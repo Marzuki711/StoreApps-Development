@@ -21,20 +21,35 @@
 function showSuccess(message){
 
     if(typeof Swal === "undefined"){
-        alert(message || "Success");
+        alert(message || "Saved successfully");
         return;
     }
 
     Swal.fire({
-        icon:"success",
-        title:"SUCCESS",
-        text:message,
-        confirmButtonText:"OK",
-        confirmButtonColor:"#198754",
-        allowOutsideClick:false
+
+        icon: "success",
+        title: "SUCCESS",
+        text: message,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#198754",
+        allowOutsideClick: false,
+        didOpen: function(){
+
+            const container =
+                document.querySelector(".swal2-container");
+
+            if(container){
+
+                container.style.zIndex = "20000";
+
+            }
+
+        }
+
     });
 
 }
+
 
 function showError(message){
 
@@ -44,14 +59,30 @@ function showError(message){
     }
 
     Swal.fire({
-        icon:"error",
-        title:"VALIDATION",
-        text:message,
-        confirmButtonText:"OK",
-        confirmButtonColor:"#dc3545"
+
+        icon: "error",
+        title: "VALIDATION",
+        text: message,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc3545",
+        allowOutsideClick: false,
+        didOpen: function(){
+
+            const container =
+                document.querySelector(".swal2-container");
+
+            if(container){
+
+                container.style.zIndex = "20000";
+
+            }
+
+        }
+
     });
 
 }
+
 
 function showWarning(message){
 
@@ -61,11 +92,26 @@ function showWarning(message){
     }
 
     Swal.fire({
-        icon:"warning",
-        title:"WARNING",
-        text:message,
-        confirmButtonText:"OK",
-        confirmButtonColor:"#ffc107"
+
+        icon: "warning",
+        title: "WARNING",
+        text: message,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ffc107",
+        allowOutsideClick: false,
+        didOpen: function(){
+
+            const container =
+                document.querySelector(".swal2-container");
+
+            if(container){
+
+                container.style.zIndex = "20000";
+
+            }
+
+        }
+
     });
 
 }
