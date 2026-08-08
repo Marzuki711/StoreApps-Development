@@ -216,17 +216,50 @@ async function umSaveUser(e){
     // IMPORTANT: Do not auto-close the edit form. User can close with X/Cancel.
     await umLoadUsers();
 
-    if(typeof Swal !== "undefined") {
-        await Swal.fire({
-            icon: "success",
-            title: "SUCCESS",
-            text: result.message || "User saved successfully.",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#198754",
-            allowOutsideClick: false
-        });
+    if(typeof showSuccess === "function"){
+
+        showSuccess(
+            result.message ||
+            "User saved successfully."
+        );
+
     }else{
-        alert(result.message || "User saved successfully.");
+
+        if(typeof Swal !== "undefined"){
+
+            Swal.fire({
+                icon: "success",
+                title: "SUCCESS",
+                text:
+                    result.message ||
+                    "User saved successfully.",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#198754",
+                allowOutsideClick: false,
+                didOpen: function(){
+
+                    const container =
+                        document.querySelector(
+                            ".swal2-container"
+                        );
+
+                    if(container){
+                        container.style.zIndex =
+                            "20000";
+                    }
+
+                }
+            });
+
+        }else{
+
+            alert(
+                result.message ||
+                "User saved successfully."
+            );
+
+        }
+
     }
 
     return true;
