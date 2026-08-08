@@ -37,7 +37,7 @@
             </div>
 
             <div class="sa-user-info">
-                <strong data-user-name>Store User</strong>
+                <strong data-user-name-display>Store User</strong>
                 <span data-role-display>User</span>
             </div>
         </div>
@@ -115,9 +115,6 @@
                 <span>My Account</span>
             </button>
 
-            <div class="sa-version">
-                Store Apps V1.0.2
-            </div>
 
         </div>
 
@@ -567,10 +564,18 @@
 }
 
 .sa-user-info strong{
-    font-size:13px;
+    font-size:12px;
+    line-height:1.25;
+    font-weight:700;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    max-width:150px;
+}
+
+.sa-user-info{
+    min-width:0;
+    max-width:160px;
 }
 
 .sa-user-info span{
