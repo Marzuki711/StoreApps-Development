@@ -1,20 +1,16 @@
 /*************************************************
  * Manual OT Claim System
  * FILE : roles.js
- * PURPOSE : ROLE & ACCESS CONTROL
  *
- * ROLE:
- * ADMIN = Full Access
- * USER  = Standard Access
+ * ROLE + BUTTON PERMISSION CONTROL
  *
- * IMPORTANT:
- * This file does NOT modify:
- * - calculation
- * - search
- * - validation
- * - reset
- * - save
- * - API
+ * LOCK:
+ * - Calculation
+ * - Search
+ * - Save
+ * - Reset
+ * - Validation
+ * - OT API
  *************************************************/
 
 
@@ -24,8 +20,29 @@
 
 const USER_ROLES = {
 
-    ADMIN: "Admin",
-    USER: "User"
+    ADMIN: "admin",
+    USER: "user"
+
+};
+
+
+/* ==========================================
+   PERMISSION CONSTANTS
+========================================== */
+
+const PERMISSIONS = {
+
+    MANUAL_OT: "manual_ot",
+
+    EMPLOYEE_DATABASE: "employee_database",
+
+    DASHBOARD: "dashboard",
+
+    USER_MANAGEMENT: "user_management",
+
+    SETTINGS: "settings",
+
+    ACCOUNT: "account"
 
 };
 
@@ -34,15 +51,14 @@ const USER_ROLES = {
    GET CURRENT USER
 ========================================== */
 
-function getCurrentUserRole(){
+function getCurrentUser(){
 
     if(
         typeof currentUser !== "undefined" &&
-        currentUser &&
-        currentUser.role
+        currentUser
     ){
 
-        return String(currentUser.role).trim();
+        return currentUser;
 
     }
 
@@ -52,23 +68,44 @@ function getCurrentUserRole(){
             sessionStorage.getItem("currentUser");
 
         if(!stored){
-            return "";
+
+            return null;
+
         }
 
-        const user = JSON.parse(stored);
-
-        return String(user.role || "").trim();
+        return JSON.parse(stored);
 
     }catch(err){
 
         console.error(
-            "Unable to read current user role:",
+            "Unable to read current user:",
             err
         );
+
+        return null;
+
+    }
+
+}
+
+
+/* ==========================================
+   GET CURRENT ROLE
+========================================== */
+
+function getCurrentUserRole(){
+
+    const user = getCurrentUser();
+
+    if(!user){
 
         return "";
 
     }
+
+    return String(
+        user.role || ""
+    ).trim();
 
 }
 
@@ -79,9 +116,11 @@ function getCurrentUserRole(){
 
 function normalizeRole(role){
 
-    return String(role || "")
-        .trim()
-        .toLowerCase();
+    return String(
+        role || ""
+    )
+    .trim()
+    .toLowerCase();
 
 }
 
@@ -94,7 +133,7 @@ function isAdmin(){
 
     return normalizeRole(
         getCurrentUserRole()
-    ) === "admin";
+    ) === USER_ROLES.ADMIN;
 
 }
 
@@ -107,7 +146,7 @@ function isUser(){
 
     return normalizeRole(
         getCurrentUserRole()
-    ) === "user";
+    ) === USER_ROLES.USER;
 
 }
 
@@ -118,23 +157,104 @@ function isUser(){
 
 function isLoggedIn(){
 
-    return !!getCurrentUserRole();
+    return !!getCurrentUser();
 
 }
 
 
 /* ==========================================
-   REQUIRE ADMIN
+   GET USER PERMISSIONS
 ========================================== */
 
-function requireAdmin(){
+function getUserPermissions(){
+
+    const user = getCurrentUser();
+
+    if(!user){
+
+        return {};
+
+    }
+
+
+    /* ======================================
+       ADMIN = FULL ACCESS
+    ====================================== */
 
     if(isAdmin()){
+
+        return {
+
+            [PERMISSIONS.MANUAL_OT]: true,
+
+            [PERMISSIONS.EMPLOYEE_DATABASE]: true,
+
+            [PERMISSIONS.DASHBOARD]: true,
+
+            [PERMISSIONS.USER_MANAGEMENT]: true,
+
+            [PERMISSIONS.SETTINGS]: true,
+
+            [PERMISSIONS.ACCOUNT]: true
+
+        };
+
+    }
+
+
+    /* ======================================
+       USER PERMISSIONS
+    ====================================== */
+
+    if(
+        user.permissions &&
+        typeof user.permissions === "object"
+    ){
+
+        return user.permissions;
+
+    }
+
+
+    return {};
+
+}
+
+
+/* ==========================================
+   HAS PERMISSION
+========================================== */
+
+function hasPermission(permission){
+
+    if(isAdmin()){
+
         return true;
+
+    }
+
+    const permissions =
+        getUserPermissions();
+
+    return permissions[permission] === true;
+
+}
+
+
+/* ==========================================
+   REQUIRE PERMISSION
+========================================== */
+
+function requirePermission(permission){
+
+    if(hasPermission(permission)){
+
+        return true;
+
     }
 
     showError(
-        "Access denied. Administrator permission required."
+        "You do not have permission to access this function."
     );
 
     return false;
@@ -143,84 +263,41 @@ function requireAdmin(){
 
 
 /* ==========================================
-   APPLY ROLE TO BODY
+   APPLY PERMISSIONS TO BUTTONS
 ========================================== */
 
-function applyRoleAccess(){
+function applyPermissionAccess(){
 
-    const role = getCurrentUserRole();
-
-    if(!role){
-        return;
-    }
-
-    document.body.dataset.userRole =
-        normalizeRole(role);
-
-    console.log(
-        "ROLE ACCESS :",
-        role
-    );
-
-
-    /* ==========================================
-       ROLE BADGE
-    ========================================== */
-
-    const roleElements =
+    const elements =
         document.querySelectorAll(
-            "[data-role-display]"
+            "[data-permission]"
         );
 
-    roleElements.forEach(function(el){
+    elements.forEach(function(element){
 
-        el.textContent = role;
+        const permission =
+            element.getAttribute(
+                "data-permission"
+            );
 
-    });
+        if(hasPermission(permission)){
 
+            element.style.display = "";
 
-    /* ==========================================
-       ADMIN ONLY ELEMENTS
-    ========================================== */
+            element.removeAttribute(
+                "aria-hidden"
+            );
 
-    const adminElements =
-        document.querySelectorAll(
-            "[data-role='admin']"
-        );
-
-    adminElements.forEach(function(el){
-
-        if(isAdmin()){
-
-            el.style.display = "";
+            element.disabled = false;
 
         }else{
 
-            el.style.display = "none";
+            element.style.display = "none";
 
-        }
-
-    });
-
-
-    /* ==========================================
-       USER ONLY ELEMENTS
-    ========================================== */
-
-    const userElements =
-        document.querySelectorAll(
-            "[data-role='user']"
-        );
-
-    userElements.forEach(function(el){
-
-        if(isUser()){
-
-            el.style.display = "";
-
-        }else{
-
-            el.style.display = "none";
+            element.setAttribute(
+                "aria-hidden",
+                "true"
+            );
 
         }
 
@@ -230,7 +307,107 @@ function applyRoleAccess(){
 
 
 /* ==========================================
-   ROLE DEBUG
+   APPLY ROLE ACCESS
+========================================== */
+
+function applyRoleAccess(){
+
+    const role =
+        getCurrentUserRole();
+
+    if(!role){
+
+        return;
+
+    }
+
+
+    document.body.dataset.userRole =
+        normalizeRole(role);
+
+
+    console.log(
+        "ROLE ACCESS :",
+        role
+    );
+
+
+    /* ======================================
+       ROLE DISPLAY
+    ====================================== */
+
+    const roleElements =
+        document.querySelectorAll(
+            "[data-role-display]"
+        );
+
+    roleElements.forEach(function(element){
+
+        element.textContent =
+            role;
+
+    });
+
+
+    /* ======================================
+       ADMIN ONLY
+    ====================================== */
+
+    const adminElements =
+        document.querySelectorAll(
+            "[data-role='admin']"
+        );
+
+    adminElements.forEach(function(element){
+
+        if(isAdmin()){
+
+            element.style.display = "";
+
+        }else{
+
+            element.style.display = "none";
+
+        }
+
+    });
+
+
+    /* ======================================
+       USER ONLY
+    ====================================== */
+
+    const userElements =
+        document.querySelectorAll(
+            "[data-role='user']"
+        );
+
+    userElements.forEach(function(element){
+
+        if(isUser()){
+
+            element.style.display = "";
+
+        }else{
+
+            element.style.display = "none";
+
+        }
+
+    });
+
+
+    /* ======================================
+       BUTTON PERMISSIONS
+    ====================================== */
+
+    applyPermissionAccess();
+
+}
+
+
+/* ==========================================
+   DEBUG
 ========================================== */
 
 function debugRole(){
@@ -241,9 +418,7 @@ function debugRole(){
 
     console.log(
         "CURRENT USER :",
-        typeof currentUser !== "undefined"
-            ? currentUser
-            : null
+        getCurrentUser()
     );
 
     console.log(
@@ -259,6 +434,11 @@ function debugRole(){
     console.log(
         "IS USER :",
         isUser()
+    );
+
+    console.log(
+        "PERMISSIONS :",
+        getUserPermissions()
     );
 
     console.log(
