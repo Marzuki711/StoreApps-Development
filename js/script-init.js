@@ -143,6 +143,21 @@ async function initializeApplication(){
             otModule.style.display="none";
         }
 
+        /* User Management must never appear on the login screen. */
+        const userManagementContainer =
+            document.getElementById("userManagementContainer");
+
+        if(userManagementContainer){
+            userManagementContainer.style.display="none";
+        }
+
+        const userManagementModule =
+            document.getElementById("userManagementModule");
+
+        if(userManagementModule){
+            userManagementModule.style.display="none";
+        }
+
         if(topbar){
             topbar.style.display="none";
         }
@@ -390,6 +405,9 @@ function showHome(){
     const otModule =
         document.getElementById("otModule");
 
+    const userManagementContainer =
+        document.getElementById("userManagementContainer");
+
     if(loginContainer){
         loginContainer.style.display = "none";
     }
@@ -400,6 +418,11 @@ function showHome(){
 
     if(otModule){
         otModule.style.display = "none";
+    }
+
+    /* Home must always close User Management. */
+    if(userManagementContainer){
+        userManagementContainer.style.display = "none";
     }
 
 }
