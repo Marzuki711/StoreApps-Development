@@ -1,1 +1,130 @@
+<section id="userManagementModule" class="um-page" data-permission="user_management">
+  <div class="um-header">
+    <div>
+      <div class="um-kicker">SYSTEM ADMINISTRATION</div>
+      <h1><i class="fa-solid fa-users-gear"></i> User Management</h1>
+      <p>Add, edit and manage Store Apps users and their access.</p>
+    </div>
+    <button class="um-primary-btn" id="btnAddUser" type="button">
+      <i class="fa-solid fa-user-plus"></i> Add User
+    </button>
+  </div>
+
+  <div class="um-toolbar">
+    <div class="um-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="umSearch" type="search" placeholder="Search username, name or employee ID">
+    </div>
+    <div class="um-count" id="umCount">0 Users</div>
+  </div>
+
+  <div class="um-table-wrap">
+    <table class="um-table">
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Full Name</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th class="um-action-col">Action</th>
+        </tr>
+      </thead>
+      <tbody id="umUserTableBody">
+        <tr><td colspan="7" class="um-empty">Loading users...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="umUserModal" class="um-modal" aria-hidden="true">
+    <div class="um-modal-card">
+      <div class="um-modal-head">
+        <div>
+          <div class="um-kicker">USER ACCOUNT</div>
+          <h2 id="umModalTitle">Add User</h2>
+        </div>
+        <button id="umCloseModal" class="um-icon-btn" type="button" aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="umUserForm" autocomplete="off">
+        <input type="hidden" id="umMode" value="add">
+
+        <div class="um-grid">
+          <label>
+            Employee ID
+            <input id="umEmployeeId" required maxlength="30">
+          </label>
+
+          <label>
+            Full Name
+            <input id="umFullName" required>
+          </label>
+
+          <label>
+            Email
+            <input id="umEmail" type="email">
+          </label>
+
+          <label>
+            Username
+            <input id="umUsername" required maxlength="50">
+          </label>
+
+          <label>
+            Password
+            <div class="um-password">
+              <input id="umPassword" type="password" placeholder="Required for new user">
+              <button type="button" class="um-eye" data-target="umPassword">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <small id="umPasswordHint">Minimum 6 characters for a new user.</small>
+          </label>
+
+          <label>
+            Role
+            <select id="umRole">
+              <option value="User">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+
+          <label>
+            Status
+            <select id="umStatus">
+              <option value="Active">Active</option>
+              <option value="Disabled">Disabled</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="um-permission-box">
+          <div class="um-permission-head">
+            <div>
+              <h3>Module Permissions</h3>
+              <p>Admin automatically receives full access.</p>
+            </div>
+            <div class="um-permission-actions">
+              <button type="button" id="umSelectAll">Select All</button>
+              <button type="button" id="umClearAll">Clear All</button>
+            </div>
+          </div>
+          <div id="umPermissionGrid" class="um-permission-grid">
+            <div class="um-empty">Loading permissions...</div>
+          </div>
+        </div>
+
+        <div class="um-form-actions">
+          <button type="button" class="um-secondary-btn" id="umCancel">Cancel</button>
+          <button type="submit" class="um-primary-btn" id="umSaveUser">
+            <i class="fa-solid fa-floppy-disk"></i> Save User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
 
