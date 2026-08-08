@@ -16,8 +16,28 @@ async function openUserManagement(){
         if(typeof showError === "function") showError("Administrator access is required.");
         return;
     }
+    const loginContainer = document.getElementById("loginContainer");
+    const homeContainer = document.getElementById("homeContainer");
+    const otModule = document.getElementById("otModule");
+    const userManagementContainer = document.getElementById("userManagementContainer");
+    const topbar = document.querySelector(".topbar");
+
+    if(loginContainer) loginContainer.style.display = "none";
+    if(homeContainer) homeContainer.style.display = "none";
+    if(otModule) otModule.style.display = "none";
+    if(topbar) topbar.style.display = "flex";
+
+    if(userManagementContainer){
+        userManagementContainer.style.display = "block";
+    }
+
     const module = document.getElementById("userManagementModule");
     if(module) module.style.display = "block";
+
+    if(typeof applyRoleAccess === "function"){
+        applyRoleAccess();
+    }
+
     await umLoadUsers();
 }
 
