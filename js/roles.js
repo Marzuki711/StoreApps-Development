@@ -249,11 +249,45 @@ function applyPermissionAccess(){
 }
 
 
+
+/* ==========================================
+   UPDATE SIDEBAR / ACCOUNT IDENTITY
+========================================== */
+
+function updateUserIdentity(){
+
+    const user = getCurrentUser();
+
+    const name = user
+        ? String(user.fullName || user.username || "Store User").trim()
+        : "Store User";
+
+    const role = user
+        ? String(user.role || "User").trim()
+        : "User";
+
+    document.querySelectorAll("[data-user-name]").forEach(function(element){
+        element.textContent = name || "Store User";
+    });
+
+    document.querySelectorAll("[data-role-display]").forEach(function(element){
+        element.textContent = role || "User";
+    });
+
+    const accountName = document.getElementById("accountName");
+    if(accountName){
+        accountName.textContent = name || "Account";
+    }
+
+}
+
 /* ==========================================
    ROLE ACCESS
 ========================================== */
 
 function applyRoleAccess(){
+
+    updateUserIdentity();
 
     const role =
         getCurrentUserRole();
