@@ -33,7 +33,8 @@ async function initializeApplication(){
             loadComponent("components/home.html","homeContainer"),
             loadComponent("components/fulltimer.html","fullTimerContainer"),
             loadComponent("components/parttimer.html","partTimerContainer"),
-            loadComponent("components/foreignworker.html","foreignWorkerContainer")
+            loadComponent("components/foreignworker.html","foreignWorkerContainer"),
+            loadComponent("components/user-management","userManagementContainer")
 
         ]);
 
@@ -112,6 +113,7 @@ async function initializeApplication(){
         const loginContainer=document.getElementById("loginContainer");
         const homeContainer=document.getElementById("homeContainer");
         const otModule=document.getElementById("otModule");
+        const userManagementContainer=document.getElementById("userManagementContainer");
         const topbar=document.querySelector(".topbar");
 
         if(loginContainer){
@@ -124,6 +126,10 @@ async function initializeApplication(){
 
         if(otModule){
             otModule.style.display="none";
+        }
+
+        if(userManagementContainer){
+            userManagementContainer.style.display="none";
         }
 
         if(topbar){
@@ -373,6 +379,9 @@ function showHome(){
     const otModule =
         document.getElementById("otModule");
 
+    const userManagementContainer =
+        document.getElementById("userManagementContainer");
+
     if(loginContainer){
         loginContainer.style.display = "none";
     }
@@ -383,6 +392,14 @@ function showHome(){
 
     if(otModule){
         otModule.style.display = "none";
+    }
+
+    if(userManagementContainer){
+        userManagementContainer.style.display = "none";
+    }
+
+    if(typeof applyRoleAccess === "function"){
+        applyRoleAccess();
     }
 
 }
