@@ -36,10 +36,16 @@ async function loginSystem(){
 
     currentUser = result;
 
-    sessionStorage.setItem(
-        "currentUser",
-        JSON.stringify(result)
-    );
+sessionStorage.setItem(
+    "currentUser",
+    JSON.stringify(result)
+);
+
+/* ==========================================
+   APPLY USER ROLE
+========================================== */
+
+    applyRoleAccess();
 
     requestAnimationFrame(showHome);
 
