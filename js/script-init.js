@@ -41,6 +41,22 @@ async function initializeApplication(){
         console.log("COMPONENTS LOADED");
 
         /* ==========================
+           USER MANAGEMENT UI
+           Component must be bound AFTER
+           it has been loaded into the DOM.
+        ========================== */
+
+        if(typeof initUserManagementUI === "function"){
+            initUserManagementUI();
+        }
+
+        /* Re-apply permissions because User Management
+           is a dynamically loaded component. */
+        if(typeof applyRoleAccess === "function"){
+            applyRoleAccess();
+        }
+
+        /* ==========================
            PASSWORD SHOW / HIDE
            PRESERVE ORIGINAL FUNCTION
         ========================== */
@@ -113,7 +129,6 @@ async function initializeApplication(){
         const loginContainer=document.getElementById("loginContainer");
         const homeContainer=document.getElementById("homeContainer");
         const otModule=document.getElementById("otModule");
-        const userManagementContainer=document.getElementById("userManagementContainer");
         const topbar=document.querySelector(".topbar");
 
         if(loginContainer){
@@ -126,10 +141,6 @@ async function initializeApplication(){
 
         if(otModule){
             otModule.style.display="none";
-        }
-
-        if(userManagementContainer){
-            userManagementContainer.style.display="none";
         }
 
         if(topbar){
@@ -379,9 +390,6 @@ function showHome(){
     const otModule =
         document.getElementById("otModule");
 
-    const userManagementContainer =
-        document.getElementById("userManagementContainer");
-
     if(loginContainer){
         loginContainer.style.display = "none";
     }
@@ -394,14 +402,51 @@ function showHome(){
         otModule.style.display = "none";
     }
 
-    if(userManagementContainer){
-        userManagementContainer.style.display = "none";
+}
+
+/* ==========================================
+   OPEN USER MANAGEMENT
+========================================== */
+
+function openUserManagement(){
+
+    if(typeof requirePermission === "function" && !requirePermission("user_management")){
+        return;
     }
 
-    if(typeof applyRoleAccess === "function"){
-        applyRoleAccess();
-    }
+    const loginContainer = document.getElementById("loginContainer");
+    const homeContainer = document.getElementById("homeContainer");
+    const otModule = document.getElementById("otModule");
+    const userManagementContainer = document.getElementById("userManagementContainer");
 
+    if(loginContainer) loginContainer.style.display = "none";
+    if(homeContainer) homeContainer.style.display = "none";
+    if(otModule) otModule.style.display = "none";
+    if(userManagementContainer) userManagementContainer.style.display = "block";
+
+    const toggle = document.getElementById("saSidebarToggle");
+    if(toggle) toggle.checked = false;
+
+    if(typeof umLoadUsers === "function"){
+        umLoadUsers();
+    }
+}
+
+/* ==========================================
+   CLOSE USER MANAGEMENT
+========================================== */
+
+function closeUserManagement(){
+
+    const userManagementContainer = document.getElementById("userManagementContainer");
+    const homeContainer = document.getElementById("homeContainer");
+    const otModule = document.getElementById("otModule");
+
+    if(userManagementContainer) userManagementContainer.style.display = "none";
+    if(otModule) otModule.style.display = "none";
+    if(homeContainer) homeContainer.style.display = "block";
+
+    if(typeof applyRoleAccess === "function") applyRoleAccess();
 }
 
 /* ==========================================
