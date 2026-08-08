@@ -249,45 +249,55 @@ function applyPermissionAccess(){
 }
 
 
-
-/* ==========================================
-   UPDATE SIDEBAR / ACCOUNT IDENTITY
-========================================== */
-
-function updateUserIdentity(){
-
-    const user = getCurrentUser();
-
-    const name = user
-        ? String(user.fullName || user.username || "Store User").trim()
-        : "Store User";
-
-    const role = user
-        ? String(user.role || "User").trim()
-        : "User";
-
-    document.querySelectorAll("[data-user-name]").forEach(function(element){
-        element.textContent = name || "Store User";
-    });
-
-    document.querySelectorAll("[data-role-display]").forEach(function(element){
-        element.textContent = role || "User";
-    });
-
-    const accountName = document.getElementById("accountName");
-    if(accountName){
-        accountName.textContent = name || "Account";
-    }
-
-}
-
 /* ==========================================
    ROLE ACCESS
 ========================================== */
 
-function applyRoleAccess(){
+function updateUserDisplay(){
 
-    updateUserIdentity();
+    const user = getCurrentUser();
+
+    if(!user){
+        return;
+    }
+
+    const fullName = String(
+        user.fullName ||
+        user.name ||
+        user.username ||
+        "Store User"
+    ).trim();
+
+    const role = String(
+        user.role || "User"
+    ).trim();
+
+    /* Topbar account name */
+    const accountName =
+        document.getElementById("accountName");
+
+    if(accountName){
+        accountName.textContent = fullName;
+        accountName.title = fullName;
+    }
+
+    /* Sidebar user name */
+    document
+        .querySelectorAll("[data-user-name-display]")
+        .forEach(function(element){
+            element.textContent = fullName;
+            element.title = fullName;
+        });
+
+    /* Sidebar + dashboard role */
+    document
+        .querySelectorAll("[data-role-display]")
+        .forEach(function(element){
+            element.textContent = role;
+        });
+}
+
+function applyRoleAccess(){
 
     const role =
         getCurrentUserRole();
@@ -298,6 +308,8 @@ function applyRoleAccess(){
 
     document.body.dataset.userRole =
         normalizeRole(role);
+
+    updateUserDisplay();
 
     console.log(
         "ROLE ACCESS :",
