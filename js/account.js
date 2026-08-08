@@ -1,5 +1,14 @@
 /* ==========================================
    js/account.js
+   ACCOUNT + LOGOUT
+
+   DYNAMIC PERMISSION PATCH
+   - Account permission controls Account button
+   - Existing logout / password functions LOCKED
+   ========================================== */
+
+
+/* ==========================================
    LOGOUT
 ========================================== */
 
@@ -26,9 +35,7 @@ function logout(){
     }).then((result)=>{
 
         if(!result.isConfirmed){
-
             return;
-
         }
 
         sessionStorage.clear();
@@ -63,7 +70,33 @@ function logout(){
 
 }
 
+
+/* ==========================================
+   CHANGE PASSWORD
+========================================== */
+
 function openChangePassword(){
+
+    /*
+     * Permission check is defensive.
+     * Existing password function remains unchanged.
+     */
+
+    if(
+        typeof hasPermission === "function" &&
+        !hasPermission("account")
+    ){
+
+        if(typeof showError === "function"){
+            showError(
+                "You do not have permission to access Account."
+            );
+        }
+
+        return;
+
+    }
+
 
     document
         .getElementById("accountDropdown")
@@ -74,8 +107,9 @@ function openChangePassword(){
         .getElementById("changePasswordModal")
         .style.display="flex";
 
-   }
-   
+}
+
+
 /* ==========================================================
    CHANGE PASSWORD MODAL
 ========================================================== */
@@ -87,65 +121,102 @@ function closeChangePassword(){
         .style.display="none";
 
     document.getElementById("currentPassword").value="";
+
     document.getElementById("newPassword").value="";
+
     document.getElementById("confirmPassword").value="";
 
-    ["currentPassword","newPassword","confirmPassword"].forEach(id=>{
 
-        const input=document.getElementById(id);
+    [
+        "currentPassword",
+        "newPassword",
+        "confirmPassword"
+    ].forEach(id=>{
+
+        const input =
+            document.getElementById(id);
 
         if(input){
+
             input.type="password";
+
         }
 
     });
 
+
     document
-        .querySelectorAll("#changePasswordModal .password-toggle")
+        .querySelectorAll(
+            "#changePasswordModal .password-toggle"
+        )
         .forEach(icon=>{
 
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
+            icon.classList.remove(
+                "fa-eye-slash"
+            );
+
+            icon.classList.add(
+                "fa-eye"
+            );
 
         });
 
 }
 
+
 /* ==========================================================
    PASSWORD TOGGLE
+   LOCKED
 ========================================================== */
 
 function initPasswordToggle(inputId, iconId){
 
-    const input = document.getElementById(inputId);
-    const icon  = document.getElementById(iconId);
+    const input =
+        document.getElementById(inputId);
+
+    const icon =
+        document.getElementById(iconId);
+
 
     if(!input || !icon){
         return;
     }
 
+
     // Elak duplicate event
+
     icon.onclick = function(){
 
         if(input.type === "password"){
 
             input.type = "text";
 
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
+            icon.classList.remove(
+                "fa-eye"
+            );
+
+            icon.classList.add(
+                "fa-eye-slash"
+            );
 
         }else{
 
             input.type = "password";
 
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
+            icon.classList.remove(
+                "fa-eye-slash"
+            );
+
+            icon.classList.add(
+                "fa-eye"
+            );
 
         }
 
     };
 
 }
+
 
 /* ==========================================================
    ACCOUNT MENU
@@ -155,6 +226,30 @@ function toggleAccountMenu(e){
 
     e.stopPropagation();
 
+
+    /*
+     * Account permission.
+     *
+     * User1 has Account = TRUE,
+     * therefore this remains fully usable.
+     */
+
+    if(
+        typeof hasPermission === "function" &&
+        !hasPermission("account")
+    ){
+
+        if(typeof showError === "function"){
+            showError(
+                "You do not have permission to access Account."
+            );
+        }
+
+        return;
+
+    }
+
+
     document
         .getElementById("accountDropdown")
         .classList
@@ -162,12 +257,89 @@ function toggleAccountMenu(e){
 
 }
 
-document.addEventListener("click",function(){
 
-    document
-        .getElementById("accountDropdown")
-        ?.classList
-        .remove("show");
+/* ==========================================
+   CLOSE ACCOUNT MENU
+========================================== */
 
-});
+document.addEventListener(
+    "click",
+    function(){
 
+        document
+            .getElementById("accountDropdown")
+            ?.classList
+            .remove("show");
+
+    }
+);
+
+
+/* ==========================================================
+   DYNAMIC PERMISSION
+   Do NOT change HTML/header.
+========================================================== */
+
+function initAccountPermission(){
+
+    const accountButton =
+        document.getElementById("btnAccount");
+
+
+    if(!accountButton){
+        return;
+    }
+
+
+    /*
+     * This is equivalent to adding:
+     *
+     * data-permission="account"
+     *
+     * directly to the header button.
+     *
+     * We do it here so header.html does not need
+     * to be replaced.
+     */
+
+    accountButton.setAttribute(
+        "data-permission",
+        "account"
+    );
+
+
+    /*
+     * Apply immediately if the dynamic permission
+     * engine is already available.
+     */
+
+    if(
+        typeof applyPermissionAccess ===
+        "function"
+    ){
+
+        applyPermissionAccess();
+
+    }
+
+}
+
+
+/* ==========================================
+   INITIALIZE ACCOUNT PERMISSION
+========================================== */
+
+if(
+    document.readyState === "loading"
+){
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initAccountPermission
+    );
+
+}else{
+
+    initAccountPermission();
+
+}
