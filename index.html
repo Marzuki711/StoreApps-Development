@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Manual OT Claim</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#C1121F">
+
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+</head>
+
+<body style="visibility:hidden;">
+
+<!-- ==========================
+     Loading
+========================== -->
+
+<div id="loading" class="overlay">
+
+    <div class="loader"></div>
+
+</div>
+
+<!-- ==========================
+     Main Container
+========================== -->
+
+<div class="container">
+
+<!-- ==========================
+     STORE APPS HEADER
+========================== -->
+
+<div class="topbar">
+
+    <div class="topbar-left">
+
+        <div class="logo-circle">
+
+            <i class="fa-solid fa-store"></i>
+
+        </div>
+
+        <div>
+
+            <h2>Store Apps</h2>
+
+            <span>Store Operations Platform</span>
+
+        </div>
+
+    </div>
+
+    <div class="topbar-right">
+
+    <button
+        id="btnHome"
+        class="top-btn home">
+
+        Home
+
+    </button>
+
+    <div class="account-menu">
+
+        <button
+            id="btnAccount"
+            class="top-btn account">
+
+            <i class="fa-solid fa-user-circle"></i>
+
+            <span id="accountName">
+
+                Account
+
+            </span>
+
+            <i class="fa-solid fa-chevron-down"></i>
+
+        </button>
+
+        <div
+    id="accountDropdown"
+    class="account-dropdown">
+
+    <button id="btnChangePassword">
+
+        <i class="fa-solid fa-key"></i>
+
+        <span>Change Password</span>
+
+    </button>
+
+    <hr>
+
+    <button id="btnLogout">
+
+        <i class="fa-solid fa-right-from-bracket"></i>
+
+        <span>Logout</span>
+
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+</div> 
+
+<!-- ==========================
+     LOGIN
+========================== -->
+
+<div id="loginContainer"></div>
+
+<!-- ==========================
+     HOME
+========================== -->
+
+<div id="homeContainer"></div>
+
+<!-- ==========================
+     OT MODULE
+========================== -->
+
+<div id="otModule">
+
+    <!-- Employee Type -->
+
+    <div class="card">
+
+        <div class="row">
+
+            <div class="col-12">
+
+                <label>Employee Type</label>
+
+                <select id="employeeType">
+
+                    <option value="">
+                        Select Employee Type
+                    </option>
+
+                    <option value="Full Timer">
+                        Full Timer
+                    </option>
+
+                    <option value="Part Timer">
+                        Part Timer
+                    </option>
+
+                    <option value="Foreign Worker">
+                        Foreign Worker
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FULL TIMER -->
+
+    <div id="fullTimerContainer"></div>
+
+    <!-- PART TIMER -->
+
+    <div id="partTimerContainer"></div>
+
+    <!-- FOREIGN WORKER -->
+
+    <div id="foreignWorkerContainer"></div>
+
+</div>
+
+<!-- ==========================
+     Success Modal
+========================== -->
+
+<div id="successModal" class="modal">
+
+    <div class="modal-box">
+
+        <div class="modal-icon">
+
+            ✓
+
+        </div>
+
+        <div class="modal-title">
+
+            Success
+
+        </div>
+
+        <div
+            id="successText"
+            class="modal-text">
+
+            Saved Successfully
+
+        </div>
+
+        <button
+            class="btn btn-success"
+            onclick="closeSuccess()">
+
+            OK
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ==========================
+     Validation Modal
+========================== -->
+
+<div id="validationModal" class="modal">
+
+    <div class="modal-box">
+
+        <div
+            class="modal-icon"
+            style="background:#F59E0B;">
+
+            !
+
+        </div>
+
+        <div class="modal-title">
+
+            Required Fields
+
+        </div>
+
+        <div
+            id="validationList"
+            class="modal-text"
+            style="text-align:left;margin-top:20px;">
+
+        </div>
+
+        <button
+            class="btn btn-success"
+            onclick="closeValidation()">
+
+            OK
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ==========================
+     CHANGE PASSWORD MODAL
+========================== -->
+
+<div id="changePasswordModal" class="modal">
+
+    <div class="modal-box change-password-box">
+
+        <div class="modal-icon">
+
+            <i class="fa-solid fa-key"></i>
+
+        </div>
+
+        <div class="modal-title">
+
+            Change Password
+
+        </div>
+
+        <div class="modal-text">
+
+            Please enter your password details.
+
+        </div>
+
+        <div class="login-form">
+
+            <label>Current Password</label>
+
+            <div class="password-box">
+
+    <input
+        type="password"
+        id="currentPassword"
+        placeholder="Current Password">
+
+            <i
+        id="toggleCurrentPassword"
+        class="fa-solid fa-eye password-toggle"></i>
+
+            </div>
+
+            <label>New Password</label>
+
+            <div class="password-box">
+
+    <input
+        type="password"
+        id="newPassword"
+        placeholder="New Password">
+
+            <i
+        id="toggleNewPassword"
+        class="fa-solid fa-eye password-toggle"></i>
+
+            </div>
+
+            <label>Confirm Password</label>
+
+            <div class="password-box">
+
+    <input
+        type="password"
+        id="confirmPassword"
+        placeholder="Confirm Password">
+
+         <i
+        id="toggleConfirmPassword"
+        class="fa-solid fa-eye password-toggle"></i>
+
+        </div>
+
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:30px;">
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeChangePassword()">
+
+                Cancel
+
+            </button>
+
+            <button
+                class="btn btn-success"
+                id="btnSavePassword"
+                onclick="changePassword()">
+
+                Save
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div> <!-- container -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="js/config.js?v=3.2"></script>
+<script src="js/api.js?v=4.0"></script>
+<script src="js/ui.js?v=4.5"></script>
+<script src="js/auth.js?v=3.2"></script>
+<script src="js/employee.js?v=4.2"></script>
+<script src="js/calculator.js?v=4.3"></script>
+<script src="js/save.js?v=4.4"></script>
+<script src="js/account.js?v=4.5"></script>
+<script src="js/script-search.js"></script>
+<script src="js/script-init.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,338 @@
+<div id="partTimerForm"
+     class="card"
+     style="display:none;">
+
+<h2 style="margin-bottom:20px;">PART TIMER CLAIM</h2>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Unit</label>
+
+<input
+type="text"
+id="pt_unit"
+class="form-control"
+data-required="true"
+data-label="Unit">
+
+</div>
+
+<div class="col-6">
+
+<label>Employee ID</label>
+
+<div class="search-box">
+
+<input
+type="text"
+id="pt_employeeId"
+class="form-control search-input"
+data-required="true"
+data-label="Employee ID"
+maxlength="8"
+inputmode="numeric"
+pattern="[0-9]*"
+placeholder="Enter Employee ID">
+
+<button
+type="button"
+id="btnSearchPT"
+class="search-icon">
+
+<i class="fa-solid fa-magnifying-glass"></i>
+
+</button>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Employee Name</label>
+
+<input
+type="text"
+id="pt_employeeName"
+class="form-control"
+data-required="true"
+data-label="Employee Name">
+
+</div>
+
+<div class="col-6">
+
+<label>Actual Date</label>
+
+<input
+type="date"
+id="pt_actualDate"
+class="form-control"
+data-required="true"
+data-label="Actual Date">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>First In</label>
+
+<input
+type="time"
+id="pt_firstIn"
+class="form-control"
+data-required="true"
+data-label="First In">
+
+</div>
+
+<div class="col-6">
+
+<label>Last Out</label>
+
+<input
+type="time"
+id="pt_lastOut"
+class="form-control"
+data-required="true"
+data-label="Last Out">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-3">
+
+<label>Work Hours</label>
+
+<input
+type="text"
+id="pt_workHours"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-3">
+
+<label>Work Hours (Floor)</label>
+
+<input
+type="text"
+id="pt_floorHours"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-3">
+
+<label>1st 4 Hours</label>
+
+<input
+type="text"
+id="pt_firstFour"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-3">
+
+<label>2nd 4 Hours</label>
+
+<input
+type="text"
+id="pt_secondFour"
+class="form-control"
+readonly>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-4">
+
+<label>After 8 Hours</label>
+
+<input
+type="text"
+id="pt_afterEight"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-4">
+
+<label>Public Holiday</label>
+
+<select
+id="pt_publicHoliday"
+class="form-control"
+data-required="true"
+data-label="Public Holiday">
+
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+
+</select>
+
+</div>
+
+<div class="col-4">
+
+<label>Rest Day</label>
+
+<select
+id="pt_restDay"
+class="form-control"
+data-required="true"
+data-label="Rest Day">
+
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Reason Not Captured in System</label>
+
+<select id="pt_reason" class="form-control" data-required="true" data-label="Reason Not Captured in System">
+
+    <option value="">Please Select..</option>
+
+    <option value="Ot Capped">
+        Ot Capped
+    </option>
+
+    <option value="Sistem/Device Malfunction (Please Provide Report Number at the Column &quot;O&quot;)">
+        Sistem/Device Malfunction (Please Provide Report Number at the Column "O")
+    </option>
+
+</select>
+
+</div>
+
+<div class="col-6">
+
+<label>Report Number</label>
+
+<input
+type="text"
+id="pt_reportNo"
+class="form-control"
+data-required="true"
+data-label="Report Number">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-12">
+
+<label>Reason For Overtime</label>
+
+<select id="pt_reasonOT" class="form-control" data-required="true" data-label="Reason For Overtime">
+
+    <option value="">Please Select..</option>
+
+    <option value="Absence / any leaves (EL,UPL, MC etc) - no replacement available">
+        Absence / any leaves (EL,UPL, MC etc) - no replacement available
+    </option>
+
+    <option value="Unfilled vacancy / resignation / suspension gap">
+        Unfilled vacancy / resignation / suspension gap
+    </option>
+
+    <option value="Cover other store">
+        Cover other store
+    </option>
+
+    <option value="Event and unplanned footfall spike">
+        Event and unplanned footfall spike
+    </option>
+
+    <option value="Security incident / emergency on-site">
+        Security incident / emergency on-site
+    </option>
+
+    <option value="N/A for work less 5hrs">
+        N/A for work less 5hrs
+    </option>
+
+</select>
+
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-12">
+
+<label>Remark</label>
+
+<textarea
+id="pt_remark"
+rows="3"
+class="form-control"></textarea>
+
+</div>
+
+</div>
+
+<div class="row mt-4">
+
+<div class="col-6">
+
+<button
+id="btnSavePT"
+class="btn btn-success">
+
+SAVE
+
+</button>
+
+</div>
+
+<div class="col-6">
+
+<button
+id="btnResetPT"
+type="button"
+class="btn btn-secondary">
+
+RESET
+
+</button>
+
+</div>
+
+</div>
+
+</div>

@@ -1,0 +1,387 @@
+<div id="foreignWorkerForm"
+     class="card"
+     style="display:none;">
+
+<h2 style="margin-bottom:20px;">FOREIGN WORKER CLAIM</h2>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>OM</label>
+
+<input
+type="text"
+id="fw_om"
+class="form-control"
+data-required="true"
+data-label="OM">
+
+</div>
+
+<div class="col-6">
+
+<label>FM</label>
+
+<input
+type="text"
+id="fw_fm"
+class="form-control"
+data-required="true"
+data-label="FM">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Unit</label>
+
+<input
+type="text"
+id="fw_unit"
+class="form-control"
+data-required="true"
+data-label="Unit">
+
+</div>
+
+<div class="col-6">
+
+<label>Employee ID</label>
+
+<div class="search-box">
+
+<input
+type="text"
+id="fw_employeeId"
+class="form-control search-input"
+data-required="true"
+data-label="Employee ID"
+maxlength="8"
+inputmode="numeric"
+pattern="[0-9]*"
+placeholder="Enter Employee ID">
+
+<button
+type="button"
+id="btnSearchFW"
+class="search-icon">
+
+<i class="fa-solid fa-magnifying-glass"></i>
+
+</button>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Employee Name</label>
+
+<input
+type="text"
+id="fw_employeeName"
+class="form-control"
+data-required="true"
+data-label="Employee Name">
+
+</div>
+
+<div class="col-6">
+
+<label>Position</label>
+
+<select id="fw_position" class="form-control" data-required="true" data-label="Position">
+
+    <option value="">Select Position</option>
+
+    <option value="FW">Foreign Worker (FW)</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-4">
+
+<label>Actual Date</label>
+
+<input
+type="date"
+id="fw_actualDate"
+class="form-control"
+data-required="true"
+data-label="Actual Date">
+
+</div>
+
+<div class="col-4">
+
+<label>First In</label>
+
+<input
+type="time"
+id="fw_firstIn"
+class="form-control"
+data-required="true"
+data-label="First In">
+
+</div>
+
+<div class="col-4">
+
+<label>Last Out</label>
+
+<input
+type="time"
+id="fw_lastOut"
+class="form-control"
+data-required="true"
+data-label="Last Out">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-4">
+
+<label>Work Hours</label>
+
+<input
+type="text"
+id="fw_workHours"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-4">
+
+<label>App Work Hours</label>
+
+<input
+type="text"
+id="fw_appHours"
+class="form-control"
+readonly>
+
+</div>
+
+<div class="col-4">
+
+<label>Approved OT</label>
+
+<input
+type="text"
+id="fw_approvedOT"
+class="form-control"
+readonly>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-4">
+
+<label>Paid Public Holiday</label>
+
+<select
+id="fw_publicHoliday"
+class="form-control"
+data-required="true"
+data-label="Paid Public Holiday">
+
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+
+</select>
+
+</div>
+
+<div class="col-4">
+
+<label>Rest Day</label>
+
+<select
+id="fw_restDay"
+class="form-control"
+data-required="true"
+data-label="Rest Day">
+
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+
+</select>
+
+</div>
+
+<div class="col-4">
+
+<label>Replacement Leave (PH)</label>
+
+<select
+id="fw_replacementLeave"
+class="form-control"
+data-required="true"
+data-label="Replacement Leave (PH)">
+
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Reason</label>
+
+<select id="fw_reason" class="form-control" data-required="true" data-label="Reason">
+
+    <option value="">Please Select..</option>
+
+    <option value="Ot Capped">
+        Ot Capped
+    </option>
+
+    <option value="Sistem/Device Malfunction (Please Provide Report Number at the Column &quot;O&quot;)">
+        Sistem/Device Malfunction (Please Provide Report Number at the Column "O")
+    </option>
+
+    <option value="Replacement Leave (PH)">
+        Replacement Leave (PH)
+    </option>
+
+    <option value="Training at HQ">
+        Training at HQ
+    </option>
+
+</select>
+
+</div>
+
+<div class="col-6">
+
+<label>Report Number</label>
+
+<input
+type="text"
+id="fw_reportNo"
+class="form-control"
+data-required="true"
+data-label="Report Number">
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-12">
+
+<label>Reason for Overtime</label>
+
+<select id="fw_reasonOT" class="form-control" data-required="true" data-label="Reason for Overtime">
+
+    <option value="">Please Select..</option>
+
+    <option value="Absence / any leaves (EL,UPL, MC etc) - no replacement available">
+        Absence / any leaves (EL,UPL, MC etc) - no replacement available
+    </option>
+
+    <option value="Unfilled vacancy / resignation / suspension gap">
+        Unfilled vacancy / resignation / suspension gap
+    </option>
+
+    <option value="Cover other store">
+        Cover other store
+    </option>
+
+    <option value="Event and unplanned footfall spike">
+        Event and unplanned footfall spike
+    </option>
+
+    <option value="Security incident / emergency on-site">
+        Security incident / emergency on-site
+    </option>
+
+    <option value="Replacement Leave (PH)">
+        Replacement Leave (PH)
+    </option>
+
+    <option value="N/A">
+        N/A
+    </option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-12">
+
+<label>Remark</label>
+
+<textarea
+id="fw_remark"
+rows="3"
+class="form-control"></textarea>
+
+</div>
+
+</div>
+
+<div class="row mt-4">
+
+<div class="col-6">
+
+<button
+id="btnSaveFW"
+class="btn btn-success">
+
+SAVE
+
+</button>
+
+</div>
+
+<div class="col-6">
+
+<button
+id="btnResetFW"
+type="button"
+class="btn btn-secondary">
+
+RESET
+
+</button>
+
+</div>
+
+</div>
+
+</div>
