@@ -48,6 +48,24 @@ function logout(){
 
         document.getElementById("otModule").style.display="none";
 
+        /* ==========================================
+           HIDE USER MANAGEMENT ON LOGOUT
+           ========================================== */
+
+        const userManagementContainer =
+            document.getElementById("userManagementContainer");
+
+        if(userManagementContainer){
+            userManagementContainer.style.display="none";
+        }
+
+        const userManagementModule =
+            document.getElementById("userManagementModule");
+
+        if(userManagementModule){
+            userManagementModule.style.display="none";
+        }
+
         document.getElementById("loginContainer").style.display="block";
 
         document.getElementById("loginUsername").value="";
