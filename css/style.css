@@ -511,12 +511,35 @@ opacity:1;
 
 }
 
-.topbar span{
+ .topbar span{
 
     color:#777;
 
     font-size:14px;
 
+}
+
+/* ==========================================
+   COMPACT ACCOUNT NAME
+========================================== */
+
+.topbar .account{
+    max-width:340px;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+#accountName{
+    display:block;
+    max-width:220px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:13px;
+    font-weight:600;
+    color:#475569;
 }
 
 /* ==========================================
@@ -1184,6 +1207,11 @@ opacity:1;
 
 .topbar span{
     font-size:13px;
+}
+
+#accountName{
+    max-width:150px;
+    font-size:12px;
 }
     }
 
