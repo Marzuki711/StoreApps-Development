@@ -1,5 +1,5 @@
 /*************************************************
- * Manual OT Claim System
+ * Store Apps
  * FILE : roles.js
  *
  * ROLE + BUTTON PERMISSION CONTROL
@@ -13,147 +13,74 @@
  * - OT API
  *************************************************/
 
-
-/* ==========================================
-   ROLE CONSTANTS
-========================================== */
-
 const USER_ROLES = {
-
     ADMIN: "admin",
     USER: "user"
-
 };
-
-
-/* ==========================================
-   PERMISSION CONSTANTS
-========================================== */
 
 const PERMISSIONS = {
-
     MANUAL_OT: "manual_ot",
-
     EMPLOYEE_DATABASE: "employee_database",
-
     DASHBOARD: "dashboard",
-
     USER_MANAGEMENT: "user_management",
-
     SETTINGS: "settings",
-
     ACCOUNT: "account"
-
 };
-
-
-/* ==========================================
-   GET CURRENT USER
-========================================== */
 
 function getCurrentUser(){
 
-    if(
-        typeof currentUser !== "undefined" &&
-        currentUser
-    ){
-
+    if(typeof currentUser !== "undefined" && currentUser){
         return currentUser;
-
     }
 
     try{
 
-        const stored =
-            sessionStorage.getItem("currentUser");
+        const stored = sessionStorage.getItem("currentUser");
 
         if(!stored){
-
             return null;
-
         }
 
         return JSON.parse(stored);
 
     }catch(err){
 
-        console.error(
-            "Unable to read current user:",
-            err
-        );
-
+        console.error("Unable to read current user:", err);
         return null;
 
     }
-
 }
-
-
-/* ==========================================
-   GET CURRENT ROLE
-========================================== */
 
 function getCurrentUserRole(){
 
     const user = getCurrentUser();
 
     if(!user){
-
         return "";
-
     }
 
-    return String(
-        user.role || ""
-    ).trim();
-
+    return String(user.role || "").trim();
 }
-
-
-/* ==========================================
-   NORMALIZE ROLE
-========================================== */
 
 function normalizeRole(role){
 
-    return String(
-        role || ""
-    )
-    .trim()
-    .toLowerCase();
+    return String(role || "")
+        .trim()
+        .toLowerCase();
 
 }
-
-
-/* ==========================================
-   CHECK ADMIN
-========================================== */
 
 function isAdmin(){
 
-    return normalizeRole(
-        getCurrentUserRole()
-    ) === USER_ROLES.ADMIN;
+    return normalizeRole(getCurrentUserRole()) === USER_ROLES.ADMIN;
 
 }
-
-
-/* ==========================================
-   CHECK USER
-========================================== */
 
 function isUser(){
 
-    return normalizeRole(
-        getCurrentUserRole()
-    ) === USER_ROLES.USER;
+    return normalizeRole(getCurrentUserRole()) === USER_ROLES.USER;
 
 }
-
-
-/* ==========================================
-   CHECK LOGIN
-========================================== */
 
 function isLoggedIn(){
 
@@ -161,51 +88,29 @@ function isLoggedIn(){
 
 }
 
-
-/* ==========================================
-   GET USER PERMISSIONS
-========================================== */
-
 function getUserPermissions(){
 
     const user = getCurrentUser();
 
     if(!user){
-
         return {};
-
     }
 
-
-    /* ======================================
-       ADMIN = FULL ACCESS
-    ====================================== */
-
+    /* ADMIN = FULL ACCESS */
     if(isAdmin()){
 
         return {
-
             [PERMISSIONS.MANUAL_OT]: true,
-
             [PERMISSIONS.EMPLOYEE_DATABASE]: true,
-
             [PERMISSIONS.DASHBOARD]: true,
-
             [PERMISSIONS.USER_MANAGEMENT]: true,
-
             [PERMISSIONS.SETTINGS]: true,
-
             [PERMISSIONS.ACCOUNT]: true
-
         };
 
     }
 
-
-    /* ======================================
-       USER PERMISSIONS
-    ====================================== */
-
+    /* USER = PERMISSIONS FROM BACKEND */
     if(
         user.permissions &&
         typeof user.permissions === "object"
@@ -215,89 +120,62 @@ function getUserPermissions(){
 
     }
 
-
     return {};
 
 }
 
-
-/* ==========================================
-   HAS PERMISSION
-========================================== */
-
 function hasPermission(permission){
 
     if(isAdmin()){
-
         return true;
-
     }
 
-    const permissions =
-        getUserPermissions();
+    const permissions = getUserPermissions();
 
     return permissions[permission] === true;
 
 }
 
-
-/* ==========================================
-   REQUIRE PERMISSION
-========================================== */
-
 function requirePermission(permission){
 
     if(hasPermission(permission)){
-
         return true;
-
     }
 
-    showError(
-        "You do not have permission to access this function."
-    );
+    if(typeof showError === "function"){
+        showError(
+            "You do not have permission to access this function."
+        );
+    }
 
     return false;
 
 }
 
-
-/* ==========================================
-   APPLY PERMISSIONS TO BUTTONS
-========================================== */
-
 function applyPermissionAccess(){
 
-    const elements =
-        document.querySelectorAll(
-            "[data-permission]"
-        );
+    const elements = document.querySelectorAll(
+        "[data-permission]"
+    );
 
     elements.forEach(function(element){
 
         const permission =
-            element.getAttribute(
-                "data-permission"
-            );
+            element.getAttribute("data-permission");
 
         if(hasPermission(permission)){
 
             element.style.display = "";
+            element.removeAttribute("aria-hidden");
 
-            element.removeAttribute(
-                "aria-hidden"
-            );
-
-            element.disabled = false;
+            if("disabled" in element){
+                element.disabled = false;
+            }
 
         }else{
 
             element.style.display = "none";
-
-            element.setAttribute(
-                "aria-hidden",
-                "true"
-            );
+            element.setAttribute("aria-hidden", "true");
 
         }
 
@@ -305,144 +183,101 @@ function applyPermissionAccess(){
 
 }
 
-
-/* ==========================================
-   APPLY ROLE ACCESS
-========================================== */
-
 function applyRoleAccess(){
 
-    const role =
-        getCurrentUserRole();
+    const role = getCurrentUserRole();
 
     if(!role){
-
         return;
-
     }
-
 
     document.body.dataset.userRole =
         normalizeRole(role);
 
-
-    console.log(
-        "ROLE ACCESS :",
-        role
-    );
-
-
-    /* ======================================
-       ROLE DISPLAY
-    ====================================== */
+    console.log("ROLE ACCESS :", role);
 
     const roleElements =
-        document.querySelectorAll(
-            "[data-role-display]"
-        );
+        document.querySelectorAll("[data-role-display]");
 
     roleElements.forEach(function(element){
-
-        element.textContent =
-            role;
-
+        element.textContent = role;
     });
 
-
-    /* ======================================
-       ADMIN ONLY
-    ====================================== */
-
     const adminElements =
-        document.querySelectorAll(
-            "[data-role='admin']"
-        );
+        document.querySelectorAll("[data-role='admin']");
 
     adminElements.forEach(function(element){
 
-        if(isAdmin()){
-
-            element.style.display = "";
-
-        }else{
-
-            element.style.display = "none";
-
-        }
+        element.style.display =
+            isAdmin() ? "" : "none";
 
     });
 
-
-    /* ======================================
-       USER ONLY
-    ====================================== */
-
     const userElements =
-        document.querySelectorAll(
-            "[data-role='user']"
-        );
+        document.querySelectorAll("[data-role='user']");
 
     userElements.forEach(function(element){
 
-        if(isUser()){
-
-            element.style.display = "";
-
-        }else{
-
-            element.style.display = "none";
-
-        }
+        element.style.display =
+            isUser() ? "" : "none";
 
     });
-
-
-    /* ======================================
-       BUTTON PERMISSIONS
-    ====================================== */
 
     applyPermissionAccess();
 
 }
 
+/*
+ * IMPORTANT:
+ * Home/module HTML is loaded dynamically after login.
+ * Observe only the Home container so permission rules
+ * are automatically applied when the cards are inserted.
+ */
+function watchDynamicPermissionContent(){
 
-/* ==========================================
-   DEBUG
-========================================== */
+    const homeContainer =
+        document.getElementById("homeContainer");
+
+    if(!homeContainer){
+        return;
+    }
+
+    if(homeContainer.dataset.permissionObserver === "1"){
+        return;
+    }
+
+    const observer = new MutationObserver(function(){
+
+        applyPermissionAccess();
+
+    });
+
+    observer.observe(homeContainer, {
+        childList: true,
+        subtree: true
+    });
+
+    homeContainer.dataset.permissionObserver = "1";
+
+    applyPermissionAccess();
+
+}
+
+function initRoleAccess(){
+
+    applyRoleAccess();
+    watchDynamicPermissionContent();
+
+}
 
 function debugRole(){
 
-    console.log(
-        "================================="
-    );
-
-    console.log(
-        "CURRENT USER :",
-        getCurrentUser()
-    );
-
-    console.log(
-        "CURRENT ROLE :",
-        getCurrentUserRole()
-    );
-
-    console.log(
-        "IS ADMIN :",
-        isAdmin()
-    );
-
-    console.log(
-        "IS USER :",
-        isUser()
-    );
-
-    console.log(
-        "PERMISSIONS :",
-        getUserPermissions()
-    );
-
-    console.log(
-        "================================="
-    );
+    console.log("=================================");
+    console.log("CURRENT USER :", getCurrentUser());
+    console.log("CURRENT ROLE :", getCurrentUserRole());
+    console.log("IS ADMIN :", isAdmin());
+    console.log("IS USER :", isUser());
+    console.log("PERMISSIONS :", getUserPermissions());
+    console.log("=================================");
 
 }
