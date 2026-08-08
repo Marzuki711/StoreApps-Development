@@ -1,75 +1,82 @@
 /* ==========================================================
-   Store Apps - User Management V1
-   ADD / EDIT USERS
+   Store Apps - User Management V2
+   UI only: Add / Edit / Permissions
+   Backend API remains in Code.gs / UserManagement.gs
    ========================================================== */
 
 let umUsers = [];
 let umPermissionHeaders = [];
 
+function umGetCurrentUser(){
+    if(typeof getCurrentUser === "function"){
+        return getCurrentUser();
+    }
+    if(typeof currentUser !== "undefined" && currentUser){
+        return currentUser;
+    }
+    try{
+        return JSON.parse(sessionStorage.getItem("currentUser") || "null");
+    }catch(err){
+        return null;
+    }
+}
+
 function umHasAdminAccess(){
-    const user = window.currentUser || JSON.parse(sessionStorage.getItem("currentUser") || "null");
+    const user = umGetCurrentUser();
     return !!user && String(user.role || "").trim().toLowerCase() === "admin";
 }
 
 async function openUserManagement(){
-    if(!umHasAdminAccess()){
-        if(typeof showError === "function") showError("Administrator access is required.");
+    if(typeof requirePermission === "function" && !requirePermission("user_management")){
         return;
     }
-    const loginContainer = document.getElementById("loginContainer");
-    const homeContainer = document.getElementById("homeContainer");
-    const otModule = document.getElementById("otModule");
-    const userManagementContainer = document.getElementById("userManagementContainer");
-    const topbar = document.querySelector(".topbar");
-
-    if(loginContainer) loginContainer.style.display = "none";
-    if(homeContainer) homeContainer.style.display = "none";
-    if(otModule) otModule.style.display = "none";
-    if(topbar) topbar.style.display = "flex";
-
-    if(userManagementContainer){
-        userManagementContainer.style.display = "block";
-    }
-
+    const container = document.getElementById("userManagementContainer");
     const module = document.getElementById("userManagementModule");
-    if(module) module.style.display = "block";
+    const home = document.getElementById("homeContainer");
+    const ot = document.getElementById("otModule");
 
-    if(typeof applyRoleAccess === "function"){
-        applyRoleAccess();
-    }
+    if(container) container.style.display = "block";
+    if(module) module.style.display = "block";
+    if(home) home.style.display = "none";
+    if(ot) ot.style.display = "none";
+
+    const toggle = document.getElementById("saSidebarToggle");
+    if(toggle) toggle.checked = false;
 
     await umLoadUsers();
 }
 
 async function umLoadUsers(){
     const body = document.getElementById("umUserTableBody");
-    if(body) body.innerHTML = '<tr><td colspan="7" class="um-empty">Loading users...</td></tr>';
+    if(!body) return;
 
-    const result = await callAPI("getUserManagementData", {
-        username: (currentUser || {}).username || ""
-    });
+    body.innerHTML = '<tr><td colspan="7" class="um-empty">Loading users...</td></tr>';
+
+    const user = umGetCurrentUser() || {};
+    const result = await callAPI("getUserManagementData", { username: user.username || "" });
 
     if(!result || !result.status){
-        if(body) body.innerHTML = `<tr><td colspan="7" class="um-empty">${result?.message || "Unable to load users."}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="7" class="um-empty">${umEsc(result?.message || "Unable to load users.")}</td></tr>`;
         return;
     }
 
-    umUsers = result.users || [];
-    umPermissionHeaders = result.permissionHeaders || [];
+    umUsers = Array.isArray(result.users) ? result.users : [];
+    umPermissionHeaders = Array.isArray(result.permissionHeaders) ? result.permissionHeaders : [];
     umRenderUsers();
 }
 
 function umRenderUsers(){
     const body = document.getElementById("umUserTableBody");
-    const query = (document.getElementById("umSearch")?.value || "").trim().toLowerCase();
+    const count = document.getElementById("umCount");
+    if(!body) return;
 
+    const query = (document.getElementById("umSearch")?.value || "").trim().toLowerCase();
     const rows = umUsers.filter(u =>
         [u.employeeId,u.fullName,u.username,u.role,u.status]
-        .some(v => String(v || "").toLowerCase().includes(query))
+            .some(v => String(v || "").toLowerCase().includes(query))
     );
 
-    document.getElementById("umCount").textContent =
-        `${rows.length} User${rows.length === 1 ? "" : "s"}`;
+    if(count) count.textContent = `${rows.length} User${rows.length === 1 ? "" : "s"}`;
 
     if(!rows.length){
         body.innerHTML = '<tr><td colspan="7" class="um-empty">No users found.</td></tr>';
@@ -79,14 +86,13 @@ function umRenderUsers(){
     body.innerHTML = rows.map(u => `
         <tr>
             <td>${umEsc(u.employeeId)}</td>
-            <td><strong>${umEsc(u.fullName)}</strong><br><span style="color:#94a3b8">${umEsc(u.email)}</span></td>
+            <td><strong>${umEsc(u.fullName)}</strong><br><span class="um-email">${umEsc(u.email)}</span></td>
             <td>${umEsc(u.username)}</td>
             <td class="um-role">${umEsc(u.role)}</td>
-            <td><span class="um-status ${String(u.status).toLowerCase()==="active" ? "um-active":"um-disabled"}">${umEsc(u.status)}</span></td>
+            <td><span class="um-status ${String(u.status).toLowerCase() === "active" ? "um-active" : "um-disabled"}">${umEsc(u.status)}</span></td>
             <td>${umEsc(u.lastLogin || "-")}</td>
             <td class="um-action-col"><button class="um-edit" type="button" data-edit-user="${umAttr(u.username)}"><i class="fa-solid fa-pen"></i> Edit</button></td>
-        </tr>
-    `).join("");
+        </tr>`).join("");
 
     body.querySelectorAll("[data-edit-user]").forEach(btn => {
         btn.addEventListener("click", () => umEditUser(btn.getAttribute("data-edit-user")));
@@ -94,9 +100,11 @@ function umRenderUsers(){
 }
 
 function umOpenModal(user=null){
+    const modal = document.getElementById("umUserModal");
+    if(!modal) return;
+
     document.getElementById("umMode").value = user ? "edit" : "add";
     document.getElementById("umModalTitle").textContent = user ? "Edit User" : "Add User";
-
     document.getElementById("umEmployeeId").value = user?.employeeId || "";
     document.getElementById("umFullName").value = user?.fullName || "";
     document.getElementById("umEmail").value = user?.email || "";
@@ -107,21 +115,22 @@ function umOpenModal(user=null){
 
     document.getElementById("umUsername").readOnly = !!user;
     document.getElementById("umEmployeeId").readOnly = !!user;
-    document.getElementById("umPasswordHint").textContent =
-        user ? "Leave blank to keep the existing password." : "Minimum 6 characters for a new user.";
+    document.getElementById("umPasswordHint").textContent = user
+        ? "Leave blank to keep the existing password."
+        : "Minimum 6 characters for a new user.";
 
     const grid = document.getElementById("umPermissionGrid");
     grid.innerHTML = umPermissionHeaders.map(h => {
         const checked = user?.permissions?.[h.key] === true;
         return `<label class="um-permission-item">
-            <input type="checkbox" data-permission-key="${umAttr(h.key)}" ${checked ? "checked":""}>
+            <input type="checkbox" data-permission-key="${umAttr(h.key)}" ${checked ? "checked" : ""}>
             <span>${umEsc(h.label)}</span>
         </label>`;
     }).join("") || '<div class="um-empty">No permission columns found.</div>';
 
     umApplyRoleUI();
-    document.getElementById("umUserModal").classList.add("show");
-    document.getElementById("umUserModal").setAttribute("aria-hidden","false");
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
 }
 
 function umEditUser(username){
@@ -130,24 +139,28 @@ function umEditUser(username){
 }
 
 function umCloseModal(){
-    document.getElementById("umUserModal").classList.remove("show");
-    document.getElementById("umUserModal").setAttribute("aria-hidden","true");
+    const modal = document.getElementById("umUserModal");
+    if(!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
 }
 
 function umApplyRoleUI(){
-    const isAdmin = document.getElementById("umRole").value.toLowerCase() === "admin";
+    const role = document.getElementById("umRole");
+    if(!role) return;
+    const isAdmin = role.value.toLowerCase() === "admin";
     document.querySelectorAll("#umPermissionGrid input").forEach(cb => {
-        cb.checked = isAdmin ? true : cb.checked;
+        if(isAdmin) cb.checked = true;
         cb.disabled = isAdmin;
     });
 }
 
 async function umSaveUser(e){
-    e.preventDefault();
+    if(e) e.preventDefault();
 
     if(!umHasAdminAccess()){
-        if(typeof showError === "function") showError("Administrator access is required.");
-        return;
+        showError("Administrator access is required.");
+        return false;
     }
 
     const data = {
@@ -167,35 +180,56 @@ async function umSaveUser(e){
     });
 
     if(!data.employeeId || !data.fullName || !data.username){
-        if(typeof showError === "function") showError("Please complete Employee ID, Full Name and Username.");
-        return;
+        showError("Please complete Employee ID, Full Name and Username.");
+        return false;
     }
 
     if(data.mode === "add" && data.password.length < 6){
-        if(typeof showError === "function") showError("Password must be at least 6 characters.");
-        return;
+        showError("Password must be at least 6 characters.");
+        return false;
     }
 
     const btn = document.getElementById("umSaveUser");
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-    const result = await callAPI("saveUser", {
-        adminUsername: (currentUser || {}).username || "",
-        user: data
-    });
-
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save User';
-
-    if(!result || !result.status){
-        if(typeof showError === "function") showError(result?.message || "Unable to save user.");
-        return;
+    if(btn){
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     }
 
-    umCloseModal();
-    if(typeof showSuccess === "function") showSuccess(result.message || "User saved successfully.");
+    const user = umGetCurrentUser() || {};
+    let result;
+    try{
+        result = await callAPI("saveUser", { adminUsername: user.username || "", user: data });
+    }catch(err){
+        result = {status:false, message: err?.message || "Unable to connect to server."};
+    }
+
+    if(btn){
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save User';
+    }
+
+    if(!result || !result.status){
+        showError(result?.message || "Unable to save user.");
+        return false;
+    }
+
+    // IMPORTANT: Do not auto-close the edit form. User can close with X/Cancel.
     await umLoadUsers();
+
+    if(typeof Swal !== "undefined") {
+        await Swal.fire({
+            icon: "success",
+            title: "SUCCESS",
+            text: result.message || "User saved successfully.",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#198754",
+            allowOutsideClick: false
+        });
+    }else{
+        alert(result.message || "User saved successfully.");
+    }
+
+    return true;
 }
 
 function umTogglePassword(e){
@@ -210,12 +244,16 @@ function umTogglePassword(e){
 
 function umEsc(v){
     return String(v ?? "").replace(/[&<>"']/g, c => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
     }[c]));
 }
-function umAttr(v){ return umEsc(v).replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+function umAttr(v){ return umEsc(v); }
 
-document.addEventListener("DOMContentLoaded", () => {
+function initUserManagementUI(){
+    const root = document.getElementById("userManagementModule");
+    if(!root || root.dataset.umBound === "1") return;
+    root.dataset.umBound = "1";
+
     document.getElementById("btnAddUser")?.addEventListener("click", () => umOpenModal());
     document.getElementById("umCloseModal")?.addEventListener("click", umCloseModal);
     document.getElementById("umCancel")?.addEventListener("click", umCloseModal);
@@ -223,11 +261,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("umSearch")?.addEventListener("input", umRenderUsers);
     document.getElementById("umRole")?.addEventListener("change", umApplyRoleUI);
     document.getElementById("umSelectAll")?.addEventListener("click", () =>
-        document.querySelectorAll("#umPermissionGrid input").forEach(cb => { if(!cb.disabled) cb.checked=true; })
+        document.querySelectorAll("#umPermissionGrid input").forEach(cb => { if(!cb.disabled) cb.checked = true; })
     );
     document.getElementById("umClearAll")?.addEventListener("click", () =>
-        document.querySelectorAll("#umPermissionGrid input").forEach(cb => { if(!cb.disabled) cb.checked=false; })
+        document.querySelectorAll("#umPermissionGrid input").forEach(cb => { if(!cb.disabled) cb.checked = false; })
     );
-    document.querySelectorAll(".um-eye").forEach(b => b.addEventListener("click", umTogglePassword));
-});
+    root.querySelectorAll(".um-eye").forEach(b => b.addEventListener("click", umTogglePassword));
+    document.getElementById("umBackHome")?.addEventListener("click", closeUserManagement);
+}
 
+// Backward-compatible automatic init if component already exists.
+if(document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => initUserManagementUI(), {once:true});
+} else {
+    initUserManagementUI();
+}
