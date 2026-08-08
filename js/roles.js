@@ -1,7 +1,18 @@
 /*************************************************
- * Store Apps
+ * STORE APPS
  * FILE : roles.js
- * ROLE + BUTTON PERMISSION CONTROL
+ * VERSION : Dynamic Permission Engine V1
+ *
+ * LOCK:
+ * - OT calculation
+ * - Search
+ * - Save
+ * - Reset
+ * - Validation
+ * - Existing module functions
+ *
+ * This file does NOT hard-code module names.
+ * Permission keys come from currentUser.permissions.
  *************************************************/
 
 const USER_ROLES = {
@@ -9,46 +20,99 @@ const USER_ROLES = {
     USER: "user"
 };
 
-const PERMISSIONS = {
-    MANUAL_OT: "manual_ot",
-    EMPLOYEE_DATABASE: "employee_database",
-    DASHBOARD: "dashboard",
-    REPORTS: "reports",
-    USER_MANAGEMENT: "user_management",
-    SETTINGS: "settings",
-    ACCOUNT: "account"
-};
-
 function getCurrentUser(){
+
     if(typeof currentUser !== "undefined" && currentUser){
         return currentUser;
     }
 
     try{
-        const stored = sessionStorage.getItem("currentUser");
-        return stored ? JSON.parse(stored) : null;
+
+        const stored =
+            sessionStorage.getItem("currentUser");
+
+        if(!stored){
+            return null;
+        }
+
+        return JSON.parse(stored);
+
     }catch(err){
-        console.error("Unable to read current user:", err);
+
+        console.error(
+            "Unable to read current user:",
+            err
+        );
+
         return null;
+
     }
+
 }
 
 function normalizeRole(role){
-    return String(role || "").trim().toLowerCase();
+
+    return String(role || "")
+        .trim()
+        .toLowerCase();
+
+}
+
+function normalizePermissionName(name){
+
+    return String(name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
 }
 
 function getCurrentUserRole(){
+
     const user = getCurrentUser();
-    return user ? String(user.role || "").trim() : "";
+
+    if(!user){
+        return "";
+    }
+
+    return String(
+        user.role || ""
+    ).trim();
+
 }
 
 function isAdmin(){
-    return normalizeRole(getCurrentUserRole()) === USER_ROLES.ADMIN;
+
+    return (
+        normalizeRole(
+            getCurrentUserRole()
+        ) === USER_ROLES.ADMIN
+    );
+
 }
 
 function isUser(){
-    return normalizeRole(getCurrentUserRole()) === USER_ROLES.USER;
+
+    return (
+        normalizeRole(
+            getCurrentUserRole()
+        ) === USER_ROLES.USER
+    );
+
 }
+
+function isLoggedIn(){
+
+    return !!getCurrentUser();
+
+}
+
+
+/* ==========================================
+   DYNAMIC PERMISSIONS
+========================================== */
 
 function getUserPermissions(){
 
@@ -58,129 +122,286 @@ function getUserPermissions(){
         return {};
     }
 
-    // Admin always has full access.
+    /*
+     * Admin is always allowed.
+     * This means a brand-new module automatically
+     * becomes visible to Admin as soon as its card
+     * has data-permission="module_name".
+     */
+
     if(isAdmin()){
+
         return {
-            [PERMISSIONS.MANUAL_OT]: true,
-            [PERMISSIONS.EMPLOYEE_DATABASE]: true,
-            [PERMISSIONS.DASHBOARD]: true,
-            [PERMISSIONS.REPORTS]: true,
-            [PERMISSIONS.USER_MANAGEMENT]: true,
-            [PERMISSIONS.SETTINGS]: true,
-            [PERMISSIONS.ACCOUNT]: true
+            ...(user.permissions || {})
         };
+
     }
 
-    // User permissions can be supplied by the login/session object.
-    if(user.permissions && typeof user.permissions === "object"){
+    /*
+     * Normal User permissions come from backend.
+     */
+
+    if(
+        user.permissions &&
+        typeof user.permissions === "object"
+    ){
+
         return user.permissions;
+
     }
 
-    // Safe default for User:
-    // only Manual OT Claim is visible.
-    return {
-        [PERMISSIONS.MANUAL_OT]: true,
-        [PERMISSIONS.EMPLOYEE_DATABASE]: false,
-        [PERMISSIONS.DASHBOARD]: false,
-        [PERMISSIONS.REPORTS]: false,
-        [PERMISSIONS.USER_MANAGEMENT]: false,
-        [PERMISSIONS.SETTINGS]: false,
-        [PERMISSIONS.ACCOUNT]: true
-    };
+    return {};
+
 }
 
+
+/* ==========================================
+   PERMISSION CHECK
+========================================== */
+
 function hasPermission(permission){
+
+    const key =
+        normalizePermissionName(permission);
+
+    if(!key){
+        return false;
+    }
+
+    /*
+     * Admin = full access to ANY module.
+     */
+
     if(isAdmin()){
         return true;
     }
-    return getUserPermissions()[permission] === true;
+
+    const permissions =
+        getUserPermissions();
+
+    return permissions[key] === true;
+
 }
 
+
+/* ==========================================
+   REQUIRED ACCESS
+========================================== */
+
 function requirePermission(permission){
+
     if(hasPermission(permission)){
         return true;
     }
 
     if(typeof showError === "function"){
-        showError("You do not have permission to access this function.");
+
+        showError(
+            "You do not have permission to access this function."
+        );
+
     }
 
     return false;
+
 }
+
+
+/* ==========================================
+   APPLY PERMISSION TO ALL ELEMENTS
+========================================== */
 
 function applyPermissionAccess(){
 
-    document.querySelectorAll("[data-permission]").forEach(function(element){
+    const elements =
+        document.querySelectorAll(
+            "[data-permission]"
+        );
 
-        const permission = element.getAttribute("data-permission");
+    elements.forEach(function(element){
+
+        const permission =
+            element.getAttribute(
+                "data-permission"
+            );
 
         if(hasPermission(permission)){
+
             element.style.display = "";
-            element.removeAttribute("aria-hidden");
+
+            element.removeAttribute(
+                "aria-hidden"
+            );
+
         }else{
+
             element.style.display = "none";
-            element.setAttribute("aria-hidden", "true");
+
+            element.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
         }
 
     });
+
 }
+
+
+/* ==========================================
+   ROLE ACCESS
+========================================== */
 
 function applyRoleAccess(){
 
-    const role = getCurrentUserRole();
+    const role =
+        getCurrentUserRole();
 
     if(!role){
         return;
     }
 
-    document.body.dataset.userRole = normalizeRole(role);
+    document.body.dataset.userRole =
+        normalizeRole(role);
 
-    console.log("ROLE ACCESS :", role);
+    console.log(
+        "ROLE ACCESS :",
+        role
+    );
 
-    document.querySelectorAll("[data-role='admin']").forEach(function(element){
-        element.style.display = isAdmin() ? "" : "none";
-    });
+    /*
+     * Optional role-specific elements.
+     */
 
-    document.querySelectorAll("[data-role='user']").forEach(function(element){
-        element.style.display = isUser() ? "" : "none";
-    });
+    document
+        .querySelectorAll(
+            "[data-role='admin']"
+        )
+        .forEach(function(element){
+
+            element.style.display =
+                isAdmin() ? "" : "none";
+
+        });
+
+    document
+        .querySelectorAll(
+            "[data-role='user']"
+        )
+        .forEach(function(element){
+
+            element.style.display =
+                isUser() ? "" : "none";
+
+        });
 
     applyPermissionAccess();
+
 }
+
+
+/* ==========================================
+   DYNAMIC HOME CONTENT
+========================================== */
 
 function watchDynamicPermissionContent(){
 
-    const homeContainer =
-        document.getElementById("homeContainer");
+    const container =
+        document.getElementById(
+            "homeContainer"
+        );
 
-    if(!homeContainer || homeContainer.dataset.permissionObserver === "1"){
+    if(!container){
         return;
     }
 
-    const observer = new MutationObserver(function(){
+    if(
+        container.dataset
+            .permissionObserver === "1"
+    ){
+
         applyPermissionAccess();
-    });
 
-    observer.observe(homeContainer, {
-        childList: true,
-        subtree: true
-    });
+        return;
 
-    homeContainer.dataset.permissionObserver = "1";
+    }
+
+    const observer =
+        new MutationObserver(
+            function(){
+
+                applyPermissionAccess();
+
+            }
+        );
+
+    observer.observe(
+        container,
+        {
+            childList: true,
+            subtree: true
+        }
+    );
+
+    container.dataset.permissionObserver =
+        "1";
+
     applyPermissionAccess();
+
 }
+
+
+/* ==========================================
+   INITIALIZE ROLE ACCESS
+========================================== */
 
 function initRoleAccess(){
+
     applyRoleAccess();
+
     watchDynamicPermissionContent();
+
 }
 
+
+/* ==========================================
+   DEBUG
+========================================== */
+
 function debugRole(){
-    console.log("=================================");
-    console.log("CURRENT USER :", getCurrentUser());
-    console.log("CURRENT ROLE :", getCurrentUserRole());
-    console.log("IS ADMIN :", isAdmin());
-    console.log("IS USER :", isUser());
-    console.log("PERMISSIONS :", getUserPermissions());
-    console.log("=================================");
+
+    console.log(
+        "================================="
+    );
+
+    console.log(
+        "CURRENT USER :",
+        getCurrentUser()
+    );
+
+    console.log(
+        "CURRENT ROLE :",
+        getCurrentUserRole()
+    );
+
+    console.log(
+        "IS ADMIN :",
+        isAdmin()
+    );
+
+    console.log(
+        "IS USER :",
+        isUser()
+    );
+
+    console.log(
+        "PERMISSIONS :",
+        getUserPermissions()
+    );
+
+    console.log(
+        "================================="
+    );
+
 }
