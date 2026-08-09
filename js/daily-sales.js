@@ -10,6 +10,7 @@
 let dsStores = [];
 let dsRows = [];
 let dsEditId = "";
+let dsSelectedDate = "";
 
 
 /* ==========================================
@@ -187,7 +188,9 @@ async function openDailySales() {
    LOAD DAILY SALES
 ========================================== */
 
-async function dsLoad() {
+async function dsLoad(
+    dateOverride = ""
+) {
 
     const user =
         dsGetCurrentUser() || {};
@@ -195,28 +198,59 @@ async function dsLoad() {
     const username =
         user.username || "";
 
-    const [
-        storeResponse,
-        listResponse
-    ] = await Promise.all([
+    /*
+     * Default list date is TODAY.
+     * A different date can be selected when
+     * historical records are required.
+     */
+    dsSelectedDate =
+        dateOverride ||
+        dsSelectedDate ||
+        dsTodayISO();
 
-        callDailySalesAPI(
-            "getDailySalesStores",
-            {
-                username: username,
-                role: user.role || ""
-            }
-        ),
+    const listData = {
 
-        callDailySalesAPI(
+        username:
+            username,
+
+        role:
+            user.role || "",
+
+        date:
+            dsSelectedDate
+    };
+
+    /*
+     * Store master data is loaded only once.
+     * This prevents unnecessary calls whenever
+     * the user changes the date.
+     */
+    let storeResponse = {
+        status: true,
+        stores: dsStores
+    };
+
+    if (!dsStores.length) {
+
+        storeResponse =
+            await callDailySalesAPI(
+                "getDailySalesStores",
+                {
+                    username:
+                        username,
+
+                    role:
+                        user.role || ""
+                }
+            );
+
+    }
+
+    const listResponse =
+        await callDailySalesAPI(
             "getDailySalesList",
-            {
-                username: username,
-                role: user.role || ""
-            }
-        )
-
-    ]);
+            listData
+        );
 
     if (!storeResponse?.status) {
 
@@ -239,13 +273,266 @@ async function dsLoad() {
     }
 
     dsStores =
-        storeResponse.stores || [];
+        storeResponse.stores ||
+        dsStores ||
+        [];
 
     dsRows =
         listResponse.rows || [];
 
+    dsEnsureDateFilter();
+
     dsPopulateStoreSelect();
     dsRenderTable();
+}
+
+
+/* ==========================================
+   DATE FILTER
+========================================== */
+
+function dsTodayISO() {
+
+    const now =
+        new Date();
+
+    const year =
+        now.getFullYear();
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+    return (
+        year +
+        "-" +
+        month +
+        "-" +
+        day
+    );
+}
+
+
+function dsEnsureDateFilter() {
+
+    const search =
+        document.getElementById(
+            "dsSearch"
+        );
+
+    if (!search) {
+        return;
+    }
+
+    const toolbar =
+        search.closest(
+            ".ds-toolbar"
+        );
+
+    if (!toolbar) {
+        return;
+    }
+
+    let filter =
+        document.getElementById(
+            "dsDateFilterWrap"
+        );
+
+    if (!filter) {
+
+        filter =
+            document.createElement(
+                "div"
+            );
+
+        filter.id =
+            "dsDateFilterWrap";
+
+        filter.style.display =
+            "flex";
+
+        filter.style.alignItems =
+            "center";
+
+        filter.style.gap =
+            "8px";
+
+        filter.style.flexWrap =
+            "wrap";
+
+        const label =
+            document.createElement(
+                "span"
+            );
+
+        label.textContent =
+            "Business Date:";
+
+        label.style.fontSize =
+            "13px";
+
+        label.style.fontWeight =
+            "700";
+
+        label.style.color =
+            "#334155";
+
+        const input =
+            document.createElement(
+                "input"
+            );
+
+        input.type =
+            "date";
+
+        input.id =
+            "dsDateFilter";
+
+        input.style.height =
+            "44px";
+
+        input.style.boxSizing =
+            "border-box";
+
+        input.style.border =
+            "1px solid #CBD5E1";
+
+        input.style.borderRadius =
+            "10px";
+
+        input.style.padding =
+            "0 12px";
+
+        input.style.background =
+            "#fff";
+
+        input.style.color =
+            "#172033";
+
+        input.style.fontSize =
+            "14px";
+
+        input.style.outline =
+            "none";
+
+        input.addEventListener(
+            "change",
+            async function () {
+
+                dsSelectedDate =
+                    input.value ||
+                    dsTodayISO();
+
+                await dsLoad(
+                    dsSelectedDate
+                );
+            }
+        );
+
+        const todayButton =
+            document.createElement(
+                "button"
+            );
+
+        todayButton.type =
+            "button";
+
+        todayButton.textContent =
+            "Today";
+
+        todayButton.style.height =
+            "44px";
+
+        todayButton.style.border =
+            "0";
+
+        todayButton.style.borderRadius =
+            "10px";
+
+        todayButton.style.padding =
+            "0 14px";
+
+        todayButton.style.background =
+            "#E2E8F0";
+
+        todayButton.style.color =
+            "#1E293B";
+
+        todayButton.style.fontWeight =
+            "700";
+
+        todayButton.style.cursor =
+            "pointer";
+
+        todayButton.addEventListener(
+            "click",
+            async function () {
+
+                const today =
+                    dsTodayISO();
+
+                input.value =
+                    today;
+
+                dsSelectedDate =
+                    today;
+
+                await dsLoad(
+                    today
+                );
+            }
+        );
+
+        filter.appendChild(
+            label
+        );
+
+        filter.appendChild(
+            input
+        );
+
+        filter.appendChild(
+            todayButton
+        );
+
+        const searchWrap =
+            search.closest(
+                ".ds-search"
+            );
+
+        if (searchWrap) {
+
+            toolbar.insertBefore(
+                filter,
+                searchWrap
+            );
+
+        } else {
+
+            toolbar.insertBefore(
+                filter,
+                search
+            );
+        }
+    }
+
+    const dateInput =
+        document.getElementById(
+            "dsDateFilter"
+        );
+
+    if (dateInput) {
+
+        dateInput.value =
+            dsSelectedDate ||
+            dsTodayISO();
+    }
 }
 
 
@@ -765,7 +1052,9 @@ async function dsSave() {
 
         dsCloseForm();
 
-        await dsLoad();
+        await dsLoad(
+            dsSelectedDate
+        );
 
     } catch (error) {
 
@@ -794,23 +1083,41 @@ async function dsSave() {
 
 function dsCalculate() {
 
-    const sales =
-        dsNum("dsTotalSales");
+    const totalMerchandiseSales =
+        dsNum(
+            "dsTotalMerchandiseSales"
+        );
 
     const customers =
-        dsNum("dsTotalCustomer");
+        dsNum(
+            "dsTotalCustomer"
+        );
 
-    const budget =
-        dsNum("dsBudgetSales");
+    const foodService =
+        dsNum(
+            "dsFoodService"
+        );
 
+    /*
+     * Transaction Size =
+     * Total Merchandise Sales / Total Customer
+     */
     const transactionSize =
         customers > 0
-            ? sales / customers
+            ? totalMerchandiseSales /
+              customers
             : 0;
 
+    /*
+     * Percentage =
+     * Food Service / Total Merchandise Sales * 100
+     */
     const percentage =
-        budget > 0
-            ? sales / budget * 100
+        totalMerchandiseSales > 0
+            ? (
+                foodService /
+                totalMerchandiseSales
+            ) * 100
             : 0;
 
     dsSet(
@@ -884,7 +1191,100 @@ function dsToInputDate(value) {
    TABLE
 ========================================== */
 
+function dsEnsurePercentageHeader() {
+
+    const body =
+        document.getElementById(
+            "dsTableBody"
+        );
+
+    if (!body) {
+        return;
+    }
+
+    const table =
+        body.closest(
+            "table"
+        );
+
+    if (!table) {
+        return;
+    }
+
+    const headerRow =
+        table.querySelector(
+            "thead tr"
+        );
+
+    if (!headerRow) {
+        return;
+    }
+
+    const headers =
+        Array.from(
+            headerRow.querySelectorAll(
+                "th"
+            )
+        );
+
+    const exists =
+        headers.some(
+            function(th) {
+
+                return String(
+                    th.textContent || ""
+                )
+                    .trim()
+                    .toLowerCase() ===
+                    "percentage";
+            }
+        );
+
+    if (exists) {
+        return;
+    }
+
+    /*
+     * Insert Percentage immediately before Action.
+     */
+    const actionHeader =
+        headers.find(
+            function(th) {
+
+                return String(
+                    th.textContent || ""
+                )
+                    .trim()
+                    .toLowerCase() ===
+                    "action";
+            }
+        );
+
+    const th =
+        document.createElement(
+            "th"
+        );
+
+    th.textContent =
+        "Percentage";
+
+    if (actionHeader) {
+
+        headerRow.insertBefore(
+            th,
+            actionHeader
+        );
+
+    } else {
+
+        headerRow.appendChild(th);
+    }
+}
+
+
 function dsRenderTable() {
+
+    dsEnsurePercentageHeader();
 
     const body =
         document.getElementById(
@@ -935,7 +1335,7 @@ function dsRenderTable() {
     if (!rows.length) {
 
         body.innerHTML =
-            '<tr><td colspan="9" class="ds-empty">No Daily Sales records found.</td></tr>';
+            '<tr><td colspan="10" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
         return;
     }
@@ -992,6 +1392,12 @@ function dsRenderTable() {
                             ${dsEsc(
                                 row.transactionSize
                             )}
+                        </td>
+
+                        <td class="ds-number">
+                            ${dsEsc(
+                                row.percentage
+                            )}%
                         </td>
 
                         <td>
