@@ -100,8 +100,93 @@ async function callDailySalesAPI(action, data = {}) {
 
 
 /* ==========================================
+   LIST LOADING
+========================================== */
+
+function dsSetListLoading(show) {
+
+    let overlay =
+        document.getElementById(
+            "dsListLoading"
+        );
+
+    if (!overlay) {
+
+        overlay =
+            document.createElement("div");
+
+        overlay.id =
+            "dsListLoading";
+
+        overlay.innerHTML = `
+            <div class="ds-list-loading-box">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Loading Daily Sales...</span>
+            </div>
+        `;
+
+        overlay.style.position = "absolute";
+        overlay.style.inset = "0";
+        overlay.style.display = "none";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.background = "rgba(255,255,255,.82)";
+        overlay.style.backdropFilter = "blur(2px)";
+        overlay.style.zIndex = "20";
+        overlay.style.borderRadius = "18px";
+        overlay.style.fontSize = "14px";
+        overlay.style.fontWeight = "700";
+        overlay.style.color = "#334155";
+
+        const box =
+            overlay.querySelector(
+                ".ds-list-loading-box"
+            );
+
+        box.style.display = "flex";
+        box.style.alignItems = "center";
+        box.style.gap = "10px";
+        box.style.padding = "12px 16px";
+        box.style.borderRadius = "10px";
+        box.style.background = "#fff";
+        box.style.boxShadow =
+            "0 8px 24px rgba(15,23,42,.12)";
+
+        const tableBody =
+            document.getElementById(
+                "dsTableBody"
+            );
+
+        const table =
+            tableBody?.closest("table");
+
+        const tableCard =
+            table?.closest(".ds-card");
+
+        if (tableCard) {
+            const position =
+                getComputedStyle(tableCard).position;
+
+            if (position === "static") {
+                tableCard.style.position =
+                    "relative";
+            }
+
+            tableCard.appendChild(overlay);
+        }
+    }
+
+    if (overlay) {
+        overlay.style.display =
+            show ? "flex" : "none";
+    }
+}
+
+
+/* ==========================================
    CURRENT USER
 ========================================== */
+
 
 function dsGetCurrentUser() {
 
@@ -147,6 +232,8 @@ function dsHasAccess() {
 ========================================== */
 
 async function openDailySales() {
+
+    dsSetFormLabels();
 
     if (!dsHasAccess()) {
         return;
@@ -198,11 +285,6 @@ async function dsLoad(
     const username =
         user.username || "";
 
-    /*
-     * Default list date is YESTERDAY.
-     * A different date can be selected when
-     * historical records are required.
-     */
     dsSelectedDate =
         dateOverride ||
         dsSelectedDate ||
@@ -220,72 +302,74 @@ async function dsLoad(
             dsSelectedDate
     };
 
-    /*
-     * Store master data is loaded only once.
-     * This prevents unnecessary calls whenever
-     * the user changes the date.
-     */
-    let storeResponse = {
-        status: true,
-        stores: dsStores
-    };
+    dsSetListLoading(true);
 
-    if (!dsStores.length) {
+    try {
 
-        storeResponse =
+        let storeResponse = {
+            status: true,
+            stores: dsStores
+        };
+
+        if (!dsStores.length) {
+
+            storeResponse =
+                await callDailySalesAPI(
+                    "getDailySalesStores",
+                    {
+                        username:
+                            username,
+
+                        role:
+                            user.role || ""
+                    }
+                );
+        }
+
+        const listResponse =
             await callDailySalesAPI(
-                "getDailySalesStores",
-                {
-                    username:
-                        username,
-
-                    role:
-                        user.role || ""
-                }
+                "getDailySalesList",
+                listData
             );
 
+        if (!storeResponse?.status) {
+
+            dsShowError(
+                storeResponse?.message ||
+                "Unable to load Store data."
+            );
+
+            return;
+        }
+
+        if (!listResponse?.status) {
+
+            dsShowError(
+                listResponse?.message ||
+                "Unable to load Daily Sales."
+            );
+
+            return;
+        }
+
+        dsStores =
+            storeResponse.stores ||
+            dsStores ||
+            [];
+
+        dsRows =
+            listResponse.rows || [];
+
+        dsEnsureDateFilter();
+
+        dsPopulateStoreSelect();
+        dsRenderTable();
+
+    } finally {
+
+        dsSetListLoading(false);
     }
-
-    const listResponse =
-        await callDailySalesAPI(
-            "getDailySalesList",
-            listData
-        );
-
-    if (!storeResponse?.status) {
-
-        dsShowError(
-            storeResponse?.message ||
-            "Unable to load Store data."
-        );
-
-        return;
-    }
-
-    if (!listResponse?.status) {
-
-        dsShowError(
-            listResponse?.message ||
-            "Unable to load Daily Sales."
-        );
-
-        return;
-    }
-
-    dsStores =
-        storeResponse.stores ||
-        dsStores ||
-        [];
-
-    dsRows =
-        listResponse.rows || [];
-
-    dsEnsureDateFilter();
-
-    dsPopulateStoreSelect();
-    dsRenderTable();
 }
-
 
 /* ==========================================
    DATE FILTER
@@ -768,10 +852,46 @@ function dsGet(id) {
 
 
 /* ==========================================
+   FORM LABEL
+========================================== */
+
+function dsSetFormLabels() {
+
+    const fields =
+        document.querySelectorAll(
+            "#dailySalesFormWrapper label"
+        );
+
+    fields.forEach(
+        function(label) {
+
+            const text =
+                String(
+                    label.textContent || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+            if (
+                text === "percentage" ||
+                text === "percentage:"
+            ) {
+                label.textContent =
+                    "Food Service %";
+            }
+        }
+    );
+}
+
+
+/* ==========================================
    ADD FORM
 ========================================== */
 
+
 function dsOpenAdd() {
+
+    dsSetFormLabels();
 
     if (!dsHasAccess()) {
         return;
@@ -801,6 +921,15 @@ function dsOpenAdd() {
         "0.00%"
     );
 
+    const saveButton =
+        document.getElementById(
+            "dsSaveButton"
+        );
+
+    if (saveButton) {
+        saveButton.textContent = "Save";
+    }
+
     dsToggleForm(true);
 }
 
@@ -810,6 +939,8 @@ function dsOpenAdd() {
 ========================================== */
 
 function dsOpenEdit(id) {
+
+    dsSetFormLabels();
 
     if (!dsHasAccess()) {
         return;
@@ -916,6 +1047,15 @@ function dsOpenEdit(id) {
     );
 
     dsCalculate();
+
+    const saveButton =
+        document.getElementById(
+            "dsSaveButton"
+        );
+
+    if (saveButton) {
+        saveButton.textContent = "Save";
+    }
 
     dsToggleForm(true);
 }
@@ -1172,8 +1312,7 @@ async function dsSave() {
 
             button.disabled = false;
 
-            button.innerHTML =
-                '<i class="fa-solid fa-floppy-disk"></i> Save Daily Sales';
+            button.textContent = "Save";
         }
     }
 }
@@ -1541,10 +1680,6 @@ function dsEnsureTableHeaders() {
 
 function dsRenderTable() {
 
-    dsEnsureTableHeaders();
-
-    dsEnsureTableHeaders();
-
     const body =
         document.getElementById(
             "dsTableBody"
@@ -1557,6 +1692,25 @@ function dsRenderTable() {
 
     if (!body) {
         return;
+    }
+
+    const table =
+        body.closest("table");
+
+    const headerRow =
+        table?.querySelector("thead tr");
+
+    if (headerRow) {
+
+        headerRow.innerHTML = `
+            <th>Store No</th>
+            <th>Store Name</th>
+            <th>Business Date</th>
+            <th class="ds-number">Merchandise Sales</th>
+            <th class="ds-number">Customer</th>
+            <th class="ds-number">Percentage</th>
+            <th>Action</th>
+        `;
     }
 
     const query =
@@ -1594,7 +1748,7 @@ function dsRenderTable() {
     if (!rows.length) {
 
         body.innerHTML =
-            '<tr><td colspan="12" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
+            '<tr><td colspan="7" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
         return;
     }
@@ -1603,32 +1757,38 @@ function dsRenderTable() {
         rows.map(
             function (row) {
 
+                const merchandiseSales =
+                    Number(
+                        String(
+                            row.totalMerchandiseSales ??
+                            ""
+                        )
+                            .replace(/,/g, "")
+                    ) || 0;
+
+                const budgetSales =
+                    Number(
+                        String(
+                            row.budgetSales ??
+                            ""
+                        )
+                            .replace(/,/g, "")
+                    ) || 0;
+
+                /*
+                 * LIST Percentage =
+                 * Merchandise Sales / Budget Sales * 100
+                 */
+                const percentage =
+                    budgetSales > 0
+                        ? (
+                            merchandiseSales /
+                            budgetSales
+                        ) * 100
+                        : 0;
+
                 return `
                     <tr>
-                        <td>
-                            ${dsEsc(
-                                row.dailySalesNo
-                            )}
-                        </td>
-
-                        <td>
-                            ${dsEsc(
-                                row.businessDate
-                            )}
-                        </td>
-
-                        <td>
-                            ${dsEsc(
-                                row.month
-                            )}
-                        </td>
-
-                        <td>
-                            ${dsEsc(
-                                row.year
-                            )}
-                        </td>
-
                         <td>
                             ${dsEsc(
                                 row.storeNo
@@ -1641,15 +1801,15 @@ function dsRenderTable() {
                             )}
                         </td>
 
-                        <td class="ds-number">
-                            ${dsMoney(
-                                row.totalSales
+                        <td>
+                            ${dsEsc(
+                                row.businessDate
                             )}
                         </td>
 
                         <td class="ds-number">
                             ${dsMoney(
-                                row.budgetSales
+                                merchandiseSales
                             )}
                         </td>
 
@@ -1660,15 +1820,7 @@ function dsRenderTable() {
                         </td>
 
                         <td class="ds-number">
-                            ${dsEsc(
-                                row.transactionSize
-                            )}
-                        </td>
-
-                        <td class="ds-number">
-                            ${dsEsc(
-                                row.percentage
-                            )}%
+                            ${percentage.toFixed(2)}%
                         </td>
 
                         <td>
@@ -1686,7 +1838,6 @@ function dsRenderTable() {
             }
         ).join("");
 }
-
 
 /* ==========================================
    ESCAPE HTML
@@ -1790,6 +1941,8 @@ document.addEventListener(
         if (
             [
                 "dsTotalSales",
+                "dsTotalMerchandiseSales",
+                "dsFoodService",
                 "dsTotalCustomer"
             ].includes(
                 event.target?.id
@@ -1900,3 +2053,15 @@ function calculateDailySales() {
         dsCalculate();
     }
 }
+
+
+/* ==========================================
+   INITIAL FORM LABEL COMPATIBILITY
+========================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        dsSetFormLabels();
+    }
+);
