@@ -1385,3 +1385,49 @@
     }
 }
 </style>
+
+<style id="dashboard-v6-submission-layout">
+/* =========================================================
+   V6 — STORE SUBMISSION EXACT LAYOUT
+   Right side:
+       8 SUBMITTED
+       4 PENDING
+   Each number + label stays on one line.
+   ========================================================= */
+.sa-submission-info .sa-submission-status{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:flex-start !important;
+    gap:10px !important;
+    width:max-content !important;
+    margin-top:18px !important;
+    flex-wrap:nowrap !important;
+}
+
+.sa-submission-info .sa-submission-status > span{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:7px !important;
+    width:max-content !important;
+    min-width:0 !important;
+    white-space:nowrap !important;
+    line-height:1.2 !important;
+}
+
+.sa-submission-info .sa-submission-status > span b,
+.sa-submission-info .sa-submission-status > span b span{
+    display:inline !important;
+    white-space:nowrap !important;
+    margin:0 !important;
+}
+
+.sa-submission-info .sa-submission-status i{
+    flex:0 0 auto !important;
+    width:8px !important;
+    margin:0 !important;
+    font-size:8px !important;
+}
+</style>
