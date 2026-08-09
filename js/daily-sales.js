@@ -44,13 +44,22 @@ async function callDailySalesAPI(action, data = {}) {
             data: data
         });
 
+        /*
+         * IMPORTANT:
+         * Do NOT set Content-Type: application/json here.
+         *
+         * Google Apps Script Web Apps can trigger a browser
+         * preflight request when application/json is used.
+         * The Web App does not need that preflight.
+         *
+         * Sending the JSON string without custom headers keeps
+         * this as a simple POST request. Apps Script receives it
+         * through e.postData.contents.
+         */
         const response = await fetch(
             url,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: payload,
                 redirect: "follow",
                 signal: controller.signal
@@ -80,7 +89,10 @@ async function callDailySalesAPI(action, data = {}) {
 
         return {
             status: false,
-            message: err.message
+            message:
+                err && err.message
+                    ? err.message
+                    : "Daily Sales API request failed."
         };
     }
 }
