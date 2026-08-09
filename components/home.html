@@ -1324,3 +1324,64 @@
     }
 }
 </style>
+
+<style id="dashboard-v5-submission-alignment">
+/* =========================================================
+   V5 — STORE SUBMISSION: SUBMITTED + PENDING on one row
+   ========================================================= */
+.sa-submission-info .sa-submission-status{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:28px !important;
+    width:max-content !important;
+    max-width:100% !important;
+    margin-top:18px !important;
+    flex-wrap:nowrap !important;
+}
+
+.sa-submission-info .sa-submission-status > span{
+    display:flex !important;
+    flex:0 0 auto !important;
+    align-items:center !important;
+    gap:7px !important;
+    width:max-content !important;
+    min-width:0 !important;
+    white-space:nowrap !important;
+    font-size:11px !important;
+    line-height:1.2 !important;
+}
+
+.sa-submission-info .sa-submission-status > span b{
+    display:inline !important;
+    white-space:nowrap !important;
+    font-weight:800 !important;
+}
+
+.sa-submission-info .sa-submission-status > span b span{
+    display:inline !important;
+    white-space:nowrap !important;
+}
+
+.sa-submission-info .sa-submission-status i{
+    flex:0 0 auto !important;
+    width:8px !important;
+    font-size:8px !important;
+}
+
+.sa-submission-info .sa-submission-status .submitted i{
+    color:var(--sa-green) !important;
+}
+
+.sa-submission-info .sa-submission-status .pending i{
+    color:var(--sa-orange) !important;
+}
+
+/* Keep the row compact on smaller screens. */
+@media(max-width:700px){
+    .sa-submission-info .sa-submission-status{
+        gap:18px !important;
+    }
+}
+</style>
