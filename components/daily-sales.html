@@ -1,1 +1,222 @@
+<div id="dailySalesModule" class="daily-sales-module">
+    <div class="ds-page-header">
+        <div>
+            <div class="ds-eyebrow">SALES MANAGEMENT</div>
+            <h1>Daily Sales</h1>
+            <p>Manage daily store sales records.</p>
+        </div>
+
+        <button type="button"
+                class="ds-primary-btn"
+                onclick="openDailySalesForm()">
+            <i class="fa-solid fa-plus"></i>
+            Add Daily Sales
+        </button>
+    </div>
+
+    <div id="dailySalesFormWrapper"
+         class="ds-card ds-form-wrapper"
+         style="display:none;">
+
+        <div class="ds-form-header">
+            <div>
+                <h2 id="dsFormTitle">Add Daily Sales</h2>
+                <p>Enter the daily sales information below.</p>
+            </div>
+
+            <button type="button"
+                    class="ds-icon-btn"
+                    onclick="closeDailySalesForm()"
+                    aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="dsMode" value="add">
+        <input type="hidden" id="dsEditingRow" value="">
+
+        <div class="ds-section-title">Store Information</div>
+
+        <div class="ds-grid ds-grid-3">
+            <div class="ds-field">
+                <label>Daily Sales No</label>
+                <input id="dsDailySalesNo" type="text" readonly>
+            </div>
+
+            <div class="ds-field">
+                <label>Store No <span>*</span></label>
+                <select id="dsStoreNo"
+                        onchange="onDailySalesStoreChange()">
+                    <option value="">Select Store No</option>
+                </select>
+            </div>
+
+            <div class="ds-field">
+                <label>Business Date <span>*</span></label>
+                <input id="dsBusinessDate" type="date">
+            </div>
+
+            <div class="ds-field">
+                <label>Store Name</label>
+                <input id="dsStoreName" type="text" readonly>
+            </div>
+
+            <div class="ds-field">
+                <label>Operating Hour</label>
+                <input id="dsOperatingHour" type="text" readonly>
+            </div>
+
+            <div class="ds-field">
+                <label>Opening Date</label>
+                <input id="dsOpeningDate" type="text" readonly>
+            </div>
+
+            <div class="ds-field">
+                <label>Budget Sales</label>
+                <input id="dsBudgetSales" type="text" readonly>
+            </div>
+
+            <div class="ds-field ds-field-wide">
+                <label>Person In Charge</label>
+                <input id="dsPersonInCharge" type="text" readonly>
+            </div>
+        </div>
+
+        <div class="ds-section-title">Sales Information</div>
+
+        <div class="ds-grid ds-grid-4">
+            <div class="ds-field">
+                <label>Total Sales <span>*</span></label>
+                <input id="dsTotalSales"
+                       type="number"
+                       step="0.01"
+                       min="0"
+                       oninput="calculateDailySales()">
+            </div>
+
+            <div class="ds-field">
+                <label>Total Merchandise Sales</label>
+                <input id="dsTotalMerchandiseSales"
+                       type="number"
+                       step="0.01"
+                       min="0"
+                       oninput="calculateDailySales()">
+            </div>
+
+            <div class="ds-field">
+                <label>Services</label>
+                <input id="dsServices" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Food</label>
+                <input id="dsFood" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Beverage</label>
+                <input id="dsBeverage" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>General Merchandise</label>
+                <input id="dsGeneralMerchandise" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Tobacco</label>
+                <input id="dsTobacco" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Supply</label>
+                <input id="dsSupply" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Food Service</label>
+                <input id="dsFoodService" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Alcoholic</label>
+                <input id="dsAlcoholic" type="number" step="0.01" min="0">
+            </div>
+
+            <div class="ds-field">
+                <label>Total Customer <span>*</span></label>
+                <input id="dsTotalCustomer"
+                       type="number"
+                       step="1"
+                       min="0"
+                       oninput="calculateDailySales()">
+            </div>
+
+            <div class="ds-field">
+                <label>Transaction Size</label>
+                <input id="dsTransactionSize" type="text" readonly>
+            </div>
+
+            <div class="ds-field">
+                <label>Percentage</label>
+                <input id="dsPercentage" type="text" readonly>
+            </div>
+        </div>
+
+        <div class="ds-form-actions">
+            <button type="button"
+                    class="ds-secondary-btn"
+                    onclick="closeDailySalesForm()">
+                Cancel
+            </button>
+
+            <button type="button"
+                    class="ds-primary-btn"
+                    id="dsSaveButton"
+                    onclick="saveDailySales()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Daily Sales
+            </button>
+        </div>
+    </div>
+
+    <div class="ds-card">
+        <div class="ds-toolbar">
+            <div class="ds-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="dsSearch"
+                       type="search"
+                       placeholder="Search Daily Sales No, Store No or Store Name..."
+                       oninput="filterDailySalesTable()">
+            </div>
+
+            <div id="dsCount" class="ds-count">0 records</div>
+        </div>
+
+        <div class="ds-table-wrap">
+            <table class="ds-table">
+                <thead>
+                    <tr>
+                        <th>Daily Sales No</th>
+                        <th>Business Date</th>
+                        <th>Store No</th>
+                        <th>Store Name</th>
+                        <th class="ds-number">Total Sales</th>
+                        <th class="ds-number">Budget Sales</th>
+                        <th class="ds-number">Customer</th>
+                        <th class="ds-number">Transaction Size</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="dsTableBody">
+                    <tr>
+                        <td colspan="9" class="ds-empty">
+                            No Daily Sales records.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
