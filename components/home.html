@@ -1237,3 +1237,90 @@
 
 
 
+
+<style id="dashboard-v4-date-submission-fix">
+/* =========================================================
+   V4 FIX — DATE: one visible DD/MM/YYYY only
+   ========================================================= */
+.sa-date-control{
+    position:relative !important;
+    overflow:hidden !important;
+}
+.sa-date-control > #homeSalesDate{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    margin:0 !important;
+    padding:0 42px 0 43px !important;
+    border:0 !important;
+    outline:0 !important;
+    background:transparent !important;
+    color:transparent !important;
+    -webkit-text-fill-color:transparent !important;
+    caret-color:transparent !important;
+    opacity:1 !important;
+    z-index:5 !important;
+}
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit,
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit-fields-wrapper,
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit-text,
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit-month-field,
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit-day-field,
+.sa-date-control > #homeSalesDate::-webkit-datetime-edit-year-field{
+    color:transparent !important;
+    -webkit-text-fill-color:transparent !important;
+}
+.sa-date-control > #homeSalesDate::-webkit-calendar-picker-indicator{
+    opacity:1 !important;
+    cursor:pointer !important;
+    width:18px !important;
+    height:18px !important;
+    z-index:6 !important;
+}
+.sa-date-control > #homeSalesDateDisplay{
+    position:absolute !important;
+    left:43px !important;
+    top:0 !important;
+    height:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    color:#111827 !important;
+    -webkit-text-fill-color:#111827 !important;
+    font-size:13px !important;
+    font-weight:800 !important;
+    white-space:nowrap !important;
+    pointer-events:none !important;
+    z-index:2 !important;
+}
+
+/* =========================================================
+   V4 FIX — STORE SUBMISSION
+   Submitted + Pending must be horizontally aligned
+   ========================================================= */
+.sa-submission-info .sa-submission-stats{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:24px !important;
+    flex-wrap:nowrap !important;
+    margin-top:16px !important;
+}
+.sa-submission-info .sa-submission-stats > span{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    white-space:nowrap !important;
+}
+.sa-submission-info .sa-submission-stats i{
+    font-size:8px !important;
+}
+.sa-submission-info .sa-submission-stats .pending{
+    color:#334155 !important;
+}
+@media(max-width:700px){
+    .sa-submission-info .sa-submission-stats{
+        gap:14px !important;
+    }
+}
+</style>
