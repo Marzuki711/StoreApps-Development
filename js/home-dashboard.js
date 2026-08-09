@@ -82,7 +82,10 @@ function homeSetGreeting(){
     const part = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
     const el = document.querySelector("[data-home-greeting]");
-    if(el) el.textContent = part + ", " + name;
+    if(el){
+        el.textContent = part + ", " + name;
+        el.title = name;
+    }
 }
 
 function homeSetDashboardDate(date){
