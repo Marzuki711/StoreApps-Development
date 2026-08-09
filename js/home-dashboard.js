@@ -42,6 +42,13 @@ function homeNumber(value){
     return n.toLocaleString("en-MY",{maximumFractionDigits:0});
 }
 
+function setHomeText(id, value){
+    const el = document.getElementById(id);
+    if(el && value !== undefined && value !== null){
+        el.textContent = value;
+    }
+}
+
 function homePercent(value){
     const n = Number(value) || 0;
     return n.toFixed(2) + "%";
@@ -190,22 +197,23 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const pendingStores = Math.max(totalStores - submittedStores,0);
 
-        document.getElementById("homeTotalSales").textContent = homeMoney(merchandiseSales);
-        document.getElementById("homeApsdSales").textContent = homeMoney(apsdSales);
-        document.getElementById("homeTotalCustomer").textContent = homeNumber(totalCustomer);
-        document.getElementById("homeApsdCustomer").textContent = homeNumber(apsdCustomer);
+        setHomeText("homeTotalSales", homeMoney(merchandiseSales));
+        setHomeText("homeApsdSales", homeMoney(apsdSales));
+        setHomeText("homeTotalCustomer", homeNumber(totalCustomer));
+        setHomeText("homeApsdCustomer", homeNumber(apsdCustomer));
 
-        document.getElementById("homeSubmittedStores").textContent = homeNumber(submittedStores);
-        document.getElementById("homeTotalStores").textContent = homeNumber(totalStores);
-        document.getElementById("homePendingStores").textContent = homeNumber(pendingStores);
-        document.getElementById("homeSubmissionPct").textContent = Math.round(submissionPct) + "%";
+        setHomeText("homeSubmittedStores", homeNumber(submittedStores));
+        setHomeText("homeTotalStores", homeNumber(totalStores));
+        setHomeText("homePendingStores", homeNumber(pendingStores));
+        setHomeText("homeSubmissionPct", Math.round(submissionPct) + "%");
 
-        document.getElementById("homeBusinessDate").textContent = homeDisplayDate(homeSalesDate);
-        document.getElementById("homeTotalRecord").textContent = homeNumber(totalRecord);
+        setHomeText("homeBusinessDate", homeDisplayDate(homeSalesDate));
+        setHomeText("homeTotalRecord", homeNumber(totalRecord));
 
-        document.getElementById("homeBudgetPct").textContent = homePercent(budgetPerformance);
-        document.getElementById("homeBudgetValues").textContent =
-            homeMoney(apsdSales) + " / " + homeMoney(apsdBudget);
+        setHomeText("homeBudgetPct", homePercent(budgetPerformance));
+        setHomeText("homeApsdBudgetActual", homeMoney(apsdSales));
+        setHomeText("homeApsdBudgetTarget", homeMoney(apsdBudget));
+        setHomeText("homeBudgetCaption", homePercent(budgetPerformance) + " of Budget Achieved");
 
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
