@@ -66,7 +66,15 @@
                 <span>Reports</span>
             </button>
 
-            <div class="sa-nav-divider"></div>
+            <div class="sa-nav-section-label">SYSTEM</div>
+
+            <button class="sa-side-link"
+                    type="button"
+                    data-permission="user_management"
+                    onclick="openUserManagement()">
+                <i class="fa-solid fa-user-gear"></i>
+                <span>User Management</span>
+            </button>
 
             <button class="sa-side-link"
                     type="button"
@@ -513,6 +521,15 @@
     background:rgba(255,255,255,.12);
 }
 
+.sa-nav-section-label{
+    margin:10px 12px 2px;
+    color:#94A3B8;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+}
+
 .sa-sidebar-footer{
     margin-top:auto;
 }
@@ -762,16 +779,14 @@
 
 .sa-kpi{
     position:relative;
-    min-height:146px;
-    padding:19px 17px 16px 25px;
-    display:flex;
-    align-items:center;
-    gap:13px;
+    min-height:158px;
+    padding:17px 18px 16px 25px;
+    display:block;
     overflow:hidden;
     border:1px solid var(--sa-border);
     border-radius:15px;
     background:#fff;
-    box-shadow:0 6px 18px rgba(15,23,42,.035);
+    box-shadow:0 7px 20px rgba(15,23,42,.045);
 }
 
 .sa-kpi:before,
@@ -792,15 +807,15 @@
 .sa-accent-purple:before{background:var(--sa-purple);}
 
 .sa-kpi-icon{
-    width:50px;
-    height:50px;
-    min-width:50px;
+    width:38px;
+    height:38px;
     display:grid;
     place-items:center;
-    border-radius:13px;
+    border-radius:11px;
     background:#FFF0F2;
     color:var(--sa-red);
-    font-size:21px;
+    font-size:16px;
+    margin-bottom:13px;
 }
 
 .sa-kpi-content{
@@ -809,20 +824,23 @@
 
 .sa-kpi-title{
     display:block;
+    max-width:170px;
     color:#536174;
     font-size:10px;
     font-weight:900;
     line-height:1.25;
-    letter-spacing:.15px;
+    letter-spacing:.2px;
 }
 
 .sa-kpi-content strong{
     display:block;
-    margin-top:9px;
+    margin-top:8px;
     color:#101A2D;
-    font-size:23px;
+    font-size:24px;
     line-height:1.05;
     white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .sa-kpi-content small{
