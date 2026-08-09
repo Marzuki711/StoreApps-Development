@@ -66,7 +66,10 @@ function logout(){
             userManagementModule.style.display="none";
         }
 
-        document.getElementById("loginContainer").style.display="block";
+        const dailySalesContainer = document.getElementById("dailySalesContainer");
+         if(dailySalesContainer){ dailySalesContainer.style.display="none"; }
+
+         document.getElementById("loginContainer").style.display="block";
 
         document.getElementById("loginUsername").value="";
 
