@@ -291,3 +291,23 @@ function initHomeSalesDashboard(){
     },0);
 }
 
+
+function homeDateDDMMYYYY(value){
+    if(!value) return "—";
+    const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return value;
+}
+
+function syncHomeSalesDateDisplay(value){
+    const el=document.getElementById("homeSalesDateDisplay");
+    if(el) el.textContent=homeDateDDMMYYYY(value);
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+    const input=document.getElementById("homeSalesDate");
+    if(input) syncHomeSalesDateDisplay(input.value);
+    if(input) input.addEventListener("change", e=>{
+        syncHomeSalesDateDisplay(e.target.value);
+    });
+});
