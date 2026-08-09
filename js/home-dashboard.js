@@ -206,6 +206,7 @@ async function loadHomeSalesDashboard(dateOverride=""){
         setHomeText("homeApsdCustomer", homeNumber(apsdCustomer));
 
         setHomeText("homeSubmittedStores", homeNumber(submittedStores));
+        setHomeText("homeSubmittedLabel", homeNumber(submittedStores));
         setHomeText("homeTotalStores", homeNumber(totalStores));
         setHomeText("homePendingStores", homeNumber(pendingStores));
         setHomeText("homeSubmissionPct", Math.round(submissionPct) + "%");
