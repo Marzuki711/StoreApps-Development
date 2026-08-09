@@ -42,6 +42,16 @@ async function initializeApplication(){
         console.log("COMPONENTS LOADED");
 
         /* ==========================
+           HOME SALES DASHBOARD
+           Must initialize after home component
+           and Daily Sales API module are available.
+        ========================== */
+
+        if(typeof initHomeSalesDashboard === "function"){
+            initHomeSalesDashboard();
+        }
+
+        /* ==========================
            USER MANAGEMENT UI
            Component must be bound AFTER
            it has been loaded into the DOM.
