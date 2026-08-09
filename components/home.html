@@ -308,14 +308,14 @@
                             <div class="sa-submission-status">
                                 <span class="submitted">
                                     <i class="fa-solid fa-circle"></i>
-                                    <b id="homeSubmittedLabel">
-                                        0 SUBMITTED
-                                    </b>
+                                    <span class="sa-status-number" id="homeSubmittedLabel">0</span>
+                                    <span class="sa-status-label">SUBMITTED</span>
                                 </span>
 
                                 <span class="pending">
                                     <i class="fa-solid fa-circle"></i>
-                                    <b><span id="homePendingStores">0</span> PENDING</b>
+                                    <span class="sa-status-number" id="homePendingStores">0</span>
+                                    <span class="sa-status-label">PENDING</span>
                                 </span>
                             </div>
 
@@ -1430,4 +1430,43 @@
     margin:0 !important;
     font-size:8px !important;
 }
+</style>
+
+<style id="dashboard-v7-submission-text">
+.sa-submission-info .sa-submission-status{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+    width:max-content !important;
+    margin-top:18px !important;
+}
+.sa-submission-info .sa-submission-status > span{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:7px !important;
+    width:max-content !important;
+    white-space:nowrap !important;
+    line-height:1.2 !important;
+    font-family:inherit !important;
+}
+.sa-submission-info .sa-submission-status .sa-status-number,
+.sa-submission-info .sa-submission-status .sa-status-label{
+    display:inline !important;
+    white-space:nowrap !important;
+    font-family:inherit !important;
+    font-size:11px !important;
+    font-weight:500 !important;
+    letter-spacing:0 !important;
+    margin:0 !important;
+}
+.sa-submission-info .sa-submission-status i{
+    flex:0 0 auto !important;
+    width:8px !important;
+    margin:0 !important;
+    font-size:8px !important;
+}
+.sa-submission-info .sa-submission-status .submitted i{color:#16A34A !important;}
+.sa-submission-info .sa-submission-status .pending i{color:#F59E0B !important;}
 </style>
