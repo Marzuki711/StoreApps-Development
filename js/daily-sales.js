@@ -39,21 +39,20 @@ async function callDailySalesAPI(action, data = {}) {
 
     try {
 
-        const formData = new FormData();
-
-        formData.append(
-            "payload",
-            JSON.stringify({
-                action: action,
-                data: data
-            })
-        );
+        const payload = JSON.stringify({
+            action: action,
+            data: data
+        });
 
         const response = await fetch(
             url,
             {
                 method: "POST",
-                body: formData,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: payload,
+                redirect: "follow",
                 signal: controller.signal
             }
         );
