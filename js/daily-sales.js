@@ -1384,9 +1384,166 @@ function dsEnsurePercentageHeader() {
 }
 
 
+function dsEnsureTableHeaders() {
+
+    const body =
+        document.getElementById(
+            "dsTableBody"
+        );
+
+    if (!body) {
+        return;
+    }
+
+    const table =
+        body.closest(
+            "table"
+        );
+
+    if (!table) {
+        return;
+    }
+
+    const headerRow =
+        table.querySelector(
+            "thead tr"
+        );
+
+    if (!headerRow) {
+        return;
+    }
+
+    const headers =
+        Array.from(
+            headerRow.querySelectorAll(
+                "th"
+            )
+        );
+
+    function headerText(th) {
+        return String(
+            th.textContent || ""
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    let current =
+        Array.from(
+            headerRow.querySelectorAll("th")
+        );
+
+    const businessDateHeader =
+        current.find(
+            function(th) {
+                return headerText(th) === "business date";
+            }
+        );
+
+    /*
+     * Add Month and Year immediately after
+     * Business Date if the original HTML does
+     * not already contain them.
+     */
+    if (
+        businessDateHeader &&
+        !current.some(
+            function(th) {
+                return headerText(th) === "month";
+            }
+        )
+    ) {
+
+        const th =
+            document.createElement("th");
+
+        th.textContent =
+            "Month";
+
+        businessDateHeader.after(th);
+    }
+
+    current =
+        Array.from(
+            headerRow.querySelectorAll("th")
+        );
+
+    const monthHeader =
+        current.find(
+            function(th) {
+                return headerText(th) === "month";
+            }
+        );
+
+    if (
+        monthHeader &&
+        !current.some(
+            function(th) {
+                return headerText(th) === "year";
+            }
+        )
+    ) {
+
+        const th =
+            document.createElement("th");
+
+        th.textContent =
+            "Year";
+
+        monthHeader.after(th);
+    }
+
+    /*
+     * Percentage must be immediately before Action.
+     */
+    current =
+        Array.from(
+            headerRow.querySelectorAll("th")
+        );
+
+    if (
+        !current.some(
+            function(th) {
+                return headerText(th) === "percentage";
+            }
+        )
+    ) {
+
+        const actionHeader =
+            current.find(
+                function(th) {
+                    return headerText(th) === "action";
+                }
+            );
+
+        const th =
+            document.createElement("th");
+
+        th.textContent =
+            "Percentage";
+
+        if (actionHeader) {
+            headerRow.insertBefore(
+                th,
+                actionHeader
+            );
+        } else {
+            headerRow.appendChild(th);
+        }
+    }
+
+}
+
+
+/* ==========================================
+   TABLE
+========================================== */
+
 function dsRenderTable() {
 
-    dsEnsurePercentageHeader();
+    dsEnsureTableHeaders();
+
+    dsEnsureTableHeaders();
 
     const body =
         document.getElementById(
@@ -1437,7 +1594,7 @@ function dsRenderTable() {
     if (!rows.length) {
 
         body.innerHTML =
-            '<tr><td colspan="10" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
+            '<tr><td colspan="12" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
         return;
     }
@@ -1457,6 +1614,18 @@ function dsRenderTable() {
                         <td>
                             ${dsEsc(
                                 row.businessDate
+                            )}
+                        </td>
+
+                        <td>
+                            ${dsEsc(
+                                row.month
+                            )}
+                        </td>
+
+                        <td>
+                            ${dsEsc(
+                                row.year
                             )}
                         </td>
 
