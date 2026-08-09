@@ -115,7 +115,8 @@
 
                 <div class="sa-date-control">
                     <i class="fa-regular fa-calendar"></i>
-                    <input type="date" id="homeSalesDate">
+                    <span id="homeSalesDateDisplay" class="sa-date-display">08/08/2026</span>
+                    <input type="date" id="homeSalesDate" aria-label="Business Date">
                 </div>
 
                 <button type="button"
@@ -314,9 +315,7 @@
 
                                 <span class="pending">
                                     <i class="fa-solid fa-circle"></i>
-                                    <b id="homePendingStores">
-                                        0 PENDING
-                                    </b>
+                                    <b><span id="homePendingStores">0</span> PENDING</b>
                                 </span>
                             </div>
 
