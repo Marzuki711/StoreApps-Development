@@ -63,6 +63,14 @@
 
             <button type="button"
                     class="sa-nav-item"
+                    data-permission="daily_sales"
+                    onclick="openDailySales()">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Daily Sales</span>
+            </button>
+
+            <button type="button"
+                    class="sa-nav-item"
                     data-permission="employee_database"
                     disabled>
                 <i class="fa-solid fa-users"></i>
@@ -295,6 +303,32 @@
                     <button type="button"
                             class="sa-app-button"
                             onclick="openManualOT()">
+                        Open Module
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                </article>
+
+
+                <!-- Daily Sales -->
+                <article class="sa-app-card"
+                         data-permission="daily_sales">
+
+                    <div class="sa-app-top">
+                        <div class="sa-app-icon green">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+
+                        <span class="sa-access-tag">Available</span>
+                    </div>
+
+                    <h4>Daily Sales</h4>
+
+                    <p>Create, view and manage daily store sales records.</p>
+
+                    <button type="button"
+                            class="sa-app-button"
+                            onclick="openDailySales()">
                         Open Module
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
