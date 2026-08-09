@@ -199,14 +199,14 @@ async function dsLoad(
         user.username || "";
 
     /*
-     * Default list date is TODAY.
+     * Default list date is YESTERDAY.
      * A different date can be selected when
      * historical records are required.
      */
     dsSelectedDate =
         dateOverride ||
         dsSelectedDate ||
-        dsTodayISO();
+        dsYesterdayISO();
 
     const listData = {
 
@@ -318,6 +318,37 @@ function dsTodayISO() {
     );
 }
 
+function dsYesterdayISO() {
+
+    const date =
+        new Date();
+
+    date.setDate(
+        date.getDate() - 1
+    );
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    return (
+        year +
+        "-" +
+        month +
+        "-" +
+        day
+    );
+}
+
 
 function dsEnsureDateFilter() {
 
@@ -339,6 +370,17 @@ function dsEnsureDateFilter() {
         return;
     }
 
+    /*
+     * Keep Business Date and Search on the same horizontal row.
+     * The date label stays above the date controls, while the
+     * search field is vertically aligned with the date input.
+     */
+    toolbar.style.display = "grid";
+    toolbar.style.gridTemplateColumns =
+        "minmax(430px, 480px) minmax(360px, 1fr) auto";
+    toolbar.style.columnGap = "24px";
+    toolbar.style.alignItems = "end";
+
     let filter =
         document.getElementById(
             "dsDateFilterWrap"
@@ -357,14 +399,17 @@ function dsEnsureDateFilter() {
         filter.style.display =
             "flex";
 
+        filter.style.flexDirection =
+            "column";
+
         filter.style.alignItems =
-            "center";
+            "flex-start";
 
         filter.style.gap =
             "8px";
 
-        filter.style.flexWrap =
-            "wrap";
+        filter.style.minWidth =
+            "0";
 
         const label =
             document.createElement(
@@ -444,7 +489,7 @@ function dsEnsureDateFilter() {
             "button";
 
         todayButton.textContent =
-            "Today";
+            "Yesterday";
 
         todayButton.style.height =
             "44px";
@@ -474,19 +519,50 @@ function dsEnsureDateFilter() {
             "click",
             async function () {
 
-                const today =
-                    dsTodayISO();
+                const yesterday =
+                    dsYesterdayISO();
 
                 input.value =
-                    today;
+                    yesterday;
 
                 dsSelectedDate =
-                    today;
+                    yesterday;
 
                 await dsLoad(
-                    today
+                    yesterday
                 );
             }
+        );
+
+        const dateControls =
+            document.createElement(
+                "div"
+            );
+
+        dateControls.style.display =
+            "flex";
+
+        dateControls.style.alignItems =
+            "center";
+
+        dateControls.style.gap =
+            "8px";
+
+        dateControls.style.width =
+            "100%";
+
+        input.style.flex =
+            "1 1 auto";
+
+        input.style.minWidth =
+            "0";
+
+        dateControls.appendChild(
+            input
+        );
+
+        dateControls.appendChild(
+            todayButton
         );
 
         filter.appendChild(
@@ -494,11 +570,7 @@ function dsEnsureDateFilter() {
         );
 
         filter.appendChild(
-            input
-        );
-
-        filter.appendChild(
-            todayButton
+            dateControls
         );
 
         const searchWrap =
@@ -522,6 +594,36 @@ function dsEnsureDateFilter() {
         }
     }
 
+    const searchWrap =
+        search.closest(
+            ".ds-search"
+        );
+
+    if (filter) {
+        filter.style.gridColumn = "1";
+        filter.style.gridRow = "1";
+    }
+
+    if (searchWrap) {
+        searchWrap.style.gridColumn = "2";
+        searchWrap.style.gridRow = "1";
+        searchWrap.style.alignSelf = "end";
+        searchWrap.style.width = "100%";
+        searchWrap.style.boxSizing = "border-box";
+    }
+
+    const count =
+        document.getElementById(
+            "dsCount"
+        );
+
+    if (count) {
+        count.style.gridColumn = "3";
+        count.style.gridRow = "1";
+        count.style.alignSelf = "center";
+        count.style.whiteSpace = "nowrap";
+    }
+
     const dateInput =
         document.getElementById(
             "dsDateFilter"
@@ -531,7 +633,7 @@ function dsEnsureDateFilter() {
 
         dateInput.value =
             dsSelectedDate ||
-            dsTodayISO();
+            dsYesterdayISO();
     }
 }
 
