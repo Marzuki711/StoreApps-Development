@@ -6,6 +6,7 @@
 
 let homeSalesDate = "";
 let homeSalesStores = [];
+let homeSalesDashboardInitialized = false;
 
 function homeCurrentUser(){
     if(typeof getCurrentUser === "function"){
@@ -114,6 +115,13 @@ function homeResetDashboard(){
 }
 
 async function loadHomeSalesDashboard(dateOverride=""){
+
+    const authenticatedUser = homeCurrentUser();
+    if(!authenticatedUser || !authenticatedUser.username){
+        homeSetLoading(false);
+        return;
+    }
+
     if(typeof callDailySalesAPI !== "function"){
         console.warn("Daily Sales API is not available.");
         return;
@@ -227,6 +235,22 @@ async function loadHomeSalesDashboard(dateOverride=""){
 }
 
 function initHomeSalesDashboard(){
+
+    /* Never call Daily Sales API before authentication. */
+    const user = homeCurrentUser();
+    if(!user || !user.username){
+        return;
+    }
+
+    if(homeSalesDashboardInitialized){
+        loadHomeSalesDashboard(
+            document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO()
+        );
+        return;
+    }
+
+    homeSalesDashboardInitialized = true;
+
     const input = document.getElementById("homeSalesDate");
     const refresh = document.getElementById("homeRefreshSales");
 
@@ -255,5 +279,4 @@ function initHomeSalesDashboard(){
         );
     },0);
 }
-
 
