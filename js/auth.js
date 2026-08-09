@@ -47,7 +47,16 @@ sessionStorage.setItem(
 
     applyRoleAccess();
 
-    requestAnimationFrame(showHome);
+    requestAnimationFrame(() => {
+
+        showHome();
+
+        /* Load Home Sales Dashboard only after successful login. */
+        if(typeof initHomeSalesDashboard === "function"){
+            initHomeSalesDashboard();
+        }
+
+    });
 
     setTimeout(() => {
 
