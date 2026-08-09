@@ -42,16 +42,6 @@ async function initializeApplication(){
         console.log("COMPONENTS LOADED");
 
         /* ==========================
-           HOME SALES DASHBOARD
-           Must initialize after home component
-           and Daily Sales API module are available.
-        ========================== */
-
-        if(typeof initHomeSalesDashboard === "function"){
-            initHomeSalesDashboard();
-        }
-
-        /* ==========================
            USER MANAGEMENT UI
            Component must be bound AFTER
            it has been loaded into the DOM.
@@ -441,6 +431,13 @@ function showHome(){
 
     const dailySalesContainer = document.getElementById("dailySalesContainer");
     if(dailySalesContainer){ dailySalesContainer.style.display = "none"; }
+
+    /* Home Sales Dashboard loads only for authenticated users. */
+    if(typeof getCurrentUser === "function" && getCurrentUser()){
+        if(typeof initHomeSalesDashboard === "function"){
+            initHomeSalesDashboard();
+        }
+    }
 
 }
 
