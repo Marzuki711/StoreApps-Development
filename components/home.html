@@ -109,7 +109,6 @@
                 <div class="sa-date-control">
                     <i class="fa-regular fa-calendar"></i>
                     <input type="date" id="homeSalesDate">
-                    <i class="fa-solid fa-chevron-down sa-date-arrow"></i>
                 </div>
 
                 <button type="button"
@@ -1220,9 +1219,6 @@
         padding:0 9px;
     }
 
-    .sa-date-arrow{
-        display:none;
-    }
 
     .sa-kpi-grid{
         grid-template-columns:1fr;
@@ -1280,6 +1276,25 @@
 .sa-dashboard-lock .sa-submission-status span{
     min-height:18px;
     align-items:center;
+}
+
+
+/* DATE CONTROL LOCK: show exactly one calendar icon */
+.sa-date-control input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity:0;
+    display:none;
+}
+.sa-date-control input[type="date"]{
+    appearance:none;
+    -webkit-appearance:none;
+}
+
+/* SUBMISSION STATUS LOCK: regular font, not bold */
+.sa-dashboard-lock .sa-submission-status span,
+.sa-dashboard-lock .sa-submission-status span b,
+.sa-dashboard-lock .sa-submission-status .submitted,
+.sa-dashboard-lock .sa-submission-status .pending{
+    font-weight:400 !important;
 }
 
 </style>
