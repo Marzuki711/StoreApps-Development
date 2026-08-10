@@ -1962,12 +1962,10 @@ function dsBuildShareReport(data) {
 Operating Hour : *${operatingHour}*
 Reopening Date : *${openingDate}*
 
-
 Business Date : *${businessDate}*
 Total Sales : *RM${totalSales}*
 Budget Sales : *RM${budgetSales}*
 Total Merchandise Sales : *RM${totalMerchandiseSales}*
-
 
 Breakdown by PSA :
 
@@ -1979,7 +1977,6 @@ Breakdown by PSA :
 6. Supply : ${moneyPlain(data.supply)}
 7. Food Service : ${moneyPlain(data.foodService)} *(${foodServicePercentage.toFixed(2)}%)*
 8. Alcoholic : ${moneyPlain(data.alcoholic)}
-
 
 Total Customer : ${totalCustomer.toLocaleString("en-MY")}
 Transaction Size : ${transactionSize.toFixed(2)}`;
