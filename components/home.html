@@ -66,15 +66,7 @@
                 <span>Reports</span>
             </button>
 
-            <div class="sa-nav-section-label">SYSTEM</div>
-
-            <button class="sa-side-link"
-                    type="button"
-                    data-permission="user_management"
-                    onclick="openUserManagement()">
-                <i class="fa-solid fa-user-gear"></i>
-                <span>User Management</span>
-            </button>
+            <div class="sa-nav-divider"></div>
 
             <button class="sa-side-link"
                     type="button"
@@ -114,8 +106,6 @@
             <div class="sa-header-actions">
 
                 <div class="sa-date-control">
-                    <i class="fa-regular fa-calendar"></i>
-                    <span id="homeSalesDateDisplay" class="sa-date-display">08/08/2026</span>
                     <input type="date" id="homeSalesDate" aria-label="Business Date">
                 </div>
 
@@ -125,6 +115,14 @@
                         title="Refresh">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
+
+                <div class="sa-user-control">
+                    <div class="sa-user-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span data-user-name-display>AHMAD MARZUKI BIN AHMAD ASRI</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
 
             </div>
 
@@ -163,7 +161,7 @@
 
 
         <!-- LOADING -->
-        <div id="homeSalesLoading" class="sa-loading" style="display:none;">
+        <div id="homeSalesLoading" class="sa-loading">
             <i class="fa-solid fa-spinner fa-spin"></i>
             <span>Loading Sales Dashboard...</span>
         </div>
@@ -308,14 +306,16 @@
                             <div class="sa-submission-status">
                                 <span class="submitted">
                                     <i class="fa-solid fa-circle"></i>
-                                    <span class="sa-status-number" id="homeSubmittedLabel">0</span>
-                                    <span class="sa-status-label">SUBMITTED</span>
+                                    <b id="homeSubmittedLabel">
+                                        0 SUBMITTED
+                                    </b>
                                 </span>
 
                                 <span class="pending">
                                     <i class="fa-solid fa-circle"></i>
-                                    <span class="sa-status-number" id="homePendingStores">0</span>
-                                    <span class="sa-status-label">PENDING</span>
+                                    <b id="homePendingStores">
+                                        0 PENDING
+                                    </b>
                                 </span>
                             </div>
 
@@ -376,6 +376,68 @@
 
             </div>
 
+
+            <!-- ================= BOTTOM OPERATIONAL CARDS ================= -->
+            <div class="sa-bottom-grid">
+
+                <article class="sa-bottom-card sa-bottom-orange">
+
+                    <div class="sa-bottom-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+
+                    <div>
+                        <span>BUSINESS DATE</span>
+                        <strong id="homeBusinessDate">—</strong>
+                    </div>
+
+                </article>
+
+
+                <article class="sa-bottom-card sa-bottom-orange">
+
+                    <div class="sa-bottom-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+
+                    <div>
+                        <span>TOTAL RECORD</span>
+                        <strong id="homeTotalRecord">0</strong>
+                    </div>
+
+                </article>
+
+
+                <article class="sa-bottom-card sa-bottom-green">
+
+                    <div class="sa-bottom-icon">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+
+                    <div>
+                        <span>TOTAL STORE</span>
+                        <strong id="homeTotalStoresBottom">0</strong>
+                    </div>
+
+                </article>
+
+
+                <article class="sa-bottom-card sa-bottom-red">
+
+                    <div class="sa-bottom-icon">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+
+                    <div>
+                        <span>APSD BUDGET</span>
+                        <strong id="homeApsdBudgetBottom">
+                            RM 0.00
+                        </strong>
+                    </div>
+
+                </article>
+
+            </div>
 
         </section>
 
@@ -520,15 +582,6 @@
     background:rgba(255,255,255,.12);
 }
 
-.sa-nav-section-label{
-    margin:10px 12px 2px;
-    color:#94A3B8;
-    font-size:9px;
-    font-weight:900;
-    letter-spacing:1.6px;
-    text-transform:uppercase;
-}
-
 .sa-sidebar-footer{
     margin-top:auto;
 }
@@ -573,45 +626,34 @@
     display:flex;
     align-items:center;
     gap:10px;
-    margin-left:auto;
 }
 
 .sa-date-control{
-    height:50px;
-    min-width:202px;
-    padding:0 15px;
+    height:52px;
+    min-width:198px;
+    padding:0 13px;
     display:flex;
     align-items:center;
-    gap:10px;
     border:1px solid var(--sa-border);
     border-radius:13px;
     background:#fff;
 }
 
-.sa-date-control > i:first-child{
-    color:#111827;
-    font-size:17px;
-}
-
 .sa-date-control input{
     width:100%;
+    min-width:0;
     border:0;
     outline:0;
     background:transparent;
     color:var(--sa-text);
     font-size:13px;
     font-weight:800;
-    cursor:pointer;
-}
-
-.sa-date-arrow{
-    color:#111827;
-    font-size:11px;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
 .sa-refresh{
-    width:50px;
-    height:50px;
+    width:52px;
+    height:52px;
     border:1px solid var(--sa-border);
     border-radius:13px;
     background:#fff;
@@ -666,7 +708,7 @@
 
 .sa-welcome{
     position:relative;
-    min-height:168px;
+    min-height:178px;
     margin-bottom:17px;
     padding:28px 31px;
     overflow:hidden;
@@ -681,7 +723,7 @@
 .sa-welcome-text{
     position:relative;
     z-index:2;
-    max-width:600px;
+    max-width:680px;
 }
 
 .sa-red-label{
@@ -692,26 +734,24 @@
 }
 
 .sa-welcome h2{
-    margin:7px 0 8px;
-    font-size:24px;
-    line-height:1.22;
-    font-weight:800;
-    letter-spacing:-.35px;
+    margin:8px 0 9px;
+    font-size:29px;
+    line-height:1.17;
 }
 
 .sa-welcome p{
     margin:0;
     color:var(--sa-muted);
-    font-size:13px;
-    line-height:1.5;
+    font-size:14px;
+    line-height:1.6;
 }
 
 .sa-welcome-graphic{
     position:absolute;
     right:0;
     bottom:0;
-    width:300px;
-    height:195px;
+    width:330px;
+    height:220px;
     border-radius:60% 0 0 0;
     background:#FFF0F2;
 }
@@ -778,14 +818,16 @@
 
 .sa-kpi{
     position:relative;
-    min-height:158px;
-    padding:17px 18px 16px 25px;
-    display:block;
+    min-height:150px;
+    padding:22px 18px 17px 28px;
+    display:flex;
+    align-items:center;
+    gap:15px;
     overflow:hidden;
     border:1px solid var(--sa-border);
     border-radius:15px;
     background:#fff;
-    box-shadow:0 7px 20px rgba(15,23,42,.045);
+    box-shadow:0 6px 18px rgba(15,23,42,.035);
 }
 
 .sa-kpi:before,
@@ -806,15 +848,15 @@
 .sa-accent-purple:before{background:var(--sa-purple);}
 
 .sa-kpi-icon{
-    width:38px;
-    height:38px;
+    width:62px;
+    height:62px;
+    min-width:62px;
     display:grid;
     place-items:center;
-    border-radius:11px;
+    border-radius:14px;
     background:#FFF0F2;
     color:var(--sa-red);
-    font-size:16px;
-    margin-bottom:13px;
+    font-size:27px;
 }
 
 .sa-kpi-content{
@@ -823,30 +865,26 @@
 
 .sa-kpi-title{
     display:block;
-    max-width:170px;
     color:#536174;
-    font-size:10px;
+    font-size:11px;
     font-weight:900;
-    line-height:1.25;
-    letter-spacing:.2px;
+    line-height:1.3;
 }
 
 .sa-kpi-content strong{
     display:block;
-    margin-top:8px;
+    margin-top:12px;
     color:#101A2D;
-    font-size:24px;
+    font-size:25px;
     line-height:1.05;
     white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
 }
 
 .sa-kpi-content small{
     display:block;
-    margin-top:7px;
+    margin-top:10px;
     color:#64748B;
-    font-size:10px;
+    font-size:11px;
 }
 
 
@@ -861,9 +899,9 @@
 
 .sa-large-card{
     position:relative;
-    min-height:258px;
+    min-height:265px;
     overflow:hidden;
-    padding:21px 25px 19px 30px;
+    padding:20px 25px 20px 31px;
     border:1px solid var(--sa-border);
     border-radius:15px;
     background:#fff;
@@ -1043,6 +1081,73 @@
 }
 
 
+/* ================= BOTTOM ================= */
+
+.sa-bottom-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-top:14px;
+}
+
+.sa-bottom-card{
+    position:relative;
+    min-height:112px;
+    padding:20px 18px 18px 28px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    overflow:hidden;
+    border:1px solid var(--sa-border);
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 6px 18px rgba(15,23,42,.035);
+}
+
+.sa-bottom-card:before{
+    border-radius:15px 0 0 15px;
+}
+
+.sa-bottom-orange:before{background:var(--sa-orange);}
+.sa-bottom-green:before{background:var(--sa-green);}
+.sa-bottom-red:before{background:var(--sa-red);}
+
+.sa-bottom-icon{
+    width:50px;
+    height:50px;
+    min-width:50px;
+    display:grid;
+    place-items:center;
+    border-radius:13px;
+    background:#FFF0F2;
+    color:var(--sa-red);
+    font-size:21px;
+}
+
+.sa-bottom-card > div:last-child{
+    min-width:0;
+}
+
+.sa-bottom-card span{
+    display:block;
+    color:#536174;
+    font-size:9px;
+    font-weight:900;
+    line-height:1.35;
+}
+
+.sa-bottom-card strong{
+    display:block;
+    margin-top:7px;
+    color:#111827;
+    font-size:20px;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+
 /* ================= FOOTER ================= */
 
 .sa-footer{
@@ -1206,10 +1311,6 @@
         padding:0 9px;
     }
 
-    .sa-date-arrow{
-        display:none;
-    }
-
     .sa-kpi-grid{
         grid-template-columns:1fr;
     }
@@ -1236,237 +1337,152 @@
 </style>
 
 
+<script>
+/*
+ * UI compatibility helpers.
+ * Existing application functions are used when available.
+ */
 
+(function(){
 
-<style id="dashboard-v4-date-submission-fix">
-/* =========================================================
-   V4 FIX — DATE: one visible DD/MM/YYYY only
-   ========================================================= */
-.sa-date-control{
-    position:relative !important;
-    overflow:hidden !important;
-}
-.sa-date-control > #homeSalesDate{
-    position:absolute !important;
-    inset:0 !important;
-    width:100% !important;
-    height:100% !important;
-    margin:0 !important;
-    padding:0 42px 0 43px !important;
-    border:0 !important;
-    outline:0 !important;
-    background:transparent !important;
-    color:transparent !important;
-    -webkit-text-fill-color:transparent !important;
-    caret-color:transparent !important;
-    opacity:1 !important;
-    z-index:5 !important;
-}
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit,
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit-fields-wrapper,
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit-text,
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit-month-field,
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit-day-field,
-.sa-date-control > #homeSalesDate::-webkit-datetime-edit-year-field{
-    color:transparent !important;
-    -webkit-text-fill-color:transparent !important;
-}
-.sa-date-control > #homeSalesDate::-webkit-calendar-picker-indicator{
-    opacity:1 !important;
-    cursor:pointer !important;
-    width:18px !important;
-    height:18px !important;
-    z-index:6 !important;
-}
-.sa-date-control > #homeSalesDateDisplay{
-    position:absolute !important;
-    left:43px !important;
-    top:0 !important;
-    height:100% !important;
-    display:flex !important;
-    align-items:center !important;
-    color:#111827 !important;
-    -webkit-text-fill-color:#111827 !important;
-    font-size:13px !important;
-    font-weight:800 !important;
-    white-space:nowrap !important;
-    pointer-events:none !important;
-    z-index:2 !important;
-}
-
-/* =========================================================
-   V4 FIX — STORE SUBMISSION
-   Submitted + Pending must be horizontally aligned
-   ========================================================= */
-.sa-submission-info .sa-submission-stats{
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:center !important;
-    gap:24px !important;
-    flex-wrap:nowrap !important;
-    margin-top:16px !important;
-}
-.sa-submission-info .sa-submission-stats > span{
-    display:inline-flex !important;
-    align-items:center !important;
-    gap:8px !important;
-    white-space:nowrap !important;
-}
-.sa-submission-info .sa-submission-stats i{
-    font-size:8px !important;
-}
-.sa-submission-info .sa-submission-stats .pending{
-    color:#334155 !important;
-}
-@media(max-width:700px){
-    .sa-submission-info .sa-submission-stats{
-        gap:14px !important;
+    function setText(id,value){
+        var el=document.getElementById(id);
+        if(el && value !== undefined && value !== null){
+            el.textContent=value;
+        }
     }
-}
-</style>
 
-<style id="dashboard-v5-submission-alignment">
-/* =========================================================
-   V5 — STORE SUBMISSION: SUBMITTED + PENDING on one row
-   ========================================================= */
-.sa-submission-info .sa-submission-status{
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:center !important;
-    justify-content:flex-start !important;
-    gap:28px !important;
-    width:max-content !important;
-    max-width:100% !important;
-    margin-top:18px !important;
-    flex-wrap:nowrap !important;
-}
-
-.sa-submission-info .sa-submission-status > span{
-    display:flex !important;
-    flex:0 0 auto !important;
-    align-items:center !important;
-    gap:7px !important;
-    width:max-content !important;
-    min-width:0 !important;
-    white-space:nowrap !important;
-    font-size:11px !important;
-    line-height:1.2 !important;
-}
-
-.sa-submission-info .sa-submission-status > span b{
-    display:inline !important;
-    white-space:nowrap !important;
-    font-weight:800 !important;
-}
-
-.sa-submission-info .sa-submission-status > span b span{
-    display:inline !important;
-    white-space:nowrap !important;
-}
-
-.sa-submission-info .sa-submission-status i{
-    flex:0 0 auto !important;
-    width:8px !important;
-    font-size:8px !important;
-}
-
-.sa-submission-info .sa-submission-status .submitted i{
-    color:var(--sa-green) !important;
-}
-
-.sa-submission-info .sa-submission-status .pending i{
-    color:var(--sa-orange) !important;
-}
-
-/* Keep the row compact on smaller screens. */
-@media(max-width:700px){
-    .sa-submission-info .sa-submission-status{
-        gap:18px !important;
+    function formatRM(value){
+        var n=Number(value||0);
+        return "RM " + n.toLocaleString("en-MY",{
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+        });
     }
-}
-</style>
 
-<style id="dashboard-v6-submission-layout">
-/* =========================================================
-   V6 — STORE SUBMISSION EXACT LAYOUT
-   Right side:
-       8 SUBMITTED
-       4 PENDING
-   Each number + label stays on one line.
-   ========================================================= */
-.sa-submission-info .sa-submission-status{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:flex-start !important;
-    justify-content:flex-start !important;
-    gap:10px !important;
-    width:max-content !important;
-    margin-top:18px !important;
-    flex-wrap:nowrap !important;
-}
+    function updateDashboardExtraUI(data){
+        if(!data) return;
 
-.sa-submission-info .sa-submission-status > span{
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:center !important;
-    justify-content:flex-start !important;
-    gap:7px !important;
-    width:max-content !important;
-    min-width:0 !important;
-    white-space:nowrap !important;
-    line-height:1.2 !important;
-}
+        var date =
+            data.businessDate ||
+            data.date ||
+            data.selectedDate ||
+            "";
 
-.sa-submission-info .sa-submission-status > span b,
-.sa-submission-info .sa-submission-status > span b span{
-    display:inline !important;
-    white-space:nowrap !important;
-    margin:0 !important;
-}
+        if(date){
+            setText("homeBusinessDate",date);
+        }
 
-.sa-submission-info .sa-submission-status i{
-    flex:0 0 auto !important;
-    width:8px !important;
-    margin:0 !important;
-    font-size:8px !important;
-}
-</style>
+        var totalRecord =
+            data.totalRecord ??
+            data.totalRecords ??
+            data.recordCount;
 
-<style id="dashboard-v7-submission-text">
-.sa-submission-info .sa-submission-status{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:flex-start !important;
-    gap:10px !important;
-    width:max-content !important;
-    margin-top:18px !important;
-}
-.sa-submission-info .sa-submission-status > span{
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:center !important;
-    gap:7px !important;
-    width:max-content !important;
-    white-space:nowrap !important;
-    line-height:1.2 !important;
-    font-family:inherit !important;
-}
-.sa-submission-info .sa-submission-status .sa-status-number,
-.sa-submission-info .sa-submission-status .sa-status-label{
-    display:inline !important;
-    white-space:nowrap !important;
-    font-family:inherit !important;
-    font-size:11px !important;
-    font-weight:500 !important;
-    letter-spacing:0 !important;
-    margin:0 !important;
-}
-.sa-submission-info .sa-submission-status i{
-    flex:0 0 auto !important;
-    width:8px !important;
-    margin:0 !important;
-    font-size:8px !important;
-}
-.sa-submission-info .sa-submission-status .submitted i{color:#16A34A !important;}
-.sa-submission-info .sa-submission-status .pending i{color:#F59E0B !important;}
-</style>
+        if(totalRecord !== undefined){
+            setText("homeTotalRecord",
+                Number(totalRecord||0).toLocaleString("en-MY"));
+        }
+
+        var totalStores =
+            data.totalStores ??
+            data.totalStore;
+
+        if(totalStores !== undefined){
+            setText("homeTotalStoresBottom",
+                Number(totalStores||0).toLocaleString("en-MY"));
+        }
+
+        var budget =
+            data.apsdBudget ??
+            data.budgetApsd ??
+            data.budget;
+
+        if(budget !== undefined){
+            setText("homeApsdBudgetBottom",formatRM(budget));
+        }
+
+        var actual =
+            data.apsdSales ??
+            data.totalMerchandiseSales ??
+            data.totalSales;
+
+        var target =
+            data.apsdBudget ??
+            data.budgetApsd ??
+            data.budget;
+
+        if(actual !== undefined){
+            setText("homeApsdBudgetActual",formatRM(actual));
+        }
+
+        if(target !== undefined){
+            setText("homeApsdBudgetTarget",formatRM(target));
+        }
+
+        if(actual !== undefined && target !== undefined && Number(target)>0){
+            var pct=(Number(actual)/Number(target))*100;
+            setText("homeBudgetPct",pct.toFixed(2)+"%");
+            setText("homeBudgetCaption",
+                pct.toFixed(2)+"% of Budget Achieved");
+
+            var bar=document.getElementById("homeBudgetBar");
+            if(bar){
+                bar.style.width=Math.min(Math.max(pct,0),100)+"%";
+            }
+        }
+
+        var submitted =
+            data.submittedStores ??
+            data.submitted ??
+            data.recordCount;
+
+        var stores =
+            data.totalStores ??
+            data.totalStore;
+
+        if(submitted !== undefined && stores !== undefined && Number(stores)>0){
+
+            var percent=(Number(submitted)/Number(stores))*100;
+
+            setText("homeSubmissionPct",
+                Math.round(percent)+"%");
+
+            setText("homeSubmittedStores",
+                Number(submitted).toLocaleString("en-MY"));
+
+            setText("homeTotalStores",
+                Number(stores).toLocaleString("en-MY"));
+
+            setText("homeTotalStoresBottom",
+                Number(stores).toLocaleString("en-MY"));
+
+            setText("homeSubmittedLabel",
+                Number(submitted).toLocaleString("en-MY")+" SUBMITTED");
+
+            var pending=Math.max(Number(stores)-Number(submitted),0);
+
+            setText("homePendingStores",
+                pending.toLocaleString("en-MY")+" PENDING");
+
+            var donut=document.getElementById("homeSubmissionDonut");
+
+            if(donut){
+                donut.style.background =
+                    "conic-gradient(var(--sa-red) 0% "+Math.min(Math.max(percent,0),100)+"%, #E5E7EB "+Math.min(Math.max(percent,0),100)+"% 100%)";
+            }
+        }
+    }
+
+    /*
+     * Keep compatibility with the existing dashboard script.
+     * If the existing script exposes a dashboard renderer, it can call
+     * updateDashboardExtraUI(data) without changing the backend.
+     */
+    window.StoreAppsDashboardUI={
+        update:updateDashboardExtraUI,
+        formatRM:formatRM,
+        setText:setText
+    };
+
+})();
+</script>
