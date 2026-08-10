@@ -1324,10 +1324,34 @@ async function dsSave() {
 
 function dsCalculate() {
 
-    const totalMerchandiseSales =
+    const totalSales =
         dsNum(
-            "dsTotalMerchandiseSales"
+            "dsTotalSales"
         );
+
+    const services =
+        dsNum(
+            "dsServices"
+        );
+
+    /*
+     * Total Merchandise Sales =
+     * Total Sales - Services
+     *
+     * This is now the single source of truth for the
+     * Total Merchandise Sales field. It is used by both
+     * manual entry and the Daily Sales OCR scan.
+     */
+    const totalMerchandiseSales =
+        Math.max(
+            0,
+            totalSales - services
+        );
+
+    dsSet(
+        "dsTotalMerchandiseSales",
+        totalMerchandiseSales.toFixed(2)
+    );
 
     const customers =
         dsNum(
@@ -1942,6 +1966,7 @@ document.addEventListener(
             [
                 "dsTotalSales",
                 "dsTotalMerchandiseSales",
+                "dsServices",
                 "dsFoodService",
                 "dsTotalCustomer"
             ].includes(
