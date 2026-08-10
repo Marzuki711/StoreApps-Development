@@ -416,9 +416,48 @@
 
     function lineMatchesField(line, field) {
         const n = normalize(line);
-        if (field.key === "alcoholic") return isAlcoholicLine(line);
-        if (field.key === "tobacco") return n.includes("tobacco");
-        return field.labels.some(label => n.includes(normalize(label)));
+
+        // Match the PSA label at the START of the row instead of using a
+        // generic "includes" check. This prevents overlapping labels such
+        // as "Services" vs "Food Service", and "Alcoholic" inside
+        // "Tobacco/Alcoholic", from being assigned to the wrong field.
+        if (field.key === "services") {
+            return /^services(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "food") {
+            return /^food(?:\s|$)/.test(n) && !/^food\s+service(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "beverage") {
+            return /^(beverage|beverages|bevarage|bevarages)(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "generalMerchandise") {
+            return /^(general\s+merchandise|generalmerchandise)(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "tobacco") {
+            return /^tobacco(?:\/|\s|$)/.test(n);
+        }
+
+        if (field.key === "supply") {
+            return /^supply(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "foodService") {
+            return /^food\s+service(?:\s|$)/.test(n) || /^foodservice(?:\s|$)/.test(n);
+        }
+
+        if (field.key === "alcoholic") {
+            return isAlcoholicLine(line);
+        }
+
+        if (field.key === "totalSales") {
+            return /^(total\s+gross\s+sales(?:\s+\(?(?:incl\.?\s*)?gst\)?|\s+incl\.?\s*gst)?|gross\s+sales)(?:\s|$)/.test(n);
+        }
+
+        return field.labels.some(label => n.startsWith(normalize(label)));
     }
 
     function parseReport(text) {
