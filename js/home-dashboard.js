@@ -1,3 +1,4 @@
+/* DASHBOARD UI LOCK — ONLY REQUESTED VISUAL FIXES */
 /*
  * Store Apps - Home Sales Dashboard
  * ============================================================
@@ -490,6 +491,16 @@ async function loadHomeSalesDashboard(dateOverride=""){
 }
 
 function initHomeSalesDashboard(){
+
+    /* DASHBOARD UI LOCK — native date picker remains enabled */
+    const lockedDateInput =
+        document.getElementById("homeSalesDate");
+
+    if(lockedDateInput){
+        lockedDateInput.disabled = false;
+        lockedDateInput.readOnly = false;
+    }
+
 
     /*
      * Never call Daily Sales API before authentication.
