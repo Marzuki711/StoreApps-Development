@@ -1505,6 +1505,81 @@
 
 </style>
 
+<!-- MOBILE DATE + REFRESH VISUAL FIX ONLY -->
+<style>
+/* =========================================================
+   DASHBOARD LOCK — MOBILE DATE / REFRESH VISUAL FIX ONLY
+   NO DATA / API / EVENT / CALCULATION CHANGES
+   ========================================================= */
+@media (max-width: 800px){
+    .sa-dashboard-lock .sa-header{
+        display:flex !important;
+        flex-wrap:wrap !important;
+        width:100% !important;
+        gap:10px !important;
+        align-items:center !important;
+    }
+
+    .sa-dashboard-lock .sa-header-title{
+        flex:1 1 auto !important;
+        min-width:0 !important;
+    }
+
+    .sa-dashboard-lock .sa-header-actions{
+        flex:1 0 100% !important;
+        width:100% !important;
+        min-width:0 !important;
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) 46px !important;
+        gap:8px !important;
+        box-sizing:border-box !important;
+    }
+
+    .sa-dashboard-lock .sa-date-control{
+        width:100% !important;
+        min-width:0 !important;
+        height:44px !important;
+        box-sizing:border-box !important;
+        padding:0 42px 0 10px !important;
+    }
+
+    .sa-dashboard-lock .sa-date-control input[type="date"]{
+        width:100% !important;
+        min-width:0 !important;
+        font-size:13px !important;
+        text-align:center !important;
+        padding:0 !important;
+    }
+
+    .sa-dashboard-lock .sa-date-right-icon{
+        right:13px !important;
+        font-size:16px !important;
+    }
+
+    .sa-dashboard-lock .sa-refresh{
+        width:46px !important;
+        min-width:46px !important;
+        height:44px !important;
+        box-sizing:border-box !important;
+        display:grid !important;
+        place-items:center !important;
+        margin:0 !important;
+    }
+}
+
+@media (max-width: 420px){
+    .sa-dashboard-lock .sa-header-actions{
+        grid-template-columns:minmax(0,1fr) 44px !important;
+        gap:7px !important;
+    }
+
+    .sa-dashboard-lock .sa-refresh{
+        width:44px !important;
+        min-width:44px !important;
+    }
+}
+</style>
+
 
 <script>
 /*
