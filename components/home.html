@@ -109,7 +109,6 @@
                 <div class="sa-date-control">
                     <i class="fa-regular fa-calendar"></i>
                     <input type="date" id="homeSalesDate">
-                    <i class="fa-solid fa-chevron-down sa-date-arrow"></i>
                 </div>
 
                 <button type="button"
@@ -1326,6 +1325,52 @@
     line-height:1.25 !important;
     letter-spacing:0 !important;
 }
+
+
+/* =========================================================
+   DASHBOARD UI LOCK — FINAL SMALL FIX
+   - Date: native calendar only, no chevron
+   - KPI cards: fixed vertical accent colours
+   ========================================================= */
+
+/* Remove any legacy date chevron/arrow */
+.sa-dashboard-lock .sa-date-arrow{
+    display:none !important;
+}
+
+/* Native date input remains clickable */
+.sa-dashboard-lock .sa-date-control input[type="date"]{
+    cursor:pointer !important;
+}
+
+/* ---------------------------------------------------------
+   KPI CARD VERTICAL ACCENTS
+   1. TOTAL MERCHANDISE SALES = RED
+   2. APSD SALES               = ORANGE
+   3. TOTAL CUSTOMER           = BLACK
+   4. APSD CUSTOMER            = GREEN
+   --------------------------------------------------------- */
+.sa-dashboard-lock .sa-kpi-card:nth-child(1){
+    border-left:5px solid #C1121F !important;
+}
+
+.sa-dashboard-lock .sa-kpi-card:nth-child(2){
+    border-left:5px solid #F59E0B !important;
+}
+
+.sa-dashboard-lock .sa-kpi-card:nth-child(3){
+    border-left:5px solid #111827 !important;
+}
+
+.sa-dashboard-lock .sa-kpi-card:nth-child(4){
+    border-left:5px solid #16A34A !important;
+}
+
+
+.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(1){border-left-color:#C1121F !important;}
+.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(2){border-left-color:#F59E0B !important;}
+.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(3){border-left-color:#111827 !important;}
+.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(4){border-left-color:#16A34A !important;}
 
 </style>
 
