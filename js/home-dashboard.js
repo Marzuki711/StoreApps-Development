@@ -42,13 +42,6 @@ function homeNumber(value){
     return n.toLocaleString("en-MY",{maximumFractionDigits:0});
 }
 
-function setHomeText(id, value){
-    const el = document.getElementById(id);
-    if(el && value !== undefined && value !== null){
-        el.textContent = value;
-    }
-}
-
 function homePercent(value){
     const n = Number(value) || 0;
     return n.toFixed(2) + "%";
@@ -82,10 +75,7 @@ function homeSetGreeting(){
     const part = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
     const el = document.querySelector("[data-home-greeting]");
-    if(el){
-        el.textContent = part + ", " + name;
-        el.title = name;
-    }
+    if(el) el.textContent = part + ", " + name;
 }
 
 function homeSetDashboardDate(date){
@@ -141,7 +131,7 @@ async function loadHomeSalesDashboard(dateOverride=""){
     const username = user.username || "";
     const role = user.role || "";
 
-    homeSalesDate = dateOverride || homeSalesDate || homeYesterdayISO();
+    homeSalesDate = dateOverride || homeYesterdayISO();
     homeSetDashboardDate(homeSalesDate);
     homeSetGreeting();
     homeSetLoading(true);
@@ -200,24 +190,22 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const pendingStores = Math.max(totalStores - submittedStores,0);
 
-        setHomeText("homeTotalSales", homeMoney(merchandiseSales));
-        setHomeText("homeApsdSales", homeMoney(apsdSales));
-        setHomeText("homeTotalCustomer", homeNumber(totalCustomer));
-        setHomeText("homeApsdCustomer", homeNumber(apsdCustomer));
+        document.getElementById("homeTotalSales").textContent = homeMoney(merchandiseSales);
+        document.getElementById("homeApsdSales").textContent = homeMoney(apsdSales);
+        document.getElementById("homeTotalCustomer").textContent = homeNumber(totalCustomer);
+        document.getElementById("homeApsdCustomer").textContent = homeNumber(apsdCustomer);
 
-        setHomeText("homeSubmittedStores", homeNumber(submittedStores));
-        setHomeText("homeSubmittedLabel", homeNumber(submittedStores));
-        setHomeText("homeTotalStores", homeNumber(totalStores));
-        setHomeText("homePendingStores", homeNumber(pendingStores));
-        setHomeText("homeSubmissionPct", Math.round(submissionPct) + "%");
+        document.getElementById("homeSubmittedStores").textContent = homeNumber(submittedStores);
+        document.getElementById("homeTotalStores").textContent = homeNumber(totalStores);
+        document.getElementById("homePendingStores").textContent = homeNumber(pendingStores);
+        document.getElementById("homeSubmissionPct").textContent = Math.round(submissionPct) + "%";
 
-        setHomeText("homeBusinessDate", homeDisplayDate(homeSalesDate));
-        setHomeText("homeTotalRecord", homeNumber(totalRecord));
+        document.getElementById("homeBusinessDate").textContent = homeDisplayDate(homeSalesDate);
+        document.getElementById("homeTotalRecord").textContent = homeNumber(totalRecord);
 
-        setHomeText("homeBudgetPct", homePercent(budgetPerformance));
-        setHomeText("homeApsdBudgetActual", homeMoney(apsdSales));
-        setHomeText("homeApsdBudgetTarget", homeMoney(apsdBudget));
-        setHomeText("homeBudgetCaption", homePercent(budgetPerformance) + " of Budget Achieved");
+        document.getElementById("homeBudgetPct").textContent = homePercent(budgetPerformance);
+        document.getElementById("homeBudgetValues").textContent =
+            homeMoney(apsdSales) + " / " + homeMoney(apsdBudget);
 
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
@@ -255,9 +243,11 @@ function initHomeSalesDashboard(){
     }
 
     if(homeSalesDashboardInitialized){
-        loadHomeSalesDashboard(
-            document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO()
-        );
+        const selectedDate =
+            document.getElementById("homeSalesDate")?.value ||
+            homeYesterdayISO();
+
+        loadHomeSalesDashboard(selectedDate);
         return;
     }
 
@@ -267,17 +257,23 @@ function initHomeSalesDashboard(){
     const refresh = document.getElementById("homeRefreshSales");
 
     if(input){
-        input.value = homeSalesDate || homeYesterdayISO();
+        homeSalesDate = homeYesterdayISO();
+        input.value = homeSalesDate;
         input.addEventListener("change",()=>{
-            loadHomeSalesDashboard(input.value);
+            const selectedDate = input.value;
+            if(!selectedDate){
+                return;
+            }
+            loadHomeSalesDashboard(selectedDate);
         });
     }
 
     if(refresh){
         refresh.addEventListener("click",()=>{
-            loadHomeSalesDashboard(
-                document.getElementById("homeSalesDate")?.value || homeYesterdayISO()
-            );
+            const selectedDate =
+                document.getElementById("homeSalesDate")?.value ||
+                homeYesterdayISO();
+            loadHomeSalesDashboard(selectedDate);
         });
     }
 
@@ -286,29 +282,10 @@ function initHomeSalesDashboard(){
 
     // Delay one tick so the Daily Sales module functions are fully available.
     setTimeout(()=>{
-        loadHomeSalesDashboard(
-            input?.value || homeYesterdayISO()
-        );
+        const dashboardDate =
+            homeSalesDate ||
+            homeYesterdayISO();
+        loadHomeSalesDashboard(dashboardDate);
     },0);
 }
 
-
-function homeDateDDMMYYYY(value){
-    if(!value) return "—";
-    const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(m) return `${m[3]}/${m[2]}/${m[1]}`;
-    return value;
-}
-
-function syncHomeSalesDateDisplay(value){
-    const el=document.getElementById("homeSalesDateDisplay");
-    if(el) el.textContent=homeDateDDMMYYYY(value);
-}
-
-document.addEventListener("DOMContentLoaded", ()=>{
-    const input=document.getElementById("homeSalesDate");
-    if(input) syncHomeSalesDateDisplay(input.value);
-    if(input) input.addEventListener("change", e=>{
-        syncHomeSalesDateDisplay(e.target.value);
-    });
-});
