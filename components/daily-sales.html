@@ -82,7 +82,23 @@
             </div>
         </div>
 
-        <div class="ds-section-title">Sales Information</div>
+        <div class="ds-section-title ds-sales-section-head">
+            <span>Sales Information</span>
+            <div class="ds-scan-actions">
+                <button type="button"
+                        class="ds-scan-btn"
+                        onclick="openDailySalesScanner()">
+                    <i class="fa-solid fa-camera"></i>
+                    Scan / Take Picture
+                </button>
+                <input id="dsOcrFileInput"
+                       type="file"
+                       accept="image/*"
+                       capture="environment"
+                       style="display:none;"
+                       onchange="handleDailySalesScanFile(this.files[0])">
+            </div>
+        </div>
 
         <div class="ds-grid ds-grid-4">
             <div class="ds-field">
@@ -100,7 +116,8 @@
                        type="number"
                        step="0.01"
                        min="0"
-                       oninput="calculateDailySales()">
+                       readonly
+                       title="Automatically calculated: Total Sales - Services">
             </div>
 
             <div class="ds-field">
