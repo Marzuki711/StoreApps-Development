@@ -107,12 +107,22 @@
 
         fileInput.onchange = handleFile;
 
-        // Keep a single status line. If the HTML already has one, reuse it.
+        // Keep status OUTSIDE the button so the button never changes size or moves.
         let status = $("dsOcrStatus");
         if (!status) {
             status = document.createElement("div");
             status.id = "dsOcrStatus";
-            status.style.cssText = "margin-top:8px;font-size:13px;opacity:.8;";
+            status.style.cssText = [
+                "margin-top:5px",
+                "min-height:18px",
+                "font-size:12px",
+                "line-height:18px",
+                "font-weight:500",
+                "opacity:.82",
+                "text-align:left",
+                "display:block"
+            ].join(";");
+            // Place status directly below the single scan button.
             mainButton.parentElement?.appendChild(status);
         }
 
@@ -137,15 +147,17 @@
 
     function setStatus(message, busy) {
         const status = $("dsOcrStatus");
-        if (status) status.textContent = message || "";
+        if (status) {
+            status.textContent = message || "";
+            status.setAttribute("aria-live", "polite");
+        }
 
         const buttons = getScanButtons();
         const button = buttons[0];
         if (button) {
+            // Never replace button HTML/text. This keeps the button fixed in place.
             button.disabled = !!busy;
-            button.innerHTML = busy
-                ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading Document...'
-                : '<i class="fa-solid fa-camera"></i> Scan / Take Picture';
+            button.setAttribute("aria-busy", busy ? "true" : "false");
         }
     }
 
