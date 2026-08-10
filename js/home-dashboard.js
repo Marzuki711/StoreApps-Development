@@ -1,6 +1,6 @@
 /*
  * Store Apps - Home Sales Dashboard
- * FIX v3
+ * FIX v4
  *
  * Fixes:
  * 1. Submitted label now updates correctly (4 SUBMITTED, etc.).
@@ -9,6 +9,8 @@
  * 4. Default date is ALWAYS yesterday in Malaysia time (Asia/Kuala_Lumpur).
  * 5. User-selected date is preserved after initialization.
  * 6. Missing HTML elements never cause a null.textContent error.
+ * 7. Date calculation uses explicit UTC+08:00, independent of PC timezone.
+ * 8. Duplicate decorative calendar icon is hidden automatically.
  */
 
 let homeSalesDate = "";
@@ -31,25 +33,17 @@ function homeCurrentUser(){
 
 /* Malaysia business date. Avoid browser/local timezone differences. */
 function homeTodayMalaysiaISO(){
-    try{
-        const parts = new Intl.DateTimeFormat("en-CA",{
-            timeZone:"Asia/Kuala_Lumpur",
-            year:"numeric",
-            month:"2-digit",
-            day:"2-digit"
-        }).formatToParts(new Date());
-
-        const map = {};
-        parts.forEach(p=>{ if(p.type !== "literal") map[p.type] = p.value; });
-        return `${map.year}-${map.month}-${map.day}`;
-    }catch(e){
-        const d = new Date();
-        return [
-            d.getFullYear(),
-            String(d.getMonth()+1).padStart(2,"0"),
-            String(d.getDate()).padStart(2,"0")
-        ].join("-");
-    }
+    /*
+     * Malaysia is UTC+08:00. Calculate from UTC milliseconds so the
+     * browser/PC timezone can NEVER move the dashboard back one day.
+     */
+    const malaysiaMs = Date.now() + (8 * 60 * 60 * 1000);
+    const d = new Date(malaysiaMs);
+    return [
+        d.getUTCFullYear(),
+        String(d.getUTCMonth()+1).padStart(2,"0"),
+        String(d.getUTCDate()).padStart(2,"0")
+    ].join("-");
 }
 
 function homeYesterdayISO(){
@@ -324,6 +318,12 @@ function initHomeSalesDashboard(){
 
     const input = document.getElementById("homeSalesDate");
     const refresh = document.getElementById("homeRefreshSales");
+
+    /* Keep only the browser's functional calendar icon. */
+    const decorativeCalendar = document.querySelector(".sa-date-control > i:first-child");
+    if(decorativeCalendar){
+        decorativeCalendar.style.display = "none";
+    }
 
     if(input){
         /* IMPORTANT: default is always yesterday in Malaysia. */
