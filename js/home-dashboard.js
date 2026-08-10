@@ -1,13 +1,18 @@
 /*
  * Store Apps - Home Sales Dashboard
- * Uses Daily Sales API only.
- * Default business date = Yesterday.
- * FIX v2.0 - safe DOM updates (prevents null textContent errors).
+ * DATE FIX V6
+ *
+ * IMPORTANT:
+ * - The selected date is the single source of truth for the UI.
+ * - Default date = yesterday in Malaysia (Asia/Kuala_Lumpur).
+ * - The Daily Sales API receives the selected date.
+ * - Labels are updated immediately when the user changes the date.
  */
 
 let homeSalesDate = "";
 let homeSalesStores = [];
 let homeSalesDashboardInitialized = false;
+let homeSalesRequestSeq = 0;
 
 function homeCurrentUser(){
     if(typeof getCurrentUser === "function"){
@@ -23,41 +28,38 @@ function homeCurrentUser(){
     }
 }
 
-function homeYesterdayISO(){
-    // Always calculate the business date in Malaysia time.
-    // This prevents the browser/device timezone from shifting the date.
-    const now = new Date();
-    const parts = new Intl.DateTimeFormat("en-GB",{
+function homeMalaysiaISODate(offsetDays=0){
+    const parts = new Intl.DateTimeFormat("en-CA",{
         timeZone:"Asia/Kuala_Lumpur",
         year:"numeric",
         month:"2-digit",
         day:"2-digit"
-    }).formatToParts(now);
+    }).formatToParts(new Date());
 
-    const year = Number(parts.find(p=>p.type === "year")?.value);
-    const month = Number(parts.find(p=>p.type === "month")?.value);
-    const day = Number(parts.find(p=>p.type === "day")?.value);
+    const y = Number(parts.find(p=>p.type==="year")?.value);
+    const m = Number(parts.find(p=>p.type==="month")?.value);
+    const d = Number(parts.find(p=>p.type==="day")?.value);
 
-    // Use UTC arithmetic so DST/device timezone cannot affect the result.
-    const d = new Date(Date.UTC(year,month-1,day));
-    d.setUTCDate(d.getUTCDate()-1);
+    const utc = new Date(Date.UTC(y,m-1,d));
+    utc.setUTCDate(utc.getUTCDate() + Number(offsetDays || 0));
 
     return [
-        d.getUTCFullYear(),
-        String(d.getUTCMonth()+1).padStart(2,"0"),
-        String(d.getUTCDate()).padStart(2,"0")
+        utc.getUTCFullYear(),
+        String(utc.getUTCMonth()+1).padStart(2,"0"),
+        String(utc.getUTCDate()).padStart(2,"0")
     ].join("-");
 }
 
-function homeNormalizeISO(date){
-    const value = String(date || "").trim();
-    if(/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-    return homeYesterdayISO();
+function homeYesterdayISO(){
+    return homeMalaysiaISODate(-1);
 }
 
 function homeMoney(value){
     const n = Number(String(value ?? "").replace(/,/g,"")) || 0;
-    return "RM " + n.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
+    return "RM " + n.toLocaleString("en-MY",{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+    });
 }
 
 function homeNumber(value){
@@ -72,13 +74,12 @@ function homePercent(value){
 
 function homeDisplayDate(iso){
     if(!iso) return "—";
-    const parts = String(iso).split("-");
-    if(parts.length !== 3) return String(iso);
 
-    // Dashboard labels must always be DD/MM/YYYY.
-    return String(parts[2]).padStart(2,"0") + "/" +
-           String(parts[1]).padStart(2,"0") + "/" +
-           String(parts[0]);
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return String(iso);
+
+    // No Date object is used here, avoiding timezone/day-shift problems.
+    return m[3] + "/" + m[2] + "/" + m[1];
 }
 
 function homeSetLoading(show){
@@ -95,16 +96,44 @@ function homeSetGreeting(){
         "User"
     ).trim();
 
-    const hour = new Date().getHours();
-    const part = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+    const hour = Number(new Intl.DateTimeFormat("en-US",{
+        timeZone:"Asia/Kuala_Lumpur",
+        hour:"numeric",
+        hour12:false
+    }).format(new Date()));
+
+    const part = hour < 12
+        ? "Good Morning"
+        : hour < 18
+            ? "Good Afternoon"
+            : "Good Evening";
 
     const el = document.querySelector("[data-home-greeting]");
     if(el) el.textContent = part + ", " + name;
 }
 
-function homeSetDashboardDate(date){
+function homeApplySelectedDate(date){
+    const iso = String(date || "").trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+
+    homeSalesDate = iso;
+
     const input = document.getElementById("homeSalesDate");
-    if(input) input.value = date;
+    if(input && input.value !== iso){
+        input.value = iso;
+    }
+
+    const display = homeDisplayDate(iso);
+
+    const salesLabel = document.getElementById("homeSalesLabel");
+    if(salesLabel) salesLabel.textContent = display;
+
+    const businessDate = document.getElementById("homeBusinessDate");
+    if(businessDate) businessDate.textContent = display;
+}
+
+function homeSetDashboardDate(date){
+    homeApplySelectedDate(date);
 }
 
 function homeResetDashboard(){
@@ -120,7 +149,8 @@ function homeResetDashboard(){
         homeTotalRecord:"0",
         homeBusinessDate:"—",
         homeBudgetPct:"0.00%",
-        homeBudgetValues:"RM 0.00 / RM 0.00"
+        homeApsdBudgetActual:"RM 0.00",
+        homeApsdBudgetTarget:"RM 0.00"
     };
 
     Object.keys(ids).forEach(id=>{
@@ -138,13 +168,7 @@ function homeResetDashboard(){
     if(budget) budget.style.width="0%";
 }
 
-function homeSetText(id, value){
-    const el = document.getElementById(id);
-    if(el) el.textContent = value == null ? "" : String(value);
-}
-
 async function loadHomeSalesDashboard(dateOverride=""){
-
     const authenticatedUser = homeCurrentUser();
     if(!authenticatedUser || !authenticatedUser.username){
         homeSetLoading(false);
@@ -160,19 +184,32 @@ async function loadHomeSalesDashboard(dateOverride=""){
     const username = user.username || "";
     const role = user.role || "";
 
-    // Keep the selected date. Only use yesterday as the initial default.
-    homeSalesDate = homeNormalizeISO(dateOverride || homeSalesDate || homeYesterdayISO());
-    homeSetDashboardDate(homeSalesDate);
+    const selectedDate =
+        String(dateOverride || homeSalesDate || homeYesterdayISO()).trim();
+
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)){
+        console.warn("Invalid dashboard date:", selectedDate);
+        return;
+    }
+
+    homeApplySelectedDate(selectedDate);
     homeSetGreeting();
     homeSetLoading(true);
+
+    const requestSeq = ++homeSalesRequestSeq;
 
     try{
         const [storeResponse,listResponse] = await Promise.all([
             callDailySalesAPI("getDailySalesStores",{username,role}),
             callDailySalesAPI("getDailySalesList",{
-                username,role,date:homeSalesDate
+                username,
+                role,
+                date:selectedDate
             })
         ]);
+
+        // Ignore an older request if the user changed the date again.
+        if(requestSeq !== homeSalesRequestSeq) return;
 
         if(!storeResponse || !storeResponse.status){
             throw new Error(storeResponse?.message || "Unable to load store data.");
@@ -188,7 +225,9 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         // One submitted store = one unique Store No.
         const submittedSet = new Set(
-            rows.map(r => String(r.storeNo || "").replace(/^#/,"").trim()).filter(Boolean)
+            rows
+                .map(r => String(r.storeNo || "").replace(/^#/ ,"").trim())
+                .filter(Boolean)
         );
 
         const submittedStores = submittedSet.size;
@@ -220,21 +259,28 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const pendingStores = Math.max(totalStores - submittedStores,0);
 
-        homeSetText("homeTotalSales", homeMoney(merchandiseSales));
-        homeSetText("homeApsdSales", homeMoney(apsdSales));
-        homeSetText("homeTotalCustomer", homeNumber(totalCustomer));
-        homeSetText("homeApsdCustomer", homeNumber(apsdCustomer));
+        document.getElementById("homeTotalSales").textContent = homeMoney(merchandiseSales);
+        document.getElementById("homeApsdSales").textContent = homeMoney(apsdSales);
+        document.getElementById("homeTotalCustomer").textContent = homeNumber(totalCustomer);
+        document.getElementById("homeApsdCustomer").textContent = homeNumber(apsdCustomer);
 
-        homeSetText("homeSubmittedStores", homeNumber(submittedStores));
-        homeSetText("homeTotalStores", homeNumber(totalStores));
-        homeSetText("homePendingStores", homeNumber(pendingStores));
-        homeSetText("homeSubmissionPct", Math.round(submissionPct) + "%");
+        document.getElementById("homeSubmittedStores").textContent = homeNumber(submittedStores);
+        document.getElementById("homeTotalStores").textContent = homeNumber(totalStores);
+        document.getElementById("homePendingStores").textContent = homeNumber(pendingStores);
+        document.getElementById("homeSubmittedLabel").textContent = homeNumber(submittedStores) + " SUBMITTED";
+        document.getElementById("homeSubmissionPct").textContent = Math.round(submissionPct) + "%";
 
-        homeSetText("homeBusinessDate", homeDisplayDate(homeSalesDate));
-        homeSetText("homeTotalRecord", homeNumber(totalRecord));
+        // Always keep the UI date equal to the user's selected date.
+        homeApplySelectedDate(selectedDate);
+        document.getElementById("homeTotalRecord").textContent = homeNumber(totalRecord);
 
-        homeSetText("homeBudgetPct", homePercent(budgetPerformance));
-        homeSetText("homeBudgetValues", homeMoney(apsdSales) + " / " + homeMoney(apsdBudget));
+        document.getElementById("homeBudgetPct").textContent = homePercent(budgetPerformance);
+        document.getElementById("homeApsdBudgetActual").textContent = homeMoney(apsdSales);
+        document.getElementById("homeApsdBudgetTarget").textContent = homeMoney(apsdBudget);
+        document.getElementById("homeApsdBudgetBottom").textContent = homeMoney(apsdBudget);
+        document.getElementById("homeTotalStoresBottom").textContent = homeNumber(totalStores);
+        document.getElementById("homeBudgetCaption").textContent =
+            homePercent(budgetPerformance) + " of Budget Achieved";
 
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
@@ -250,77 +296,65 @@ async function loadHomeSalesDashboard(dateOverride=""){
         const budgetBar = document.getElementById("homeBudgetBar");
         if(budgetBar) budgetBar.style.width = Math.min(Math.max(budgetPerformance,0),100) + "%";
 
-        const label = document.getElementById("homeSalesLabel");
-        if(label) label.textContent = homeDisplayDate(homeSalesDate);
-
     }catch(err){
         console.error("Home Sales Dashboard:",err);
         if(typeof showError === "function"){
             showError(err.message || "Unable to load Sales Dashboard.");
         }
     }finally{
-        homeSetLoading(false);
+        if(requestSeq === homeSalesRequestSeq){
+            homeSetLoading(false);
+        }
     }
 }
 
 function initHomeSalesDashboard(){
-
-    /* Never call Daily Sales API before authentication. */
     const user = homeCurrentUser();
-    if(!user || !user.username){
-        return;
-    }
-
-    if(homeSalesDashboardInitialized){
-        loadHomeSalesDashboard(
-            homeNormalizeISO(document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO())
-        );
-        return;
-    }
-
-    homeSalesDashboardInitialized = true;
+    if(!user || !user.username) return;
 
     const input = document.getElementById("homeSalesDate");
     const refresh = document.getElementById("homeRefreshSales");
 
-    if(input){
-        // Always initialise to the Malaysia business date (yesterday).
+    // First initialization: ALWAYS use Malaysia yesterday unless a date
+    // was already selected during this page session.
+    if(!homeSalesDate){
         homeSalesDate = homeYesterdayISO();
-        input.value = homeSalesDate;
-
-        input.addEventListener("change",()=>{
-            const selectedDate = homeNormalizeISO(input.value);
-            if(!selectedDate) return;
-
-            // Update the selected date immediately so every dashboard label
-            // follows the date selected by the user.
-            homeSalesDate = selectedDate;
-            homeSetDashboardDate(selectedDate);
-            homeSetText("homeSalesLabel", homeDisplayDate(selectedDate));
-            homeSetText("homeBusinessDate", homeDisplayDate(selectedDate));
-
-            loadHomeSalesDashboard(selectedDate);
-        });
     }
 
-    if(refresh){
-        refresh.addEventListener("click",()=>{
-            const selectedDate =
-                homeNormalizeISO(document.getElementById("homeSalesDate")?.value ||
-                homeSalesDate || homeYesterdayISO());
-            loadHomeSalesDashboard(selectedDate);
-        });
+    homeApplySelectedDate(homeSalesDate);
+
+    if(!homeSalesDashboardInitialized){
+        homeSalesDashboardInitialized = true;
+
+        if(input && !input.dataset.homeDateBound){
+            input.dataset.homeDateBound = "1";
+            input.addEventListener("change",function(){
+                const selected = String(input.value || "").trim();
+                if(!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
+
+                // Change the visible labels BEFORE the API request.
+                homeApplySelectedDate(selected);
+                loadHomeSalesDashboard(selected);
+            });
+        }
+
+        if(refresh && !refresh.dataset.homeRefreshBound){
+            refresh.dataset.homeRefreshBound = "1";
+            refresh.addEventListener("click",function(){
+                const selected =
+                    document.getElementById("homeSalesDate")?.value ||
+                    homeSalesDate ||
+                    homeYesterdayISO();
+
+                homeApplySelectedDate(selected);
+                loadHomeSalesDashboard(selected);
+            });
+        }
     }
 
     homeResetDashboard();
+    homeApplySelectedDate(homeSalesDate);
     homeSetGreeting();
 
-    // Delay one tick so the Daily Sales module functions are fully available.
-    setTimeout(()=>{
-        const dashboardDate = homeNormalizeISO(
-            homeSalesDate || homeYesterdayISO()
-        );
-        loadHomeSalesDashboard(dashboardDate);
-    },0);
+    loadHomeSalesDashboard(homeSalesDate);
 }
-
