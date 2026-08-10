@@ -109,6 +109,7 @@
                 <div class="sa-date-control">
                     <i class="fa-regular fa-calendar"></i>
                     <input type="date" id="homeSalesDate">
+                    <i class="fa-solid fa-chevron-down sa-date-arrow"></i>
                 </div>
 
                 <button type="button"
@@ -1219,6 +1220,9 @@
         padding:0 9px;
     }
 
+    .sa-date-arrow{
+        display:none;
+    }
 
     .sa-kpi-grid{
         grid-template-columns:1fr;
@@ -1279,22 +1283,48 @@
 }
 
 
-/* DATE CONTROL LOCK: show exactly one calendar icon */
-.sa-date-control input[type="date"]::-webkit-calendar-picker-indicator{
-    opacity:0;
-    display:none;
+/* DATE CONTROL — LOCKED: one native calendar icon only */
+.sa-dashboard-lock .sa-date-control{
+    position:relative;
+    min-width:150px;
+    height:44px;
+    padding:0 12px;
+    display:flex;
+    align-items:center;
+    background:#fff;
+    border:1px solid #E2E8F0;
+    border-radius:13px;
+    box-sizing:border-box;
 }
-.sa-date-control input[type="date"]{
-    appearance:none;
-    -webkit-appearance:none;
+.sa-dashboard-lock .sa-date-control input[type="date"]{
+    width:100%;
+    height:100%;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:#111827;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    box-sizing:border-box;
+}
+.sa-dashboard-lock .sa-date-control input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity:1;
+    cursor:pointer;
+    width:18px;
+    height:18px;
 }
 
-/* SUBMISSION STATUS LOCK: regular font, not bold */
+
+/* STORE SUBMISSION — regular Store Apps typography */
 .sa-dashboard-lock .sa-submission-status span,
-.sa-dashboard-lock .sa-submission-status span b,
-.sa-dashboard-lock .sa-submission-status .submitted,
-.sa-dashboard-lock .sa-submission-status .pending{
+.sa-dashboard-lock .sa-submission-status span b{
+    font-family:inherit !important;
+    font-size:11px !important;
     font-weight:400 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
 }
 
 </style>
