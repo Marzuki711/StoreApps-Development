@@ -1,18 +1,18 @@
+
+/* =========================================================
+   DASHBOARD UI LOCK
+   Keep this module focused on data binding only.
+   Do not modify Dashboard layout/design here.
+   ========================================================= */
 /*
  * Store Apps - Home Sales Dashboard
- * DATE FIX V6
- *
- * IMPORTANT:
- * - The selected date is the single source of truth for the UI.
- * - Default date = yesterday in Malaysia (Asia/Kuala_Lumpur).
- * - The Daily Sales API receives the selected date.
- * - Labels are updated immediately when the user changes the date.
+ * Uses Daily Sales API only.
+ * Default business date = Yesterday.
  */
 
 let homeSalesDate = "";
 let homeSalesStores = [];
 let homeSalesDashboardInitialized = false;
-let homeSalesRequestSeq = 0;
 
 function homeCurrentUser(){
     if(typeof getCurrentUser === "function"){
@@ -28,38 +28,19 @@ function homeCurrentUser(){
     }
 }
 
-function homeMalaysiaISODate(offsetDays=0){
-    const parts = new Intl.DateTimeFormat("en-CA",{
-        timeZone:"Asia/Kuala_Lumpur",
-        year:"numeric",
-        month:"2-digit",
-        day:"2-digit"
-    }).formatToParts(new Date());
-
-    const y = Number(parts.find(p=>p.type==="year")?.value);
-    const m = Number(parts.find(p=>p.type==="month")?.value);
-    const d = Number(parts.find(p=>p.type==="day")?.value);
-
-    const utc = new Date(Date.UTC(y,m-1,d));
-    utc.setUTCDate(utc.getUTCDate() + Number(offsetDays || 0));
-
-    return [
-        utc.getUTCFullYear(),
-        String(utc.getUTCMonth()+1).padStart(2,"0"),
-        String(utc.getUTCDate()).padStart(2,"0")
-    ].join("-");
-}
-
 function homeYesterdayISO(){
-    return homeMalaysiaISODate(-1);
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return [
+        d.getFullYear(),
+        String(d.getMonth()+1).padStart(2,"0"),
+        String(d.getDate()).padStart(2,"0")
+    ].join("-");
 }
 
 function homeMoney(value){
     const n = Number(String(value ?? "").replace(/,/g,"")) || 0;
-    return "RM " + n.toLocaleString("en-MY",{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
+    return "RM " + n.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function homeNumber(value){
@@ -74,12 +55,12 @@ function homePercent(value){
 
 function homeDisplayDate(iso){
     if(!iso) return "—";
-
-    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(!m) return String(iso);
-
-    // No Date object is used here, avoiding timezone/day-shift problems.
-    return m[3] + "/" + m[2] + "/" + m[1];
+    const parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    const d = new Date(Number(parts[0]),Number(parts[1])-1,Number(parts[2]));
+    return d.toLocaleDateString("en-GB",{
+        day:"2-digit",month:"long",year:"numeric"
+    });
 }
 
 function homeSetLoading(show){
@@ -96,44 +77,16 @@ function homeSetGreeting(){
         "User"
     ).trim();
 
-    const hour = Number(new Intl.DateTimeFormat("en-US",{
-        timeZone:"Asia/Kuala_Lumpur",
-        hour:"numeric",
-        hour12:false
-    }).format(new Date()));
-
-    const part = hour < 12
-        ? "Good Morning"
-        : hour < 18
-            ? "Good Afternoon"
-            : "Good Evening";
+    const hour = new Date().getHours();
+    const part = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
     const el = document.querySelector("[data-home-greeting]");
     if(el) el.textContent = part + ", " + name;
 }
 
-function homeApplySelectedDate(date){
-    const iso = String(date || "").trim();
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
-
-    homeSalesDate = iso;
-
-    const input = document.getElementById("homeSalesDate");
-    if(input && input.value !== iso){
-        input.value = iso;
-    }
-
-    const display = homeDisplayDate(iso);
-
-    const salesLabel = document.getElementById("homeSalesLabel");
-    if(salesLabel) salesLabel.textContent = display;
-
-    const businessDate = document.getElementById("homeBusinessDate");
-    if(businessDate) businessDate.textContent = display;
-}
-
 function homeSetDashboardDate(date){
-    homeApplySelectedDate(date);
+    const input = document.getElementById("homeSalesDate");
+    if(input) input.value = date;
 }
 
 function homeResetDashboard(){
@@ -149,8 +102,7 @@ function homeResetDashboard(){
         homeTotalRecord:"0",
         homeBusinessDate:"—",
         homeBudgetPct:"0.00%",
-        homeApsdBudgetActual:"RM 0.00",
-        homeApsdBudgetTarget:"RM 0.00"
+        homeBudgetValues:"RM 0.00 / RM 0.00"
     };
 
     Object.keys(ids).forEach(id=>{
@@ -169,6 +121,7 @@ function homeResetDashboard(){
 }
 
 async function loadHomeSalesDashboard(dateOverride=""){
+
     const authenticatedUser = homeCurrentUser();
     if(!authenticatedUser || !authenticatedUser.username){
         homeSetLoading(false);
@@ -184,32 +137,18 @@ async function loadHomeSalesDashboard(dateOverride=""){
     const username = user.username || "";
     const role = user.role || "";
 
-    const selectedDate =
-        String(dateOverride || homeSalesDate || homeYesterdayISO()).trim();
-
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)){
-        console.warn("Invalid dashboard date:", selectedDate);
-        return;
-    }
-
-    homeApplySelectedDate(selectedDate);
+    homeSalesDate = dateOverride || homeSalesDate || homeYesterdayISO();
+    homeSetDashboardDate(homeSalesDate);
     homeSetGreeting();
     homeSetLoading(true);
-
-    const requestSeq = ++homeSalesRequestSeq;
 
     try{
         const [storeResponse,listResponse] = await Promise.all([
             callDailySalesAPI("getDailySalesStores",{username,role}),
             callDailySalesAPI("getDailySalesList",{
-                username,
-                role,
-                date:selectedDate
+                username,role,date:homeSalesDate
             })
         ]);
-
-        // Ignore an older request if the user changed the date again.
-        if(requestSeq !== homeSalesRequestSeq) return;
 
         if(!storeResponse || !storeResponse.status){
             throw new Error(storeResponse?.message || "Unable to load store data.");
@@ -225,9 +164,7 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         // One submitted store = one unique Store No.
         const submittedSet = new Set(
-            rows
-                .map(r => String(r.storeNo || "").replace(/^#/ ,"").trim())
-                .filter(Boolean)
+            rows.map(r => String(r.storeNo || "").replace(/^#/,"").trim()).filter(Boolean)
         );
 
         const submittedStores = submittedSet.size;
@@ -266,21 +203,25 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         document.getElementById("homeSubmittedStores").textContent = homeNumber(submittedStores);
         document.getElementById("homeTotalStores").textContent = homeNumber(totalStores);
-        document.getElementById("homePendingStores").textContent = homeNumber(pendingStores);
-        document.getElementById("homeSubmittedLabel").textContent = homeNumber(submittedStores) + " SUBMITTED";
+
+        const submittedLabel = document.getElementById("homeSubmittedLabel");
+        if(submittedLabel){
+            submittedLabel.textContent = homeNumber(submittedStores) + " SUBMITTED";
+        }
+
+        const pendingLabel = document.getElementById("homePendingStores");
+        if(pendingLabel){
+            pendingLabel.textContent = homeNumber(pendingStores) + " PENDING";
+        }
+
         document.getElementById("homeSubmissionPct").textContent = Math.round(submissionPct) + "%";
 
-        // Always keep the UI date equal to the user's selected date.
-        homeApplySelectedDate(selectedDate);
+        document.getElementById("homeBusinessDate").textContent = homeDisplayDate(homeSalesDate);
         document.getElementById("homeTotalRecord").textContent = homeNumber(totalRecord);
 
         document.getElementById("homeBudgetPct").textContent = homePercent(budgetPerformance);
-        document.getElementById("homeApsdBudgetActual").textContent = homeMoney(apsdSales);
-        document.getElementById("homeApsdBudgetTarget").textContent = homeMoney(apsdBudget);
-        document.getElementById("homeApsdBudgetBottom").textContent = homeMoney(apsdBudget);
-        document.getElementById("homeTotalStoresBottom").textContent = homeNumber(totalStores);
-        document.getElementById("homeBudgetCaption").textContent =
-            homePercent(budgetPerformance) + " of Budget Achieved";
+        document.getElementById("homeBudgetValues").textContent =
+            homeMoney(apsdSales) + " / " + homeMoney(apsdBudget);
 
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
@@ -296,65 +237,62 @@ async function loadHomeSalesDashboard(dateOverride=""){
         const budgetBar = document.getElementById("homeBudgetBar");
         if(budgetBar) budgetBar.style.width = Math.min(Math.max(budgetPerformance,0),100) + "%";
 
+        const label = document.getElementById("homeSalesLabel");
+        if(label) label.textContent = homeDisplayDate(homeSalesDate);
+
     }catch(err){
         console.error("Home Sales Dashboard:",err);
         if(typeof showError === "function"){
             showError(err.message || "Unable to load Sales Dashboard.");
         }
     }finally{
-        if(requestSeq === homeSalesRequestSeq){
-            homeSetLoading(false);
-        }
+        homeSetLoading(false);
     }
 }
 
 function initHomeSalesDashboard(){
+
+    /* Never call Daily Sales API before authentication. */
     const user = homeCurrentUser();
-    if(!user || !user.username) return;
+    if(!user || !user.username){
+        return;
+    }
+
+    if(homeSalesDashboardInitialized){
+        loadHomeSalesDashboard(
+            document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO()
+        );
+        return;
+    }
+
+    homeSalesDashboardInitialized = true;
 
     const input = document.getElementById("homeSalesDate");
     const refresh = document.getElementById("homeRefreshSales");
 
-    // First initialization: ALWAYS use Malaysia yesterday unless a date
-    // was already selected during this page session.
-    if(!homeSalesDate){
-        homeSalesDate = homeYesterdayISO();
+    if(input){
+        input.value = homeSalesDate || homeYesterdayISO();
+        input.addEventListener("change",()=>{
+            loadHomeSalesDashboard(input.value);
+        });
     }
 
-    homeApplySelectedDate(homeSalesDate);
-
-    if(!homeSalesDashboardInitialized){
-        homeSalesDashboardInitialized = true;
-
-        if(input && !input.dataset.homeDateBound){
-            input.dataset.homeDateBound = "1";
-            input.addEventListener("change",function(){
-                const selected = String(input.value || "").trim();
-                if(!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
-
-                // Change the visible labels BEFORE the API request.
-                homeApplySelectedDate(selected);
-                loadHomeSalesDashboard(selected);
-            });
-        }
-
-        if(refresh && !refresh.dataset.homeRefreshBound){
-            refresh.dataset.homeRefreshBound = "1";
-            refresh.addEventListener("click",function(){
-                const selected =
-                    document.getElementById("homeSalesDate")?.value ||
-                    homeSalesDate ||
-                    homeYesterdayISO();
-
-                homeApplySelectedDate(selected);
-                loadHomeSalesDashboard(selected);
-            });
-        }
+    if(refresh){
+        refresh.addEventListener("click",()=>{
+            loadHomeSalesDashboard(
+                document.getElementById("homeSalesDate")?.value || homeYesterdayISO()
+            );
+        });
     }
 
     homeResetDashboard();
-    homeApplySelectedDate(homeSalesDate);
     homeSetGreeting();
 
-    loadHomeSalesDashboard(homeSalesDate);
+    // Delay one tick so the Daily Sales module functions are fully available.
+    setTimeout(()=>{
+        loadHomeSalesDashboard(
+            input?.value || homeYesterdayISO()
+        );
+    },0);
 }
+
