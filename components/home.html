@@ -107,8 +107,7 @@
             <div class="sa-header-actions">
 
                 <div class="sa-date-control">
-                    <i class="fa-regular fa-calendar"></i>
-                    <input type="date" id="homeSalesDate">
+<input type="date" id="homeSalesDate">
                 </div>
 
                 <button type="button"
@@ -167,7 +166,7 @@
             <div class="sa-kpi-grid">
 
                 <!-- RED -->
-                <article class="sa-kpi sa-accent-red">
+                <article class="sa-kpi sa-accent-orange">
 
                     <div class="sa-kpi-icon">
                         <i class="fa-solid fa-chart-line"></i>
@@ -215,7 +214,7 @@
 
 
                 <!-- GREEN -->
-                <article class="sa-kpi sa-accent-green">
+                <article class="sa-kpi sa-accent-black">
 
                     <div class="sa-kpi-icon">
                         <i class="fa-solid fa-users"></i>
@@ -1350,27 +1349,24 @@
    3. TOTAL CUSTOMER           = BLACK
    4. APSD CUSTOMER            = GREEN
    --------------------------------------------------------- */
-.sa-dashboard-lock .sa-kpi-card:nth-child(1){
-    border-left:5px solid #C1121F !important;
+
+
+
+/* =========================================================
+   FINAL LOCKED KPI ACCENTS — ONLY REQUESTED CHANGE
+   ========================================================= */
+.sa-dashboard-lock .sa-kpi.sa-accent-red:before{
+    background:#C1121F !important;
 }
-
-.sa-dashboard-lock .sa-kpi-card:nth-child(2){
-    border-left:5px solid #F59E0B !important;
+.sa-dashboard-lock .sa-kpi.sa-accent-orange:before{
+    background:#F59E0B !important;
 }
-
-.sa-dashboard-lock .sa-kpi-card:nth-child(3){
-    border-left:5px solid #111827 !important;
+.sa-dashboard-lock .sa-kpi.sa-accent-black:before{
+    background:#111827 !important;
 }
-
-.sa-dashboard-lock .sa-kpi-card:nth-child(4){
-    border-left:5px solid #16A34A !important;
+.sa-dashboard-lock .sa-kpi.sa-accent-green:before{
+    background:#16A34A !important;
 }
-
-
-.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(1){border-left-color:#C1121F !important;}
-.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(2){border-left-color:#F59E0B !important;}
-.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(3){border-left-color:#111827 !important;}
-.sa-dashboard-lock .sa-kpi-grid > .sa-kpi-card:nth-child(4){border-left-color:#16A34A !important;}
 
 </style>
 
