@@ -1390,11 +1390,39 @@
 }
 
 
-/* FINAL LOCK — ONLY THE TWO REQUESTED DASHBOARD FIXES */
+/* LOCKED DATE — one native calendar icon on the right */
+.sa-dashboard-lock .sa-date-control{
+    position:relative;
+}
+.sa-dashboard-lock .sa-date-control input[type="date"]{
+    width:100%;
+    min-width:0;
+    height:100%;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:var(--sa-text);
+    font-size:13px;
+    font-weight:800;
+    text-align:center;
+    cursor:pointer;
+}
+.sa-dashboard-lock .sa-date-control input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity:1;
+    cursor:pointer;
+    margin-left:auto;
+}
+
+/* LOCKED KPI ACCENTS — ONLY THE FOUR KPI CARDS */
 .sa-dashboard-lock .sa-kpi.sa-accent-red::before{background:#C1121F !important;}
 .sa-dashboard-lock .sa-kpi.sa-accent-orange::before{background:#F59E0B !important;}
 .sa-dashboard-lock .sa-kpi.sa-accent-black::before{background:#111827 !important;}
 .sa-dashboard-lock .sa-kpi.sa-accent-green::before{background:#16A34A !important;}
+
+/* LOCKED: bottom operational cards are not part of Dashboard UI */
+.sa-dashboard-lock .sa-bottom-grid{
+    display:none !important;
+}
 
 </style>
 
