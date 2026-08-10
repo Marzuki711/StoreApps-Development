@@ -1,16 +1,8 @@
 /*
  * Store Apps - Home Sales Dashboard
- * FIX v4
- *
- * Fixes:
- * 1. Submitted label now updates correctly (4 SUBMITTED, etc.).
- * 2. APSD Budget actual/target use the real HTML IDs.
- * 3. Budget caption and progress bar are updated.
- * 4. Default date is ALWAYS yesterday in Malaysia time (Asia/Kuala_Lumpur).
- * 5. User-selected date is preserved after initialization.
- * 6. Missing HTML elements never cause a null.textContent error.
- * 7. Date calculation uses explicit UTC+08:00, independent of PC timezone.
- * 8. Duplicate decorative calendar icon is hidden automatically.
+ * Uses Daily Sales API only.
+ * Default business date = Yesterday.
+ * FIX v2.0 - safe DOM updates (prevents null textContent errors).
  */
 
 let homeSalesDate = "";
@@ -31,14 +23,25 @@ function homeCurrentUser(){
     }
 }
 
-/* Malaysia business date. Avoid browser/local timezone differences. */
-function homeTodayMalaysiaISO(){
-    /*
-     * Malaysia is UTC+08:00. Calculate from UTC milliseconds so the
-     * browser/PC timezone can NEVER move the dashboard back one day.
-     */
-    const malaysiaMs = Date.now() + (8 * 60 * 60 * 1000);
-    const d = new Date(malaysiaMs);
+function homeYesterdayISO(){
+    // Always calculate the business date in Malaysia time.
+    // This prevents the browser/device timezone from shifting the date.
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-GB",{
+        timeZone:"Asia/Kuala_Lumpur",
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+    }).formatToParts(now);
+
+    const year = Number(parts.find(p=>p.type === "year")?.value);
+    const month = Number(parts.find(p=>p.type === "month")?.value);
+    const day = Number(parts.find(p=>p.type === "day")?.value);
+
+    // Use UTC arithmetic so DST/device timezone cannot affect the result.
+    const d = new Date(Date.UTC(year,month-1,day));
+    d.setUTCDate(d.getUTCDate()-1);
+
     return [
         d.getUTCFullYear(),
         String(d.getUTCMonth()+1).padStart(2,"0"),
@@ -46,25 +49,15 @@ function homeTodayMalaysiaISO(){
     ].join("-");
 }
 
-function homeYesterdayISO(){
-    /* Calculate yesterday from the Malaysia calendar date, not browser UTC/local date. */
-    const today = homeTodayMalaysiaISO();
-    const p = today.split("-").map(Number);
-    const d = new Date(Date.UTC(p[0],p[1]-1,p[2]));
-    d.setUTCDate(d.getUTCDate()-1);
-    return [
-        d.getUTCFullYear(),
-        String(d.getUTCMonth()+1).padStart(2,"0"),
-        String(d.getUTCDate()).padStart(2,"0")
-    ].join("-");
+function homeNormalizeISO(date){
+    const value = String(date || "").trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    return homeYesterdayISO();
 }
 
 function homeMoney(value){
     const n = Number(String(value ?? "").replace(/,/g,"")) || 0;
-    return "RM " + n.toLocaleString("en-MY",{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
+    return "RM " + n.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function homeNumber(value){
@@ -80,20 +73,12 @@ function homePercent(value){
 function homeDisplayDate(iso){
     if(!iso) return "—";
     const parts = String(iso).split("-");
-    if(parts.length !== 3) return iso;
-    const d = new Date(Number(parts[0]),Number(parts[1])-1,Number(parts[2]));
-    return d.toLocaleDateString("en-GB",{
-        day:"2-digit",
-        month:"long",
-        year:"numeric"
-    });
-}
+    if(parts.length !== 3) return String(iso);
 
-function homeSetText(id,value){
-    const el = document.getElementById(id);
-    if(el){
-        el.textContent = value == null ? "" : String(value);
-    }
+    // Dashboard labels must always be DD/MM/YYYY.
+    return String(parts[2]).padStart(2,"0") + "/" +
+           String(parts[1]).padStart(2,"0") + "/" +
+           String(parts[0]);
 }
 
 function homeSetLoading(show){
@@ -123,7 +108,7 @@ function homeSetDashboardDate(date){
 }
 
 function homeResetDashboard(){
-    const values = {
+    const ids = {
         homeTotalSales:"RM 0.00",
         homeApsdSales:"RM 0.00",
         homeTotalCustomer:"0",
@@ -132,28 +117,34 @@ function homeResetDashboard(){
         homeTotalStores:"0",
         homePendingStores:"0",
         homeSubmissionPct:"0%",
-        homeSubmittedLabel:"0 SUBMITTED",
         homeTotalRecord:"0",
         homeBusinessDate:"—",
         homeBudgetPct:"0.00%",
-        homeApsdBudgetActual:"RM 0.00",
-        homeApsdBudgetTarget:"RM 0.00",
-        homeBudgetCaption:"0.00% of Budget Achieved"
+        homeBudgetValues:"RM 0.00 / RM 0.00"
     };
 
-    Object.keys(values).forEach(id=>homeSetText(id,values[id]));
+    Object.keys(ids).forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.textContent=ids[id];
+    });
 
-    const donut = document.getElementById("homeSubmissionDonut");
-    const budgetBar = document.getElementById("homeBudgetBar");
+    const donut=document.getElementById("homeSubmissionDonut");
+    const bar=document.getElementById("homeSubmissionBar");
+    const budget=document.getElementById("homeBudgetBar");
 
-    if(donut){
-        donut.style.background =
-            "conic-gradient(#C1121F 0deg,#E5E7EB 0deg 360deg)";
-    }
-    if(budgetBar) budgetBar.style.width = "0%";
+    if(donut) donut.style.background =
+        "conic-gradient(#C1121F 0deg,#E5E7EB 0deg 360deg)";
+    if(bar) bar.style.width="0%";
+    if(budget) budget.style.width="0%";
+}
+
+function homeSetText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = value == null ? "" : String(value);
 }
 
 async function loadHomeSalesDashboard(dateOverride=""){
+
     const authenticatedUser = homeCurrentUser();
     if(!authenticatedUser || !authenticatedUser.username){
         homeSetLoading(false);
@@ -162,7 +153,6 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
     if(typeof callDailySalesAPI !== "function"){
         console.warn("Daily Sales API is not available.");
-        homeSetLoading(false);
         return;
     }
 
@@ -170,7 +160,8 @@ async function loadHomeSalesDashboard(dateOverride=""){
     const username = user.username || "";
     const role = user.role || "";
 
-    homeSalesDate = dateOverride || homeSalesDate || homeYesterdayISO();
+    // Keep the selected date. Only use yesterday as the initial default.
+    homeSalesDate = homeNormalizeISO(dateOverride || homeSalesDate || homeYesterdayISO());
     homeSetDashboardDate(homeSalesDate);
     homeSetGreeting();
     homeSetLoading(true);
@@ -179,9 +170,7 @@ async function loadHomeSalesDashboard(dateOverride=""){
         const [storeResponse,listResponse] = await Promise.all([
             callDailySalesAPI("getDailySalesStores",{username,role}),
             callDailySalesAPI("getDailySalesList",{
-                username,
-                role,
-                date:homeSalesDate
+                username,role,date:homeSalesDate
             })
         ]);
 
@@ -192,43 +181,35 @@ async function loadHomeSalesDashboard(dateOverride=""){
             throw new Error(listResponse?.message || "Unable to load Daily Sales.");
         }
 
-        homeSalesStores = Array.isArray(storeResponse.stores)
-            ? storeResponse.stores
-            : [];
-
-        const rows = Array.isArray(listResponse.rows)
-            ? listResponse.rows
-            : [];
+        homeSalesStores = storeResponse.stores || [];
+        const rows = listResponse.rows || [];
 
         const totalStores = homeSalesStores.length;
 
-        /* One submitted store = one unique Store No. */
+        // One submitted store = one unique Store No.
         const submittedSet = new Set(
-            rows
-                .map(r=>String(r?.storeNo ?? "").replace(/^#/ , "").trim())
-                .filter(Boolean)
+            rows.map(r => String(r.storeNo || "").replace(/^#/,"").trim()).filter(Boolean)
         );
 
         const submittedStores = submittedSet.size;
         const totalRecord = rows.length;
 
-        const merchandiseSales = rows.reduce((sum,r)=>{
-            return sum + (Number(String(r?.totalMerchandiseSales ?? "").replace(/,/g,"")) || 0);
-        },0);
+        const merchandiseSales = rows.reduce(
+            (sum,r)=>sum + (Number(String(r.totalMerchandiseSales ?? "").replace(/,/g,"")) || 0),0
+        );
 
-        const totalCustomer = rows.reduce((sum,r)=>{
-            return sum + (Number(String(r?.totalCustomer ?? "").replace(/,/g,"")) || 0);
-        },0);
+        const totalCustomer = rows.reduce(
+            (sum,r)=>sum + (Number(String(r.totalCustomer ?? "").replace(/,/g,"")) || 0),0
+        );
 
-        /* Budget comes from Area for all stores. */
-        const totalBudget = homeSalesStores.reduce((sum,s)=>{
-            return sum + (Number(String(s?.budgetSales ?? "").replace(/,/g,"")) || 0);
-        },0);
+        // Budget is taken from Area for every store, not only submitted stores.
+        const totalBudget = homeSalesStores.reduce(
+            (sum,s)=>sum + (Number(String(s.budgetSales ?? "").replace(/,/g,"")) || 0),0
+        );
 
         const apsdSales = totalStores ? merchandiseSales / totalStores : 0;
         const apsdCustomer = totalStores ? totalCustomer / totalStores : 0;
         const apsdBudget = totalStores ? totalBudget / totalStores : 0;
-
         const budgetPerformance = apsdBudget > 0
             ? (apsdSales / apsdBudget) * 100
             : 0;
@@ -239,31 +220,22 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const pendingStores = Math.max(totalStores - submittedStores,0);
 
-        /* KPI */
-        homeSetText("homeTotalSales",homeMoney(merchandiseSales));
-        homeSetText("homeApsdSales",homeMoney(apsdSales));
-        homeSetText("homeTotalCustomer",homeNumber(totalCustomer));
-        homeSetText("homeApsdCustomer",homeNumber(apsdCustomer));
+        homeSetText("homeTotalSales", homeMoney(merchandiseSales));
+        homeSetText("homeApsdSales", homeMoney(apsdSales));
+        homeSetText("homeTotalCustomer", homeNumber(totalCustomer));
+        homeSetText("homeApsdCustomer", homeNumber(apsdCustomer));
 
-        /* Submission */
-        homeSetText("homeSubmittedStores",homeNumber(submittedStores));
-        homeSetText("homeTotalStores",homeNumber(totalStores));
-        homeSetText("homePendingStores",homeNumber(pendingStores) + " PENDING");
-        homeSetText("homeSubmittedLabel",homeNumber(submittedStores) + " SUBMITTED");
-        homeSetText("homeSubmissionPct",Math.round(submissionPct) + "%");
+        homeSetText("homeSubmittedStores", homeNumber(submittedStores));
+        homeSetText("homeTotalStores", homeNumber(totalStores));
+        homeSetText("homePendingStores", homeNumber(pendingStores));
+        homeSetText("homeSubmissionPct", Math.round(submissionPct) + "%");
 
-        /* Dates */
-        homeSetText("homeBusinessDate",homeDisplayDate(homeSalesDate));
-        homeSetText("homeTotalRecord",homeNumber(totalRecord));
-        homeSetText("homeSalesLabel",homeDisplayDate(homeSalesDate));
+        homeSetText("homeBusinessDate", homeDisplayDate(homeSalesDate));
+        homeSetText("homeTotalRecord", homeNumber(totalRecord));
 
-        /* APSD Budget Performance */
-        homeSetText("homeBudgetPct",homePercent(budgetPerformance));
-        homeSetText("homeApsdBudgetActual",homeMoney(apsdSales));
-        homeSetText("homeApsdBudgetTarget",homeMoney(apsdBudget));
-        homeSetText("homeBudgetCaption",homePercent(budgetPerformance) + " of Budget Achieved");
+        homeSetText("homeBudgetPct", homePercent(budgetPerformance));
+        homeSetText("homeBudgetValues", homeMoney(apsdSales) + " / " + homeMoney(apsdBudget));
 
-        /* Submission donut */
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
         if(donut){
@@ -272,24 +244,14 @@ async function loadHomeSalesDashboard(dateOverride=""){
                 degrees + "deg 360deg)";
         }
 
-        /* Budget bar */
-        const budgetBar = document.getElementById("homeBudgetBar");
-        if(budgetBar){
-            budgetBar.style.width = Math.min(Math.max(budgetPerformance,0),100) + "%";
-        }
+        const subBar = document.getElementById("homeSubmissionBar");
+        if(subBar) subBar.style.width = Math.min(submissionPct,100) + "%";
 
-        console.log("HOME DASHBOARD FIX v3",{
-            date:homeSalesDate,
-            totalStores,
-            submittedStores,
-            pendingStores,
-            merchandiseSales,
-            totalCustomer,
-            apsdSales,
-            apsdBudget,
-            budgetPerformance,
-            totalRecord
-        });
+        const budgetBar = document.getElementById("homeBudgetBar");
+        if(budgetBar) budgetBar.style.width = Math.min(Math.max(budgetPerformance,0),100) + "%";
+
+        const label = document.getElementById("homeSalesLabel");
+        if(label) label.textContent = homeDisplayDate(homeSalesDate);
 
     }catch(err){
         console.error("Home Sales Dashboard:",err);
@@ -302,6 +264,8 @@ async function loadHomeSalesDashboard(dateOverride=""){
 }
 
 function initHomeSalesDashboard(){
+
+    /* Never call Daily Sales API before authentication. */
     const user = homeCurrentUser();
     if(!user || !user.username){
         return;
@@ -309,7 +273,7 @@ function initHomeSalesDashboard(){
 
     if(homeSalesDashboardInitialized){
         loadHomeSalesDashboard(
-            document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO()
+            homeNormalizeISO(document.getElementById("homeSalesDate")?.value || homeSalesDate || homeYesterdayISO())
         );
         return;
     }
@@ -319,36 +283,31 @@ function initHomeSalesDashboard(){
     const input = document.getElementById("homeSalesDate");
     const refresh = document.getElementById("homeRefreshSales");
 
-    /* Keep only the browser's functional calendar icon. */
-    const decorativeCalendar = document.querySelector(".sa-date-control > i:first-child");
-    if(decorativeCalendar){
-        decorativeCalendar.style.display = "none";
-    }
-
     if(input){
-        /* IMPORTANT: default is always yesterday in Malaysia. */
+        // Always initialise to the Malaysia business date (yesterday).
         homeSalesDate = homeYesterdayISO();
         input.value = homeSalesDate;
 
         input.addEventListener("change",()=>{
-            const selectedDate = input.value;
-            if(selectedDate){
-                homeSalesDate = selectedDate;
-                loadHomeSalesDashboard(selectedDate);
-            }
+            const selectedDate = homeNormalizeISO(input.value);
+            if(!selectedDate) return;
+
+            // Update the selected date immediately so every dashboard label
+            // follows the date selected by the user.
+            homeSalesDate = selectedDate;
+            homeSetDashboardDate(selectedDate);
+            homeSetText("homeSalesLabel", homeDisplayDate(selectedDate));
+            homeSetText("homeBusinessDate", homeDisplayDate(selectedDate));
+
+            loadHomeSalesDashboard(selectedDate);
         });
-    }else{
-        homeSalesDate = homeYesterdayISO();
     }
 
     if(refresh){
         refresh.addEventListener("click",()=>{
             const selectedDate =
-                document.getElementById("homeSalesDate")?.value ||
-                homeSalesDate ||
-                homeYesterdayISO();
-
-            homeSalesDate = selectedDate;
+                homeNormalizeISO(document.getElementById("homeSalesDate")?.value ||
+                homeSalesDate || homeYesterdayISO());
             loadHomeSalesDashboard(selectedDate);
         });
     }
@@ -356,7 +315,12 @@ function initHomeSalesDashboard(){
     homeResetDashboard();
     homeSetGreeting();
 
+    // Delay one tick so the Daily Sales module functions are fully available.
     setTimeout(()=>{
-        loadHomeSalesDashboard(homeSalesDate || homeYesterdayISO());
+        const dashboardDate = homeNormalizeISO(
+            homeSalesDate || homeYesterdayISO()
+        );
+        loadHomeSalesDashboard(dashboardDate);
     },0);
 }
+
