@@ -106,7 +106,9 @@
             <div class="sa-header-actions">
 
                 <div class="sa-date-control">
-                    <input type="date" id="homeSalesDate" aria-label="Business Date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <input type="date" id="homeSalesDate">
+                    <i class="fa-solid fa-chevron-down sa-date-arrow"></i>
                 </div>
 
                 <button type="button"
@@ -115,14 +117,6 @@
                         title="Refresh">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
-
-                <div class="sa-user-control">
-                    <div class="sa-user-icon">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <span data-user-name-display>AHMAD MARZUKI BIN AHMAD ASRI</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </div>
 
             </div>
 
@@ -631,24 +625,33 @@
 .sa-date-control{
     height:52px;
     min-width:198px;
-    padding:0 13px;
+    padding:0 15px;
     display:flex;
     align-items:center;
+    gap:10px;
     border:1px solid var(--sa-border);
     border-radius:13px;
     background:#fff;
 }
 
+.sa-date-control > i:first-child{
+    color:#111827;
+    font-size:17px;
+}
+
 .sa-date-control input{
     width:100%;
-    min-width:0;
     border:0;
     outline:0;
     background:transparent;
     color:var(--sa-text);
     font-size:13px;
     font-weight:800;
-    font-family:Arial,Helvetica,sans-serif;
+}
+
+.sa-date-arrow{
+    color:#111827;
+    font-size:11px;
 }
 
 .sa-refresh{
@@ -1311,6 +1314,10 @@
         padding:0 9px;
     }
 
+    .sa-date-arrow{
+        display:none;
+    }
+
     .sa-kpi-grid{
         grid-template-columns:1fr;
     }
@@ -1334,6 +1341,45 @@
         opacity:.7;
     }
 }
+
+/* =========================================================
+   DASHBOARD LOCK — ONLY REQUESTED VISUAL FIXES
+   DO NOT CHANGE DASHBOARD STRUCTURE / DATA / API
+   ========================================================= */
+
+/* Remove duplicate user name from the inner Dashboard header.
+   The main Store Apps header remains the single user display. */
+.sa-dashboard-lock .sa-header-actions .sa-user-control{
+    display:none !important;
+}
+
+/* Smaller KPI icons — restore compact card proportions. */
+.sa-dashboard-lock .sa-kpi-icon{
+    width:46px;
+    height:46px;
+    min-width:46px;
+    border-radius:12px;
+    font-size:19px;
+}
+
+/* Smaller greeting typography. */
+.sa-dashboard-lock .sa-welcome h2{
+    font-size:22px;
+    line-height:1.22;
+    margin:7px 0 8px;
+}
+
+/* Keep submission status aligned cleanly with its counts. */
+.sa-dashboard-lock .sa-submission-status{
+    margin-top:14px;
+    gap:8px;
+}
+
+.sa-dashboard-lock .sa-submission-status span{
+    min-height:18px;
+    align-items:center;
+}
+
 </style>
 
 
