@@ -253,51 +253,95 @@
         var result = {};
         var found = 0;
 
-        // Ignore header rows and use the right-most amount in each PSA row.
-        LABELS.forEach(function (label) {
-            var best = null;
-            rows.forEach(function (row) {
-                var idx = findLabel(row, label);
-                if (idx < 0) return;
-                var rowText = normalizeText(row.text);
-                // Never let "Alcoholic" match the Tobacco/Alcoholic row.
-                if (label.key === 'alcoholic' && rowText.indexOf('tobacco') >= 0) return;
-                // Never let Services match Food Service.
-                if (label.key === 'services' && rowText.indexOf('food service') >= 0) return;
-                var amount = extractRowAmount(row, 0.45);
-                if (amount === null) return;
-                var labelX = centerX(row.words[idx]);
-                if (!best || Math.abs(centerX(row.words.filter(function(w){return isMoneyToken(w.text);}).slice(-1)[0] || row.words[idx]) - labelX) > 0) {
-                    best = { amount: amount, y: row.y };
-                }
-            });
-            if (best) {
-                result[label.key] = best.amount;
-                found++;
+        /*
+         * OEOD PSA parser:
+         * IMPORTANT: classify the WHOLE row before matching short labels.
+         * This prevents:
+         *   "Food Service" -> Food
+         *   "Tobacco/Alcoholic" -> Alcoholic
+         * and makes Services independent from Food Service.
+         */
+        function rowLabel(row) {
+            var raw = normalizeText(row.text)
+                .replace(/[|]/g, 'i')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            // OCR clean-up for common camera errors.
+            raw = raw
+                .replace(/\bfood\s+senice\b/g, 'food service')
+                .replace(/\bfood\s+servlce\b/g, 'food service')
+                .replace(/\bfood\s+seruice\b/g, 'food service')
+                .replace(/\bservlces\b/g, 'services')
+                .replace(/\bservlce\b/g, 'service')
+                .replace(/\bseruice\b/g, 'service')
+                .replace(/\baicoholic\b/g, 'alcoholic')
+                .replace(/\balcohollc\b/g, 'alcoholic')
+                .replace(/\bbeuerage\b/g, 'beverage')
+                .replace(/\bgenerai\b/g, 'general')
+                .replace(/\bmerchandlse\b/g, 'merchandise');
+
+            /*
+             * Longest / most specific labels FIRST.
+             * Never classify a row as Food or Alcoholic if it contains
+             * the longer combined label.
+             */
+            if (/\bfood\s+service\b/.test(raw)) return 'foodService';
+            if (/\btobacco\s*\/?\s*alcoholic\b/.test(raw) ||
+                /\btobacco\s+alcoholic\b/.test(raw)) return 'tobacco';
+            if (/\bgeneral\s+merchandise\b/.test(raw)) return 'generalMerchandise';
+            if (/\bservices\b/.test(raw) || /\bservice\b/.test(raw)) return 'services';
+            if (/\bbeverage(?:s)?\b/.test(raw)) return 'beverage';
+            if (/\bfood\b/.test(raw)) return 'food';
+            if (/\balcoholic\b/.test(raw)) return 'alcoholic';
+            if (/\bsupply\b/.test(raw)) return 'supply';
+            return null;
+        }
+
+        rows.forEach(function (row) {
+            var key = rowLabel(row);
+            if (!key) return;
+
+            var amount = extractRowAmount(row, 0.45);
+            if (amount == null) return;
+
+            // One row = one PSA. Keep the first valid occurrence.
+            if (result[key] == null) {
+                result[key] = amount;
             }
         });
 
-        // Total Gross Sales / Total: select the right-most money value on the Total Gross Sales row.
+        // Total Gross Sales (Incl.GST): right-most amount on the total row.
         rows.forEach(function (row) {
             var text = normalizeText(row.text).replace(/\s+/g, ' ');
-            if (text.indexOf('total gross sales') >= 0 || (text.indexOf('gross sales') >= 0 && text.indexOf('incl') >= 0)) {
+            if (text.indexOf('total gross sales') >= 0 ||
+                (text.indexOf('gross sales') >= 0 && text.indexOf('incl') >= 0)) {
                 var amount = extractRowAmount(row, 0.45);
                 if (amount !== null) result.totalSales = amount;
             }
         });
 
+        // Fallback for OCR variations of the total row.
         if (result.totalSales == null) {
-            // Fallback: choose the largest right-most money on rows containing "total" and "sales".
             rows.forEach(function (row) {
                 var t = normalizeText(row.text);
                 if (t.indexOf('total') >= 0 && t.indexOf('sales') >= 0) {
                     var a = extractRowAmount(row, 0.45);
-                    if (a !== null) result.totalSales = a;
+                    if (a !== null) {
+                        if (result.totalSales == null || a > result.totalSales) {
+                            result.totalSales = a;
+                        }
+                    }
                 }
             });
         }
 
-        return { result: result, found: found + (result.totalSales != null ? 1 : 0) };
+        // Count only fields actually present in the document.
+        Object.keys(result).forEach(function (k) {
+            if (result[k] != null) found++;
+        });
+
+        return { result: result, found: found };
     }
 
     function setField(id, value, overwrite) {
