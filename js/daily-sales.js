@@ -1287,17 +1287,10 @@ async function dsSave() {
             return;
         }
 
-        /*
-         * SAVE SUCCESS + SHARE REPORT
-         * Existing API/database save flow remains unchanged.
-         */
+        // Capture the saved values before closing the form.
         const savedReport = dsBuildShareReport();
 
-        await dsShowSaveSuccess(
-            response.message ||
-            "Daily Sales saved successfully.",
-            savedReport
-        );
+        await dsShowSaveSuccessDialog(savedReport);
 
         dsCloseForm();
 
@@ -1326,44 +1319,135 @@ async function dsSave() {
 
 
 /* ==========================================
+   SAVE SUCCESS + SHARE REPORT
+   LOCKED DAILY SALES CORE
+========================================== */
+
+function dsFormatAmount(value) {
+
+    const n = Number(value);
+
+    return Number.isFinite(n)
+        ? n.toLocaleString("en-MY", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })
+        : "0.00";
+}
+
+function dsBuildShareReport() {
+
+    const storeNo = dsGet("dsStoreNo");
+    const storeName = dsGet("dsStoreName");
+    const operatingHour = dsGet("dsOperatingHour");
+    const openingDate = dsGet("dsOpeningDate");
+    const businessDate = dsGet("dsBusinessDate");
+    const totalSales = dsNum("dsTotalSales");
+    const budgetSales = dsNum("dsBudgetSales");
+    const merchandise = dsNum("dsTotalMerchandiseSales");
+    const services = dsNum("dsServices");
+    const food = dsNum("dsFood");
+    const beverage = dsNum("dsBeverage");
+    const generalMerchandise = dsNum("dsGeneralMerchandise");
+    const tobacco = dsNum("dsTobacco");
+    const supply = dsNum("dsSupply");
+    const foodService = dsNum("dsFoodService");
+    const alcoholic = dsNum("dsAlcoholic");
+    const customer = dsNum("dsTotalCustomer");
+    const transactionSize = dsNum("dsTransactionSize");
+    const percentage = dsNum("dsPercentage");
+
+    const displayStore = storeNo
+        ? `#${String(storeNo).replace(/^#/, "")} ${storeName}`.trim()
+        : storeName;
+
+    return [
+        `Store No : *${displayStore}*`,
+        `Operating Hour : *${operatingHour}*`,
+        `Reopening Date : *${openingDate}*`,
+        "",
+        `Business Date : *${businessDate}*`,
+        `Total Sales : *RM${dsFormatAmount(totalSales)}*`,
+        `Budget Sales : *RM${dsFormatAmount(budgetSales)}*`,
+        `Total Merchandise Sales : *RM${dsFormatAmount(merchandise)}*`,
+        "",
+        "Breakdown by PSA :",
+        `Services : ${dsFormatAmount(services)}`,
+        `Food : ${dsFormatAmount(food)}`,
+        `Beverages : ${dsFormatAmount(beverage)}`,
+        `General Merchandise : ${dsFormatAmount(generalMerchandise)}`,
+        `Tobacco/Alcoholic : ${dsFormatAmount(tobacco)}`,
+        `Supply : ${dsFormatAmount(supply)}`,
+        `Food Service : ${dsFormatAmount(foodService)} *(${percentage.toFixed(2)}%)*`,
+        `Alcoholic : ${dsFormatAmount(alcoholic)}`,
+        "",
+        `Total Customer : ${customer.toLocaleString("en-MY")}`,
+        `Transaction Size : ${transactionSize.toFixed(2)}`
+    ].join("\\n");
+}
+
+async function dsShareReport(report) {
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: "Daily Sales Report",
+                text: report
+            });
+            return;
+        }
+    } catch (error) {
+        if (error && error.name === "AbortError") return;
+        console.warn("Native share unavailable:", error);
+    }
+
+    const whatsappUrl =
+        "https://wa.me/?text=" + encodeURIComponent(report);
+
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+}
+
+async function dsShowSaveSuccessDialog(report) {
+
+    if (typeof Swal !== "undefined") {
+
+        const result = await Swal.fire({
+            icon: "success",
+            title: "Save Successfully",
+            text: "Daily Sales has been saved successfully.",
+            showCancelButton: true,
+            confirmButtonText: "OK",
+            cancelButtonText: "Share Report",
+            reverseButtons: true,
+            allowOutsideClick: false
+        });
+
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            await dsShareReport(report);
+        }
+
+        return;
+    }
+
+    const share = window.confirm(
+        "Save Successfully\\n\\nPress OK to continue, or Cancel to Share Report."
+    );
+
+    if (!share) {
+        await dsShareReport(report);
+    }
+}
+
+/* ==========================================
    CALCULATIONS
 ========================================== */
 
 function dsCalculate() {
 
-    /*
-     * Total Merchandise Sales =
-     * Total Sales - Services
-     *
-     * Total Customer remains manual.
-     */
-    const totalSales =
-        dsNum("dsTotalSales");
-
-    const services =
-        dsNum("dsServices");
-
-    const hasSourceValues =
-        dsGet("dsTotalSales") !== "" ||
-        dsGet("dsServices") !== "";
-
-    if (hasSourceValues) {
-        dsSet(
-            "dsTotalMerchandiseSales",
-            Math.max(
-                0,
-                totalSales - services
-            ).toFixed(2)
-        );
-    }
-
     const totalMerchandiseSales =
-        hasSourceValues
-            ? Math.max(
-                0,
-                totalSales - services
-            )
-            : dsNum("dsTotalMerchandiseSales");
+        dsNum(
+            "dsTotalMerchandiseSales"
+        );
 
     const customers =
         dsNum(
@@ -1897,194 +1981,6 @@ function dsAttr(value) {
 }
 
 
-
-/* ==========================================
-   SAVE SUCCESS + SHARE REPORT
-========================================== */
-
-function dsFormatShareMoney(value) {
-
-    const number =
-        Number(
-            String(value ?? "")
-                .replace(/,/g, "")
-                .replace(/[^\d.-]/g, "")
-        );
-
-    if (!Number.isFinite(number)) {
-        return "0.00";
-    }
-
-    return number.toLocaleString(
-        "en-MY",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    );
-}
-
-
-function dsBuildShareReport() {
-
-    const storeNo = dsGet("dsStoreNo");
-    const storeName = dsGet("dsStoreName");
-    const operatingHour = dsGet("dsOperatingHour");
-    const openingDate = dsGet("dsOpeningDate");
-    const businessDate = dsGet("dsBusinessDate");
-
-    const totalSales = dsNum("dsTotalSales");
-    const budgetSales = dsNum("dsBudgetSales");
-    const services = dsNum("dsServices");
-    const food = dsNum("dsFood");
-    const beverage = dsNum("dsBeverage");
-    const generalMerchandise = dsNum("dsGeneralMerchandise");
-    const tobacco = dsNum("dsTobacco");
-    const supply = dsNum("dsSupply");
-    const foodService = dsNum("dsFoodService");
-    const alcoholic = dsNum("dsAlcoholic");
-    const totalCustomer = dsNum("dsTotalCustomer");
-
-    const totalMerchandiseSales =
-        Math.max(0, totalSales - services);
-
-    const transactionSize =
-        totalCustomer > 0
-            ? totalMerchandiseSales / totalCustomer
-            : 0;
-
-    const foodServicePercentage =
-        totalMerchandiseSales > 0
-            ? (foodService / totalMerchandiseSales) * 100
-            : 0;
-
-    /*
-     * Exactly ONE blank line between sections.
-     */
-    return [
-        `Store No : *${storeNo} ${storeName}*`,
-        `Operating Hour : *${operatingHour}*`,
-        `Reopening Date : *${openingDate}*`,
-        "",
-        `Business Date : *${businessDate}*`,
-        `Total Sales : *RM${dsFormatShareMoney(totalSales)}*`,
-        `Budget Sales : *RM${dsFormatShareMoney(budgetSales)}*`,
-        `Total Merchandise Sales : *RM${dsFormatShareMoney(totalMerchandiseSales)}*`,
-        "",
-        "Breakdown by PSA :",
-        `Services : ${dsFormatShareMoney(services)}`,
-        `Food : ${dsFormatShareMoney(food)}`,
-        `Beverages : ${dsFormatShareMoney(beverage)}`,
-        `General Merchandise : ${dsFormatShareMoney(generalMerchandise)}`,
-        `Tobacco/Alcoholic : ${dsFormatShareMoney(tobacco)}`,
-        `Supply : ${dsFormatShareMoney(supply)}`,
-        `Food Service : ${dsFormatShareMoney(foodService)} *(${foodServicePercentage.toFixed(2)}%)*`,
-        `Alcoholic : ${dsFormatShareMoney(alcoholic)}`,
-        "",
-        `Total Customer : ${totalCustomer}`,
-        `Transaction Size : ${transactionSize.toFixed(2)}`
-    ].join("\n");
-}
-
-
-async function dsShareReport(reportText) {
-
-    const text = String(reportText || "").trim();
-
-    if (!text) return;
-
-    /*
-     * Use native Share on supported phones/tablets.
-     */
-    if (
-        typeof navigator !== "undefined" &&
-        typeof navigator.share === "function"
-    ) {
-        try {
-            await navigator.share({
-                title: "Daily Sales Report",
-                text: text
-            });
-            return;
-        } catch (error) {
-            if (
-                error &&
-                error.name === "AbortError"
-            ) {
-                return;
-            }
-        }
-    }
-
-    /*
-     * Desktop fallback: open WhatsApp Web with the report.
-     */
-    const whatsappUrl =
-        "https://wa.me/?text=" +
-        encodeURIComponent(text);
-
-    window.open(
-        whatsappUrl,
-        "_blank",
-        "noopener,noreferrer"
-    );
-}
-
-
-async function dsShowSaveSuccess(message, reportText) {
-
-    if (typeof Swal !== "undefined") {
-
-        const result =
-            await Swal.fire({
-
-                icon: "success",
-
-                title: "Save Successfully",
-
-                text:
-                    message ||
-                    "Daily Sales saved successfully.",
-
-                showCancelButton: true,
-
-                confirmButtonText: "Share Report",
-
-                cancelButtonText: "OK",
-
-                confirmButtonColor: "#198754",
-
-                cancelButtonColor: "#64748B",
-
-                reverseButtons: true,
-
-                allowOutsideClick: false,
-
-                allowEscapeKey: false
-
-            });
-
-        if (result.isConfirmed) {
-            await dsShareReport(reportText);
-        }
-
-        return result;
-    }
-
-    /*
-     * Basic browser fallback.
-     */
-    const share =
-        window.confirm(
-            "Save Successfully\n\nPress OK to Share Report."
-        );
-
-    if (share) {
-        await dsShareReport(reportText);
-    }
-}
-
-
 /* ==========================================
    ALERT
 ========================================== */
@@ -2166,7 +2062,6 @@ document.addEventListener(
             [
                 "dsTotalSales",
                 "dsTotalMerchandiseSales",
-                "dsServices",
                 "dsFoodService",
                 "dsTotalCustomer"
             ].includes(
