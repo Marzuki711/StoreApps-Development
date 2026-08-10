@@ -2,6 +2,7 @@
  * Store Apps - Home Sales Dashboard
  * Uses Daily Sales API only.
  * Default business date = Yesterday.
+ * FIX v2.0 - safe DOM updates (prevents null textContent errors).
  */
 
 let homeSalesDate = "";
@@ -114,6 +115,11 @@ function homeResetDashboard(){
     if(budget) budget.style.width="0%";
 }
 
+function homeSetText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = value == null ? "" : String(value);
+}
+
 async function loadHomeSalesDashboard(dateOverride=""){
 
     const authenticatedUser = homeCurrentUser();
@@ -190,22 +196,21 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const pendingStores = Math.max(totalStores - submittedStores,0);
 
-        document.getElementById("homeTotalSales").textContent = homeMoney(merchandiseSales);
-        document.getElementById("homeApsdSales").textContent = homeMoney(apsdSales);
-        document.getElementById("homeTotalCustomer").textContent = homeNumber(totalCustomer);
-        document.getElementById("homeApsdCustomer").textContent = homeNumber(apsdCustomer);
+        homeSetText("homeTotalSales", homeMoney(merchandiseSales));
+        homeSetText("homeApsdSales", homeMoney(apsdSales));
+        homeSetText("homeTotalCustomer", homeNumber(totalCustomer));
+        homeSetText("homeApsdCustomer", homeNumber(apsdCustomer));
 
-        document.getElementById("homeSubmittedStores").textContent = homeNumber(submittedStores);
-        document.getElementById("homeTotalStores").textContent = homeNumber(totalStores);
-        document.getElementById("homePendingStores").textContent = homeNumber(pendingStores);
-        document.getElementById("homeSubmissionPct").textContent = Math.round(submissionPct) + "%";
+        homeSetText("homeSubmittedStores", homeNumber(submittedStores));
+        homeSetText("homeTotalStores", homeNumber(totalStores));
+        homeSetText("homePendingStores", homeNumber(pendingStores));
+        homeSetText("homeSubmissionPct", Math.round(submissionPct) + "%");
 
-        document.getElementById("homeBusinessDate").textContent = homeDisplayDate(homeSalesDate);
-        document.getElementById("homeTotalRecord").textContent = homeNumber(totalRecord);
+        homeSetText("homeBusinessDate", homeDisplayDate(homeSalesDate));
+        homeSetText("homeTotalRecord", homeNumber(totalRecord));
 
-        document.getElementById("homeBudgetPct").textContent = homePercent(budgetPerformance);
-        document.getElementById("homeBudgetValues").textContent =
-            homeMoney(apsdSales) + " / " + homeMoney(apsdBudget);
+        homeSetText("homeBudgetPct", homePercent(budgetPerformance));
+        homeSetText("homeBudgetValues", homeMoney(apsdSales) + " / " + homeMoney(apsdBudget));
 
         const degrees = Math.min(Math.max(submissionPct,0),100) * 3.6;
         const donut = document.getElementById("homeSubmissionDonut");
@@ -243,11 +248,9 @@ function initHomeSalesDashboard(){
     }
 
     if(homeSalesDashboardInitialized){
-        const selectedDate =
-            document.getElementById("homeSalesDate")?.value ||
-            homeYesterdayISO();
-
-        loadHomeSalesDashboard(selectedDate);
+        loadHomeSalesDashboard(
+            document.getElementById("homeSalesDate")?.value || homeYesterdayISO()
+        );
         return;
     }
 
