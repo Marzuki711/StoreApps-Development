@@ -1287,21 +1287,15 @@ async function dsSave() {
             return;
         }
 
-        /*
-         * Keep the existing save flow intact.
-         * Only the post-save confirmation UI is enhanced here.
-         */
-        const savedReport =
-            dsBuildShareReport(data);
+        dsShowSuccess(
+            response.message ||
+            "Daily Sales saved successfully."
+        );
 
         dsCloseForm();
 
         await dsLoad(
             dsSelectedDate
-        );
-
-        await dsShowSavedDialog(
-            savedReport
         );
 
     } catch (error) {
@@ -1330,10 +1324,34 @@ async function dsSave() {
 
 function dsCalculate() {
 
-    const totalMerchandiseSales =
+    const totalSales =
         dsNum(
-            "dsTotalMerchandiseSales"
+            "dsTotalSales"
         );
+
+    const services =
+        dsNum(
+            "dsServices"
+        );
+
+    /*
+     * Total Merchandise Sales =
+     * Total Sales - Services
+     *
+     * This is now the single source of truth for the
+     * Total Merchandise Sales field. It is used by both
+     * manual entry and the Daily Sales OCR scan.
+     */
+    const totalMerchandiseSales =
+        Math.max(
+            0,
+            totalSales - services
+        );
+
+    dsSet(
+        "dsTotalMerchandiseSales",
+        totalMerchandiseSales.toFixed(2)
+    );
 
     const customers =
         dsNum(
@@ -1868,223 +1886,6 @@ function dsAttr(value) {
 
 
 /* ==========================================
-   SAVE SUCCESS / SHARE REPORT
-========================================== */
-
-function dsFormatReportDate(value) {
-
-    const text =
-        String(value || "").trim();
-
-    const match =
-        text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-    if (match) {
-        return `${match[3]}/${match[2]}/${match[1]}`;
-    }
-
-    return text;
-}
-
-
-function dsFormatReportStoreNo(value) {
-
-    const text =
-        String(value || "").trim();
-
-    if (!text) {
-        return "";
-    }
-
-    return text.startsWith("#")
-        ? text
-        : `#${text}`;
-}
-
-
-function dsBuildShareReport(data) {
-
-    const storeNo =
-        dsFormatReportStoreNo(
-            data.storeNo
-        );
-
-    const storeName =
-        dsGet("dsStoreName");
-
-    const operatingHour =
-        dsGet("dsOperatingHour");
-
-    const openingDate =
-        dsGet("dsOpeningDate");
-
-    const businessDate =
-        dsFormatReportDate(
-            data.businessDate
-        );
-
-    const totalSales =
-        dsMoney(data.totalSales);
-
-    const budgetSales =
-        dsMoney(
-            dsGet("dsBudgetSales")
-        );
-
-    const totalMerchandiseSales =
-        dsMoney(
-            data.totalMerchandiseSales
-        );
-
-    const totalCustomer =
-        Number(data.totalCustomer) || 0;
-
-    const transactionSize =
-        data.totalCustomer > 0
-            ? Number(data.totalMerchandiseSales) /
-              totalCustomer
-            : 0;
-
-    const foodServicePercentage =
-        Number(data.totalMerchandiseSales) > 0
-            ? (
-                Number(data.foodService) /
-                Number(data.totalMerchandiseSales)
-            ) * 100
-            : 0;
-
-    const moneyPlain = function(value) {
-        return dsMoney(value) || "0.00";
-    };
-
-    const report =
-`Store No : *${storeNo} ${storeName}*
-Operating Hour : *${operatingHour}*
-Reopening Date : *${openingDate}*
-
-Business Date : *${businessDate}*
-Total Sales : *RM${totalSales}*
-Budget Sales : *RM${budgetSales}*
-Total Merchandise Sales : *RM${totalMerchandiseSales}*
-
-Breakdown by PSA :
-
-1. Services : ${moneyPlain(data.services)}
-2. Food : ${moneyPlain(data.food)}
-3. Beverages : ${moneyPlain(data.beverage)}
-4. General Merchandise : ${moneyPlain(data.generalMerchandise)}
-5. Tobacco/Alcoholic : ${moneyPlain(data.tobacco)}
-6. Supply : ${moneyPlain(data.supply)}
-7. Food Service : ${moneyPlain(data.foodService)} *(${foodServicePercentage.toFixed(2)}%)*
-8. Alcoholic : ${moneyPlain(data.alcoholic)}
-
-Total Customer : ${totalCustomer.toLocaleString("en-MY")}
-Transaction Size : ${transactionSize.toFixed(2)}`;
-
-    return report;
-}
-
-
-async function dsShareReport(report) {
-
-    const text =
-        String(report || "").trim();
-
-    if (!text) {
-        return;
-    }
-
-    /*
-     * Prefer the device/browser native Share dialog.
-     * This keeps the report available to WhatsApp and
-     * other installed sharing apps on supported devices.
-     */
-    if (
-        typeof navigator !== "undefined" &&
-        typeof navigator.share === "function"
-    ) {
-        try {
-            await navigator.share({
-                text: text
-            });
-
-            return;
-
-        } catch (error) {
-
-            /*
-             * User cancellation is not an error that should
-             * interrupt the Daily Sales workflow.
-             */
-            if (
-                error &&
-                error.name === "AbortError"
-            ) {
-                return;
-            }
-        }
-    }
-
-    /*
-     * Desktop/fallback: open WhatsApp Web with the report
-     * pre-filled. The existing saved data is not changed.
-     */
-    const whatsappUrl =
-        "https://wa.me/?text=" +
-        encodeURIComponent(text);
-
-    window.open(
-        whatsappUrl,
-        "_blank",
-        "noopener,noreferrer"
-    );
-}
-
-
-async function dsShowSavedDialog(report) {
-
-    if (
-        typeof Swal === "undefined"
-    ) {
-        dsShowSuccess(
-            "Save Successfully"
-        );
-        return;
-    }
-
-    const result =
-        await Swal.fire({
-
-            icon: "success",
-
-            title: "Save Successfully",
-
-            text: "Daily Sales has been saved successfully.",
-
-            showDenyButton: true,
-
-            confirmButtonText: "OK",
-
-            denyButtonText: "Share Report",
-
-            reverseButtons: false,
-
-            confirmButtonColor: "#198754",
-
-            denyButtonColor: "#C1121F",
-
-            allowOutsideClick: false,
-
-            allowEscapeKey: true
-        });
-
-    if (result?.isDenied) {
-        await dsShareReport(report);
-    }
-}
-
-
-/* ==========================================
    ALERT
 ========================================== */
 
@@ -2165,6 +1966,7 @@ document.addEventListener(
             [
                 "dsTotalSales",
                 "dsTotalMerchandiseSales",
+                "dsServices",
                 "dsFoodService",
                 "dsTotalCustomer"
             ].includes(
