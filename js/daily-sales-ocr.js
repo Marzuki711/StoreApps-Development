@@ -4,7 +4,8 @@
 
    OCR is isolated from Daily Sales API / Save / Database logic.
    - Keeps ONE Scan / Take Picture button (the first/top button).
-   - Keeps the Reading document / Scan complete status.
+   - Keeps the Reading document / Scan complete status below the button.
+   - Scan button opens a small menu: Gallery Picture / Camera Picture.
    - Supply defaults to 0.00 when not present, but remains editable.
    - Total Merchandise Sales remains editable. OCR only calculates it
      when the field is empty.
@@ -18,6 +19,8 @@
 
     let tesseractPromise = null;
     let observerStarted = false;
+    let outsideClickBound = false;
+    let menuOpen = false;
 
     const FIELD_MAP = [
         { key: "services", id: "dsServices", labels: ["services", "service"] },
@@ -94,37 +97,35 @@
         mainButton.onclick = openDailySalesScanner;
         mainButton.removeAttribute("disabled");
 
-        let fileInput = $("dsOcrFileInput");
-        if (!fileInput) {
-            fileInput = document.createElement("input");
-            fileInput.id = "dsOcrFileInput";
-            fileInput.type = "file";
-            fileInput.accept = "image/*";
-            fileInput.setAttribute("capture", "environment");
-            fileInput.style.display = "none";
-            document.body.appendChild(fileInput);
+        // Two separate pickers:
+        // - Gallery: normal image picker
+        // - Camera: mobile camera (capture=environment)
+        let galleryInput = $("dsOcrGalleryInput");
+        if (!galleryInput) {
+            galleryInput = document.createElement("input");
+            galleryInput.id = "dsOcrGalleryInput";
+            galleryInput.type = "file";
+            galleryInput.accept = "image/*";
+            galleryInput.style.display = "none";
+            document.body.appendChild(galleryInput);
         }
 
-        fileInput.onchange = handleFile;
-
-        // Keep status OUTSIDE the button so the button never changes size or moves.
-        let status = $("dsOcrStatus");
-        if (!status) {
-            status = document.createElement("div");
-            status.id = "dsOcrStatus";
-            status.style.cssText = [
-                "margin-top:5px",
-                "min-height:18px",
-                "font-size:12px",
-                "line-height:18px",
-                "font-weight:500",
-                "opacity:.82",
-                "text-align:left",
-                "display:block"
-            ].join(";");
-            // Place status directly below the single scan button.
-            mainButton.parentElement?.appendChild(status);
+        let cameraInput = $("dsOcrCameraInput");
+        if (!cameraInput) {
+            cameraInput = document.createElement("input");
+            cameraInput.id = "dsOcrCameraInput";
+            cameraInput.type = "file";
+            cameraInput.accept = "image/*";
+            cameraInput.setAttribute("capture", "environment");
+            cameraInput.style.display = "none";
+            document.body.appendChild(cameraInput);
         }
+
+        galleryInput.onchange = handleFile;
+        cameraInput.onchange = handleFile;
+
+        ensureScanMenu(mainButton);
+        ensureStatus(mainButton);
 
         // Supply is always usable manually and starts at 0.00 when blank.
         const supply = $("dsSupply");
@@ -145,17 +146,189 @@
         return true;
     }
 
-    function setStatus(message, busy) {
-        const status = $("dsOcrStatus");
-        if (status) {
-            status.textContent = message || "";
-            status.setAttribute("aria-live", "polite");
+    function ensureStatus(mainButton) {
+        let status = $("dsOcrStatus");
+        if (!status) {
+            status = document.createElement("div");
+            status.id = "dsOcrStatus";
+            document.body.appendChild(status);
         }
 
-        const buttons = getScanButtons();
-        const button = buttons[0];
+        // Position the status below the button without taking up layout space.
+        status.style.cssText = [
+            "position:fixed",
+            "display:none",
+            "z-index:2147483000",
+            "width:260px",
+            "max-width:calc(100vw - 24px)",
+            "box-sizing:border-box",
+            "font-size:11px",
+            "line-height:16px",
+            "font-weight:500",
+            "color:#64748B",
+            "text-align:left",
+            "white-space:nowrap",
+            "overflow:hidden",
+            "text-overflow:ellipsis",
+            "pointer-events:none",
+            "background:transparent",
+            "margin:0",
+            "padding:2px 0"
+        ].join(";");
+
+        positionFloatingElement(status, mainButton, 4);
+    }
+
+    function ensureScanMenu(mainButton) {
+        let menu = $("dsOcrScanMenu");
+
+        if (!menu) {
+            menu = document.createElement("div");
+            menu.id = "dsOcrScanMenu";
+            menu.innerHTML = `
+                <button type="button" data-ocr-source="gallery">
+                    <span aria-hidden="true">🖼️</span>
+                    <span>Gallery Picture</span>
+                </button>
+                <button type="button" data-ocr-source="camera">
+                    <span aria-hidden="true">📷</span>
+                    <span>Camera Picture</span>
+                </button>
+            `;
+            document.body.appendChild(menu);
+
+            menu.querySelectorAll("button").forEach(btn => {
+                btn.style.cssText = [
+                    "width:100%",
+                    "display:flex",
+                    "align-items:center",
+                    "gap:10px",
+                    "border:0",
+                    "background:#fff",
+                    "color:#172033",
+                    "padding:11px 14px",
+                    "font-size:13px",
+                    "font-weight:600",
+                    "text-align:left",
+                    "cursor:pointer",
+                    "box-sizing:border-box"
+                ].join(";");
+                btn.addEventListener("mouseenter", () => {
+                    btn.style.background = "#F1F5F9";
+                });
+                btn.addEventListener("mouseleave", () => {
+                    btn.style.background = "#fff";
+                });
+                btn.addEventListener("click", () => {
+                    const source = btn.getAttribute("data-ocr-source");
+                    closeScanMenu();
+                    startFilePicker(source);
+                });
+            });
+        }
+
+        menu.style.position = "fixed";
+        menu.style.zIndex = "2147482999";
+        menu.style.width = "210px";
+        menu.style.maxWidth = "calc(100vw - 24px)";
+        menu.style.background = "#fff";
+        menu.style.border = "1px solid #CBD5E1";
+        menu.style.borderRadius = "10px";
+        menu.style.boxShadow = "0 10px 28px rgba(15,23,42,.16)";
+        menu.style.overflow = "hidden";
+        menu.style.display = "none";
+
+        positionFloatingElement(menu, mainButton, 6);
+
+        if (!outsideClickBound) {
+            outsideClickBound = true;
+            document.addEventListener("click", function (event) {
+                const button = getScanButtons()[0];
+                const menuEl = $("dsOcrScanMenu");
+                if (!menuEl || !menuOpen) return;
+                if (event.target === button || menuEl.contains(event.target)) return;
+                closeScanMenu();
+            }, true);
+
+            window.addEventListener("resize", () => {
+                const button = getScanButtons()[0];
+                if (!button) return;
+                if (menuOpen) positionFloatingElement($("dsOcrScanMenu"), button, 6);
+                const status = $("dsOcrStatus");
+                if (status) positionFloatingElement(status, button, 4);
+            });
+
+            window.addEventListener("scroll", () => {
+                const button = getScanButtons()[0];
+                if (!button) return;
+                if (menuOpen) positionFloatingElement($("dsOcrScanMenu"), button, 6);
+                const status = $("dsOcrStatus");
+                if (status && status.style.display !== "none") {
+                    positionFloatingElement(status, button, 4);
+                }
+            }, true);
+        }
+    }
+
+    function positionFloatingElement(element, anchor, gap) {
+        if (!element || !anchor) return;
+
+        const rect = anchor.getBoundingClientRect();
+        const width = element.offsetWidth || parseFloat(getComputedStyle(element).width) || 210;
+        const viewportPadding = 12;
+
+        let left = rect.left;
+        if (left + width > window.innerWidth - viewportPadding) {
+            left = window.innerWidth - width - viewportPadding;
+        }
+        left = Math.max(viewportPadding, left);
+
+        element.style.left = `${Math.round(left)}px`;
+        element.style.top = `${Math.round(rect.bottom + gap)}px`;
+    }
+
+    function toggleScanMenu() {
+        const menu = $("dsOcrScanMenu");
+        const button = getScanButtons()[0];
+        if (!menu || !button) return;
+
+        menuOpen = !menuOpen;
+        if (menuOpen) {
+            positionFloatingElement(menu, button, 6);
+            menu.style.display = "block";
+        } else {
+            menu.style.display = "none";
+        }
+    }
+
+    function closeScanMenu() {
+        const menu = $("dsOcrScanMenu");
+        menuOpen = false;
+        if (menu) menu.style.display = "none";
+    }
+
+    function startFilePicker(source) {
+        const input =
+            source === "camera"
+                ? $("dsOcrCameraInput")
+                : $("dsOcrGalleryInput");
+
+        if (input) input.click();
+    }
+
+    function setStatus(message, busy) {
+        const status = $("dsOcrStatus");
+        const button = getScanButtons()[0];
+
+        if (status && button) {
+            status.textContent = message || "";
+            status.style.display = message ? "block" : "none";
+            status.setAttribute("aria-live", "polite");
+            positionFloatingElement(status, button, 4);
+        }
+
         if (button) {
-            // Never replace button HTML/text. This keeps the button fixed in place.
+            // Never replace button HTML/text. The button remains fixed.
             button.disabled = !!busy;
             button.setAttribute("aria-busy", busy ? "true" : "false");
         }
@@ -163,8 +336,7 @@
 
     function openDailySalesScanner() {
         ensureScannerControls();
-        const input = $("dsOcrFileInput");
-        if (input) input.click();
+        toggleScanMenu();
     }
 
     async function handleFile(event) {
@@ -172,6 +344,7 @@
         event.target.value = "";
         if (!file) return;
 
+        closeScanMenu();
         setStatus("Reading document...", true);
 
         try {
