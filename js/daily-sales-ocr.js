@@ -1,580 +1,528 @@
 /*
  * Store Apps - Daily Sales OCR
- *
- * LOCKED CORE SAFE MODULE
- * - Does not modify Daily Sales API / save flow.
- * - Adds Scan / Take Picture only.
- * - OCR is targeted to OEOD PSA Report layout.
+ * ADDITIVE MODULE ONLY
+ * Does not modify Daily Sales API, save, search, validation or database logic.
  */
 (function () {
-    'use strict';
+    "use strict";
 
-    var OCR_SCRIPT_ID = 'dsTesseractScript';
-    var OCR_SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js';
-    var CONTROL_ID = 'dsOcrControl';
-    var MENU_ID = 'dsOcrMenu';
-    var STATUS_ID = 'dsOcrStatus';
-    var GALLERY_ID = 'dsOcrGalleryInput';
-    var CAMERA_ID = 'dsOcrCameraInput';
-
-    var FIELDS = {
-        totalSales: 'dsTotalSales',
-        merchandise: 'dsTotalMerchandiseSales',
-        services: 'dsServices',
-        food: 'dsFood',
-        beverage: 'dsBeverage',
-        generalMerchandise: 'dsGeneralMerchandise',
-        tobacco: 'dsTobacco',
-        supply: 'dsSupply',
-        foodService: 'dsFoodService',
-        alcoholic: 'dsAlcoholic'
+    const OCR_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    const IDS = {
+        totalSales: "dsTotalSales",
+        merch: "dsTotalMerchandiseSales",
+        services: "dsServices",
+        food: "dsFood",
+        beverage: "dsBeverage",
+        general: "dsGeneralMerchandise",
+        tobacco: "dsTobacco",
+        supply: "dsSupply",
+        foodService: "dsFoodService",
+        alcoholic: "dsAlcoholic"
     };
 
-    var LABELS = [
-        { key: 'generalMerchandise', variants: ['general merchandise', 'generai merchandise', 'general merchandlse'] },
-        { key: 'tobacco', variants: ['tobacco/alcoholic', 'tobacco alcoholic', 'tobacco/alcoholic'] },
-        { key: 'foodService', variants: ['food service', 'food senice', 'food servlce', 'food seruice'] },
-        { key: 'services', variants: ['services', 'service', 'servlces'] },
-        { key: 'beverage', variants: ['beverage', 'beverages'] },
-        { key: 'food', variants: ['food'] },
-        { key: 'alcoholic', variants: ['alcoholic', 'aicoholic', 'alcohollc'] }
-    ];
+    let ocrBusy = false;
+    let ocrStatusEl = null;
+    let galleryInput = null;
+    let cameraInput = null;
 
-    var state = {
-        ready: false,
-        processing: false,
-        observer: null
-    };
+    function el(id) { return document.getElementById(id); }
 
-    function byId(id) {
-        return document.getElementById(id);
+    function waitForElement(id, timeout = 20000) {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const timer = setInterval(() => {
+                const node = el(id);
+                if (node) {
+                    clearInterval(timer);
+                    resolve(node);
+                } else if (Date.now() - start > timeout) {
+                    clearInterval(timer);
+                    resolve(null);
+                }
+            }, 100);
+        });
     }
 
     function setStatus(text, busy) {
-        var el = byId(STATUS_ID);
-        if (!el) return;
-        el.textContent = text || '';
-        el.classList.toggle('is-busy', !!busy);
-        el.setAttribute('aria-live', 'polite');
+        if (!ocrStatusEl) return;
+        ocrStatusEl.textContent = text || "";
+        ocrStatusEl.style.display = text ? "block" : "none";
+        ocrStatusEl.style.minHeight = "18px";
+        ocrStatusEl.style.fontSize = "12px";
+        ocrStatusEl.style.lineHeight = "18px";
+        ocrStatusEl.style.fontWeight = "600";
+        ocrStatusEl.style.color = busy ? "#64748B" : "#475569";
     }
 
-    function normalizeText(value) {
-        return String(value || '')
-            .toLowerCase()
-            .replace(/[|]/g, 'i')
-            .replace(/[!]/g, 'l')
-            .replace(/[’']/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
+    function ensureEditable(id) {
+        const node = el(id);
+        if (!node) return;
+        node.readOnly = false;
+        node.disabled = false;
+        node.removeAttribute("readonly");
+        node.removeAttribute("disabled");
     }
 
-    function normalizeWord(value) {
-        var s = normalizeText(value)
-            .replace(/[^a-z0-9/]+/g, '');
-        var fixes = {
-            'generai': 'general',
-            'merchandlse': 'merchandise',
-            'merchandlise': 'merchandise',
-            'senice': 'service',
-            'servlce': 'service',
-            'servlces': 'services',
-            'seruice': 'service',
-            'aicoholic': 'alcoholic',
-            'alcohollc': 'alcoholic',
-            'beuerage': 'beverage',
-            'beverages': 'beverages'
+    function ensureMerchEditable() {
+        // Explicitly keep this field manually editable.
+        ensureEditable(IDS.merch);
+    }
+
+    function numberFromText(text) {
+        if (text == null) return null;
+        let s = String(text).trim()
+            .replace(/[Oo]/g, "0")
+            .replace(/[Il|]/g, "1")
+            .replace(/[Ss]/g, "5")
+            .replace(/\s/g, "");
+        // Keep the last plausible monetary number in a token.
+        const m = s.match(/-?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})|-?\d+(?:\.\d{1,2})?/g);
+        if (!m || !m.length) return null;
+        const v = Number(m[m.length - 1].replace(/,/g, ""));
+        return Number.isFinite(v) ? v : null;
+    }
+
+    function money(v) {
+        return Number(v || 0).toFixed(2);
+    }
+
+    function setValue(id, value, triggerCalc = false) {
+        const node = el(id);
+        if (!node || value == null || !Number.isFinite(Number(value))) return false;
+        node.value = money(value);
+        if (triggerCalc) {
+            try {
+                if (typeof calculateDailySales === "function") calculateDailySales();
+            } catch (_) {}
+        }
+        return true;
+    }
+
+    function fieldHasManualValue(id) {
+        const node = el(id);
+        return !!(node && String(node.value || "").trim() !== "");
+    }
+
+    function ensureInputs() {
+        Object.values(IDS).forEach(ensureEditable);
+        const supply = el(IDS.supply);
+        if (supply && String(supply.value || "").trim() === "") supply.value = "0.00";
+    }
+
+    function findScanButtons() {
+        return Array.from(document.querySelectorAll("button")).filter(btn => {
+            const t = String(btn.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+            return t.includes("scan / take picture") || t === "scan/take picture";
+        });
+    }
+
+    function ensureStatusAndButton() {
+        const buttons = findScanButtons();
+        if (!buttons.length) return false;
+
+        // Keep the first existing Scan button and hide duplicate scan buttons.
+        const main = buttons[0];
+        buttons.slice(1).forEach(b => { b.style.display = "none"; });
+        main.type = "button";
+        main.onclick = openDailySalesScanner;
+        main.style.position = "relative";
+
+        // Put status below the button, never beside it, so the button cannot move.
+        let wrap = main.parentElement;
+        if (!wrap) return true;
+        if (!wrap.dataset.ocrLayoutReady) {
+            wrap.dataset.ocrLayoutReady = "1";
+            wrap.style.display = "flex";
+            wrap.style.flexDirection = "column";
+            wrap.style.alignItems = "flex-start";
+            wrap.style.gap = "4px";
+        }
+
+        ocrStatusEl = wrap.querySelector("[data-ds-ocr-status]");
+        if (!ocrStatusEl) {
+            ocrStatusEl = document.createElement("div");
+            ocrStatusEl.setAttribute("data-ds-ocr-status", "1");
+            ocrStatusEl.style.minHeight = "18px";
+            ocrStatusEl.style.fontSize = "12px";
+            ocrStatusEl.style.lineHeight = "18px";
+            ocrStatusEl.style.fontWeight = "600";
+            ocrStatusEl.style.display = "none";
+            wrap.appendChild(ocrStatusEl);
+        }
+        return true;
+    }
+
+    function ensureFileInputs() {
+        if (!galleryInput) {
+            galleryInput = document.createElement("input");
+            galleryInput.type = "file";
+            galleryInput.accept = "image/*";
+            galleryInput.style.display = "none";
+            galleryInput.id = "dsOcrGalleryInput";
+            document.body.appendChild(galleryInput);
+            galleryInput.addEventListener("change", onFileSelected);
+        }
+        if (!cameraInput) {
+            cameraInput = document.createElement("input");
+            cameraInput.type = "file";
+            cameraInput.accept = "image/*";
+            cameraInput.setAttribute("capture", "environment");
+            cameraInput.style.display = "none";
+            cameraInput.id = "dsOcrCameraInput";
+            document.body.appendChild(cameraInput);
+            cameraInput.addEventListener("change", onFileSelected);
+        }
+    }
+
+    function buildChoiceMenu(anchor) {
+        let menu = document.getElementById("dsOcrChoiceMenu");
+        if (menu) menu.remove();
+
+        menu = document.createElement("div");
+        menu.id = "dsOcrChoiceMenu";
+        menu.style.position = "fixed";
+        menu.style.zIndex = "99999";
+        menu.style.background = "#fff";
+        menu.style.border = "1px solid #CBD5E1";
+        menu.style.borderRadius = "12px";
+        menu.style.boxShadow = "0 12px 30px rgba(15,23,42,.16)";
+        menu.style.padding = "6px";
+        menu.style.minWidth = "210px";
+
+        const rect = anchor.getBoundingClientRect();
+        menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 230)) + "px";
+        menu.style.top = Math.min(window.innerHeight - 110, rect.bottom + 6) + "px";
+
+        const add = (label, icon, action) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.innerHTML = `<i class="fa-solid ${icon}" style="width:20px"></i><span>${label}</span>`;
+            b.style.display = "flex";
+            b.style.alignItems = "center";
+            b.style.gap = "9px";
+            b.style.width = "100%";
+            b.style.border = "0";
+            b.style.background = "transparent";
+            b.style.padding = "11px 12px";
+            b.style.borderRadius = "8px";
+            b.style.cursor = "pointer";
+            b.style.textAlign = "left";
+            b.style.fontWeight = "700";
+            b.style.color = "#1E293B";
+            b.addEventListener("click", () => { menu.remove(); action(); });
+            menu.appendChild(b);
         };
-        return fixes[s] || s;
+
+        add("Gallery Picture", "fa-image", () => galleryInput.click());
+        add("Camera Picture", "fa-camera", () => cameraInput.click());
+
+        document.body.appendChild(menu);
+        setTimeout(() => {
+            const close = e => {
+                if (!menu.contains(e.target) && e.target !== anchor) {
+                    menu.remove(); document.removeEventListener("pointerdown", close);
+                }
+            };
+            document.addEventListener("pointerdown", close);
+        }, 0);
+    }
+
+    async function openDailySalesScanner(event) {
+        if (event) event.preventDefault();
+        if (ocrBusy) return;
+        ensureInputs();
+        ensureFileInputs();
+        const button = event?.currentTarget || findScanButtons()[0];
+        buildChoiceMenu(button || document.body);
+    }
+
+    window.openDailySalesScanner = openDailySalesScanner;
+
+    async function onFileSelected(e) {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = "";
+        if (!file || ocrBusy) return;
+        await runOCR(file);
     }
 
     function loadTesseract() {
         if (window.Tesseract) return Promise.resolve(window.Tesseract);
-        var existing = byId(OCR_SCRIPT_ID);
-        if (existing) {
-            return new Promise(function (resolve, reject) {
-                var tries = 0;
-                var timer = setInterval(function () {
-                    if (window.Tesseract) {
-                        clearInterval(timer);
-                        resolve(window.Tesseract);
-                    } else if (++tries > 100) {
-                        clearInterval(timer);
-                        reject(new Error('OCR library could not be loaded.'));
-                    }
-                }, 100);
-            });
-        }
-        return new Promise(function (resolve, reject) {
-            var script = document.createElement('script');
-            script.id = OCR_SCRIPT_ID;
-            script.src = OCR_SCRIPT_SRC;
-            script.async = true;
-            script.onload = function () {
-                if (window.Tesseract) resolve(window.Tesseract);
-                else reject(new Error('OCR library loaded but Tesseract is unavailable.'));
-            };
-            script.onerror = function () {
-                reject(new Error('Unable to load OCR library. Check internet connection.'));
-            };
-            document.head.appendChild(script);
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-ds-tesseract]');
+            if (existing) {
+                existing.addEventListener("load", () => resolve(window.Tesseract));
+                existing.addEventListener("error", reject);
+                return;
+            }
+            const s = document.createElement("script");
+            s.src = OCR_SRC;
+            s.async = true;
+            s.dataset.dsTesseract = "1";
+            s.onload = () => resolve(window.Tesseract);
+            s.onerror = () => reject(new Error("Unable to load OCR engine."));
+            document.head.appendChild(s);
         });
     }
 
-    function createEnhancedImage(file) {
-        return new Promise(function (resolve, reject) {
-            var img = new Image();
-            var url = URL.createObjectURL(file);
-            img.onload = function () {
-                try {
-                    var maxW = 2400;
-                    var scale = Math.min(2.2, maxW / img.naturalWidth);
-                    if (scale < 1) scale = 1;
-                    var canvas = document.createElement('canvas');
-                    canvas.width = Math.round(img.naturalWidth * scale);
-                    canvas.height = Math.round(img.naturalHeight * scale);
-                    var ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    for (var i = 0; i < data.data.length; i += 4) {
-                        var r = data.data[i], g = data.data[i + 1], b = data.data[i + 2];
-                        var gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-                        gray = gray < 150 ? Math.max(0, gray - 18) : Math.min(255, gray + 12);
-                        data.data[i] = data.data[i + 1] = data.data[i + 2] = gray;
-                    }
-                    ctx.putImageData(data, 0, 0);
-                    canvas.toBlob(function (blob) {
-                        URL.revokeObjectURL(url);
-                        if (!blob) reject(new Error('Unable to prepare image.'));
-                        else resolve(blob);
-                    }, 'image/png', 1);
-                } catch (e) {
-                    URL.revokeObjectURL(url);
-                    reject(e);
-                }
-            };
-            img.onerror = function () {
+    function preprocess(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
                 URL.revokeObjectURL(url);
-                reject(new Error('Unable to read selected image.'));
+                const maxW = 2600;
+                const scale = Math.min(3, Math.max(1.6, maxW / img.naturalWidth));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                const ctx = canvas.getContext("2d", { willReadFrequently: true });
+                ctx.imageSmoothingEnabled = true;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < data.data.length; i += 4) {
+                    const r = data.data[i], g = data.data[i + 1], b = data.data[i + 2];
+                    let gray = 0.299*r + 0.587*g + 0.114*b;
+                    gray = (gray - 128) * 1.35 + 128;
+                    gray = Math.max(0, Math.min(255, gray));
+                    data.data[i] = data.data[i+1] = data.data[i+2] = gray;
+                }
+                ctx.putImageData(data, 0, 0);
+                resolve(canvas);
             };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Unable to read image.")); };
             img.src = url;
         });
     }
 
-    function moneyValue(text) {
-        var s = String(text || '')
-            .replace(/[OQ]/g, '0')
-            .replace(/[Il]/g, '1')
-            .replace(/[Ss]/g, '5')
-            .replace(/\s/g, '')
-            .replace(/RM/gi, '');
-        var m = s.match(/-?\d{1,3}(?:,\d{3})*\.\d{2}|-?\d+\.\d{2}/);
-        if (!m) return null;
-        var n = Number(m[0].replace(/,/g, ''));
-        return Number.isFinite(n) ? n : null;
+    function normalizeLabel(s) {
+        return String(s || "")
+            .toLowerCase()
+            .replace(/[|]/g, "i")
+            .replace(/[0]/g, "o")
+            .replace(/[^a-z]/g, "");
     }
 
-    function isMoneyToken(text) {
-        return /(?:\d[\d,]*\.\d{2})/.test(String(text || '').replace(/[OQ]/g, '0'));
+    function fuzzyScore(text, target) {
+        const a = normalizeLabel(text), b = normalizeLabel(target);
+        if (!a || !b) return 0;
+        if (a === b) return 1;
+        if (a.includes(b)) return 0.88;
+        if (b.includes(a)) return 0.82;
+        let same = 0;
+        const n = Math.min(a.length, b.length);
+        for (let i=0;i<n;i++) if (a[i] === b[i]) same++;
+        return same / Math.max(a.length, b.length);
     }
 
-    function centerY(word) {
-        return word.bbox ? (word.bbox.y0 + word.bbox.y1) / 2 : 0;
+    function parseMoneyToken(s) {
+        if (!s) return null;
+        let t = String(s).replace(/[Oo]/g,"0").replace(/[Il|]/g,"1").replace(/[Ss]/g,"5");
+        t = t.replace(/[^0-9,.-]/g, "");
+        if (!/\d/.test(t)) return null;
+        const candidates = t.match(/-?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})|-?\d+(?:\.\d{1,2})?/g);
+        if (!candidates) return null;
+        const v = Number(candidates[candidates.length-1].replace(/,/g,""));
+        return Number.isFinite(v) ? v : null;
     }
 
-    function centerX(word) {
-        return word.bbox ? (word.bbox.x0 + word.bbox.x1) / 2 : 0;
-    }
+    function reconstructRows(words) {
+        const usable = (words || []).filter(w => {
+            const t = String(w.text || "").trim();
+            return t && w.bbox && Number.isFinite(w.bbox.y0) && Number.isFinite(w.bbox.y1);
+        }).map(w => ({
+            text: String(w.text).trim(),
+            x: Number(w.bbox.x0),
+            y: (Number(w.bbox.y0)+Number(w.bbox.y1))/2,
+            h: Math.max(1, Number(w.bbox.y1)-Number(w.bbox.y0)),
+            x1: Number(w.bbox.x1)
+        })).sort((a,b) => a.y-b.y || a.x-b.x);
 
-    function clusterRows(words) {
-        var sorted = words.slice().sort(function (a, b) {
-            return centerY(a) - centerY(b) || centerX(a) - centerX(b);
-        });
-        var rows = [];
-        var tolerance = 34;
-        sorted.forEach(function (word) {
-            var y = centerY(word);
-            var best = null;
-            var bestDiff = Infinity;
-            rows.forEach(function (row) {
-                var diff = Math.abs(y - row.y);
-                if (diff < tolerance && diff < bestDiff) {
-                    best = row;
-                    bestDiff = diff;
-                }
-            });
-            if (!best) {
-                best = { y: y, words: [] };
-                rows.push(best);
+        const rows = [];
+        usable.forEach(w => {
+            let row = null;
+            for (let i=rows.length-1;i>=0;i--) {
+                const r = rows[i];
+                const tolerance = Math.max(10, Math.min(30, Math.max(w.h, r.avgH)*0.65));
+                if (Math.abs(w.y-r.y) <= tolerance) { row = r; break; }
+                if (r.y < w.y - 35) break;
             }
-            best.words.push(word);
-            best.y = best.words.reduce(function (sum, w) { return sum + centerY(w); }, 0) / best.words.length;
+            if (!row) { row = {y:w.y, avgH:w.h, words:[]}; rows.push(row); }
+            row.words.push(w);
+            row.y = row.words.reduce((a,b)=>a+b.y,0)/row.words.length;
+            row.avgH = row.words.reduce((a,b)=>a+b.h,0)/row.words.length;
         });
-        rows.forEach(function (row) {
-            row.words.sort(function (a, b) { return centerX(a) - centerX(b); });
-            row.text = row.words.map(function (w) { return w.text; }).join(' ');
-        });
-        return rows.sort(function (a, b) { return a.y - b.y; });
+        rows.forEach(r => r.words.sort((a,b)=>a.x-b.x));
+        return rows;
     }
 
-    function findLabel(row, label) {
-        var words = row.words.map(function (w) { return normalizeWord(w.text); });
-        for (var v = 0; v < label.variants.length; v++) {
-            var parts = label.variants[v].split(/\s+/).map(normalizeWord);
-            for (var i = 0; i <= words.length - parts.length; i++) {
-                var ok = true;
-                for (var j = 0; j < parts.length; j++) {
-                    if (words[i + j] !== parts[j]) { ok = false; break; }
-                }
-                if (ok) return i;
-            }
+    function rowText(row) { return row.words.map(w=>w.text).join(" ").replace(/\s+/g," ").trim(); }
+
+    function rowNumbers(row) {
+        const out=[];
+        for (const w of row.words) {
+            const v=parseMoneyToken(w.text);
+            if (v!=null && v>=0 && v<100000000) out.push({value:v,x:w.x});
         }
-        return -1;
+        return out;
     }
 
-    function extractRowAmount(row, minXRatio) {
-        var candidates = row.words.filter(function (w) {
-            return isMoneyToken(w.text) && centerX(w) >= minXRatio;
-        });
-        if (!candidates.length) {
-            candidates = row.words.filter(function (w) { return isMoneyToken(w.text); });
-        }
-        if (!candidates.length) return null;
-        candidates.sort(function (a, b) { return centerX(b) - centerX(a); });
-        return moneyValue(candidates[0].text);
-    }
+    function extractPSA(words) {
+        const rows = reconstructRows(words);
+        const targets = [
+            {key:"services", labels:["Services"]},
+            {key:"foodService", labels:["Food Service"]},
+            {key:"food", labels:["Food"]},
+            {key:"beverage", labels:["Beverage","Beverages"]},
+            {key:"general", labels:["General Merchandise"]},
+            {key:"tobacco", labels:["Tobacco/Alcoholic","Tobacco Alcoholic","Tobacco"]},
+            {key:"supply", labels:["Supply"]},
+            {key:"alcoholic", labels:["Alcoholic"]}
+        ];
+        const found={};
 
-    function parseReport(data) {
-        var words = (data && data.words ? data.words : []).filter(function (w) {
-            return w && w.text && w.bbox;
-        });
-        if (!words.length) throw new Error('No readable text was found in the document.');
+        // Exact phrase rows first. This prevents Food Service -> Food and Tobacco/Alcoholic -> Alcoholic.
+        for (const row of rows) {
+            const text=rowText(row);
+            const compact=normalizeLabel(text);
+            const nums=rowNumbers(row).sort((a,b)=>a.x-b.x);
+            if (!nums.length) continue;
 
-        var rows = clusterRows(words);
-        var result = {};
-        var found = 0;
-
-        /*
-         * OEOD PSA parser:
-         * IMPORTANT: classify the WHOLE row before matching short labels.
-         * This prevents:
-         *   "Food Service" -> Food
-         *   "Tobacco/Alcoholic" -> Alcoholic
-         * and makes Services independent from Food Service.
-         */
-        function rowLabel(row) {
-            var raw = normalizeText(row.text)
-                .replace(/[|]/g, 'i')
-                .replace(/\s+/g, ' ')
-                .trim();
-
-            // OCR clean-up for common camera errors.
-            raw = raw
-                .replace(/\bfood\s+senice\b/g, 'food service')
-                .replace(/\bfood\s+servlce\b/g, 'food service')
-                .replace(/\bfood\s+seruice\b/g, 'food service')
-                .replace(/\bservlces\b/g, 'services')
-                .replace(/\bservlce\b/g, 'service')
-                .replace(/\bseruice\b/g, 'service')
-                .replace(/\baicoholic\b/g, 'alcoholic')
-                .replace(/\balcohollc\b/g, 'alcoholic')
-                .replace(/\bbeuerage\b/g, 'beverage')
-                .replace(/\bgenerai\b/g, 'general')
-                .replace(/\bmerchandlse\b/g, 'merchandise');
-
-            /*
-             * Longest / most specific labels FIRST.
-             * Never classify a row as Food or Alcoholic if it contains
-             * the longer combined label.
-             */
-            if (/\bfood\s+service\b/.test(raw)) return 'foodService';
-            if (/\btobacco\s*\/?\s*alcoholic\b/.test(raw) ||
-                /\btobacco\s+alcoholic\b/.test(raw)) return 'tobacco';
-            if (/\bgeneral\s+merchandise\b/.test(raw)) return 'generalMerchandise';
-            if (/\bservices\b/.test(raw) || /\bservice\b/.test(raw)) return 'services';
-            if (/\bbeverage(?:s)?\b/.test(raw)) return 'beverage';
-            if (/\bfood\b/.test(raw)) return 'food';
-            if (/\balcoholic\b/.test(raw)) return 'alcoholic';
-            if (/\bsupply\b/.test(raw)) return 'supply';
-            return null;
-        }
-
-        rows.forEach(function (row) {
-            var key = rowLabel(row);
-            if (!key) return;
-
-            var amount = extractRowAmount(row, 0.45);
-            if (amount == null) return;
-
-            // One row = one PSA. Keep the first valid occurrence.
-            if (result[key] == null) {
-                result[key] = amount;
-            }
-        });
-
-        // Total Gross Sales (Incl.GST): right-most amount on the total row.
-        rows.forEach(function (row) {
-            var text = normalizeText(row.text).replace(/\s+/g, ' ');
-            if (text.indexOf('total gross sales') >= 0 ||
-                (text.indexOf('gross sales') >= 0 && text.indexOf('incl') >= 0)) {
-                var amount = extractRowAmount(row, 0.45);
-                if (amount !== null) result.totalSales = amount;
-            }
-        });
-
-        // Fallback for OCR variations of the total row.
-        if (result.totalSales == null) {
-            rows.forEach(function (row) {
-                var t = normalizeText(row.text);
-                if (t.indexOf('total') >= 0 && t.indexOf('sales') >= 0) {
-                    var a = extractRowAmount(row, 0.45);
-                    if (a !== null) {
-                        if (result.totalSales == null || a > result.totalSales) {
-                            result.totalSales = a;
-                        }
+            // Total is the rightmost monetary number on the row.
+            const total=nums[nums.length-1].value;
+            for (const t of targets) {
+                if (found[t.key] != null) continue;
+                for (const label of t.labels) {
+                    const lp=normalizeLabel(label);
+                    if (compact.includes(lp)) {
+                        // Protect specific rows from generic labels.
+                        if (t.key === "food" && compact.includes("foodservice")) continue;
+                        if (t.key === "alcoholic" && compact.includes("tobaccoalcoholic")) continue;
+                        if (t.key === "services" && compact.includes("foodservice")) continue;
+                        found[t.key]=total;
+                        break;
                     }
                 }
-            });
+            }
         }
 
-        // Count only fields actually present in the document.
-        Object.keys(result).forEach(function (k) {
-            if (result[k] != null) found++;
-        });
-
-        return { result: result, found: found };
-    }
-
-    function setField(id, value, overwrite) {
-        var el = byId(id);
-        if (!el || value == null) return false;
-        if (!overwrite && String(el.value || '').trim() !== '') return false;
-        el.value = Number(value).toFixed(2);
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-    }
-
-    function fillFields(parsed) {
-        var r = parsed.result;
-        var count = 0;
-        if (setField(FIELDS.totalSales, r.totalSales, true)) count++;
-        if (setField(FIELDS.services, r.services, true)) count++;
-        if (setField(FIELDS.food, r.food, true)) count++;
-        if (setField(FIELDS.beverage, r.beverage, true)) count++;
-        if (setField(FIELDS.generalMerchandise, r.generalMerchandise, true)) count++;
-        if (setField(FIELDS.tobacco, r.tobacco, true)) count++;
-        if (setField(FIELDS.foodService, r.foodService, true)) count++;
-        if (setField(FIELDS.alcoholic, r.alcoholic, true)) count++;
-
-        // Supply is not present in the supplied OEOD page. Default to 0.00, but never lock it.
-        var supply = r.supply != null ? r.supply : 0;
-        if (setField(FIELDS.supply, supply, false)) count++;
-
-        // Merchandise sales is a calculated suggestion only. Keep it editable and never overwrite user input.
-        var merch = byId(FIELDS.merchandise);
-        if (merch && String(merch.value || '').trim() === '' && r.totalSales != null && r.services != null) {
-            merch.value = Math.max(0, r.totalSales - r.services).toFixed(2);
-            merch.dispatchEvent(new Event('input', { bubbles: true }));
-            merch.dispatchEvent(new Event('change', { bubbles: true }));
-            count++;
+        // If OCR splits a label badly, use nearest fuzzy row match.
+        for (const t of targets) {
+            if (found[t.key] != null) continue;
+            let best=null;
+            for (const row of rows) {
+                const text=rowText(row);
+                const nums=rowNumbers(row).sort((a,b)=>a.x-b.x);
+                if (!nums.length) continue;
+                let score=0;
+                for (const label of t.labels) score=Math.max(score,fuzzyScore(text,label));
+                if (t.key === "food" && normalizeLabel(text).includes("foodservice")) score=0;
+                if (t.key === "services" && normalizeLabel(text).includes("foodservice")) score=0;
+                if (t.key === "alcoholic" && normalizeLabel(text).includes("tobaccoalcoholic")) score=0;
+                if (!best || score>best.score) best={score,row,value:nums[nums.length-1].value};
+            }
+            if (best && best.score>=0.72) found[t.key]=best.value;
         }
 
-        if (typeof window.calculateDailySales === 'function') {
-            try { window.calculateDailySales(); } catch (e) {}
+        // Total Gross Sales row.
+        let totalSales=null;
+        for (const row of rows) {
+            const c=normalizeLabel(rowText(row));
+            if (c.includes("totalgrosssales") || (c.includes("grosssales") && c.includes("total"))) {
+                const nums=rowNumbers(row).sort((a,b)=>a.x-b.x);
+                if (nums.length) totalSales=nums[nums.length-1].value;
+            }
         }
-        return count;
+        if (totalSales==null) {
+            // fallback: look for the largest monetary row near the PSA section
+            const candidates=rows.map(r=>({r, n:rowNumbers(r).sort((a,b)=>a.x-b.x)})).filter(x=>x.n.length && /gross|sales/i.test(rowText(x.r)));
+            if (candidates.length) totalSales=candidates[candidates.length-1].n[candidates[candidates.length-1].n.length-1].value;
+        }
+        found.totalSales=totalSales;
+        return found;
     }
 
-    function showMenu() {
-        var menu = byId(MENU_ID);
-        if (!menu) return;
-        var open = menu.hidden;
-        menu.hidden = !open;
-    }
-
-    function closeMenu() {
-        var menu = byId(MENU_ID);
-        if (menu) menu.hidden = true;
-    }
-
-    function startInput(inputId) {
-        var input = byId(inputId);
-        if (!input) return;
-        closeMenu();
-        input.value = '';
-        input.click();
-    }
-
-    function processFile(file) {
-        if (!file || state.processing) return;
-        state.processing = true;
-        setStatus('Reading document...', true);
-
-        loadTesseract()
-            .then(function (Tesseract) {
-                return Tesseract.recognize(file, 'eng', {
-                    logger: function (m) {
-                        if (m && m.status === 'recognizing text' && typeof m.progress === 'number') {
-                            var pct = Math.round(m.progress * 100);
-                            setStatus('Reading document... ' + pct + '%', true);
-                        }
-                    }
-                });
-            })
-            .then(function (first) {
-                var parsed = parseReport(first.data);
-                // The original image should be sufficient for the supplied OEOD format.
-                // If fewer than 7 PSA/total values were found, retry with enhanced image.
-                if (parsed.found < 7) {
-                    setStatus('Reading document... 50%', true);
-                    return createEnhancedImage(window.__dsOcrPendingFile).then(function (enhanced) {
-                        return loadTesseract().then(function (Tesseract) {
-                            return Tesseract.recognize(enhanced, 'eng', {
-                                logger: function (m) {
-                                    if (m && m.status === 'recognizing text' && typeof m.progress === 'number') {
-                                        setStatus('Reading document... ' + Math.round(50 + m.progress * 50) + '%', true);
-                                    }
-                                }
-                            });
-                        }).then(function (second) {
-                            var parsed2 = parseReport(second.data);
-                            return parsed2.found > parsed.found ? parsed2 : parsed;
-                        });
-                    });
+    async function recognize(canvas) {
+        const T=await loadTesseract();
+        if (!T || typeof T.recognize !== "function") throw new Error("OCR engine is unavailable.");
+        const result=await T.recognize(canvas,"eng",{
+            logger: m => {
+                if (m && m.status === "recognizing text") {
+                    const pct=Math.round((m.progress||0)*100);
+                    setStatus(`Reading document... ${pct}%`, true);
+                } else {
+                    setStatus("Reading document...", true);
                 }
-                return parsed;
-            })
-            .then(function (parsed) {
-                var filled = fillFields(parsed);
-                setStatus('Scan complete — ' + filled + ' fields filled.', false);
-            })
-            .catch(function (err) {
-                console.error('Daily Sales OCR error:', err);
-                setStatus('Unable to read document. Please try a clearer picture.', false);
-            })
-            .finally(function () {
-                state.processing = false;
-                window.__dsOcrPendingFile = null;
-            });
-    }
-
-    function buildControl(button) {
-        if (byId(CONTROL_ID)) return;
-        var parent = button.parentElement;
-        if (!parent) return;
-
-        // Remove/hide duplicate Scan buttons anywhere in the loaded Daily Sales form.
-        var allButtons = Array.prototype.slice.call(document.querySelectorAll('button'));
-        allButtons.forEach(function (b) {
-            if (b !== button && normalizeText(b.textContent).indexOf('scan / take picture') >= 0) {
-                b.style.display = 'none';
             }
         });
+        return result && result.data ? result.data : {};
+    }
 
-        var wrapper = document.createElement('div');
-        wrapper.id = CONTROL_ID;
-        wrapper.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:stretch;width:260px;min-width:260px;box-sizing:border-box;';
+    async function runOCR(file) {
+        ocrBusy=true;
+        ensureInputs(); ensureMerchEditable(); ensureFileInputs(); ensureStatusAndButton();
+        setStatus("Reading document...", true);
+        try {
+            const canvas=await preprocess(file);
+            const data=await recognize(canvas);
+            const words=data.words || [];
+            const result=extractPSA(words);
 
-        button.parentNode.insertBefore(wrapper, button);
-        wrapper.appendChild(button);
-        button.style.width = '100%';
-        button.style.boxSizing = 'border-box';
-        button.onclick = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showMenu();
-        };
+            let filled=0;
+            if (result.totalSales != null) { setValue(IDS.totalSales,result.totalSales); filled++; }
+            if (result.services != null) { setValue(IDS.services,result.services); filled++; }
+            if (result.food != null) { setValue(IDS.food,result.food); filled++; }
+            if (result.beverage != null) { setValue(IDS.beverage,result.beverage); filled++; }
+            if (result.general != null) { setValue(IDS.general,result.general); filled++; }
+            if (result.tobacco != null) { setValue(IDS.tobacco,result.tobacco); filled++; }
+            if (result.foodService != null) { setValue(IDS.foodService,result.foodService); filled++; }
+            if (result.alcoholic != null) { setValue(IDS.alcoholic,result.alcoholic); filled++; }
 
-        var status = document.createElement('div');
-        status.id = STATUS_ID;
-        status.textContent = '';
-        status.style.cssText = 'min-height:18px;height:18px;line-height:18px;margin-top:3px;font-size:11px;font-weight:600;color:#64748b;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-        wrapper.appendChild(status);
+            // Supply is intentionally 0.00 when the OEOD report has no Supply row.
+            if (result.supply != null) setValue(IDS.supply,result.supply);
+            else { const s=el(IDS.supply); if (s) s.value="0.00"; }
+            filled++;
 
-        var menu = document.createElement('div');
-        menu.id = MENU_ID;
-        menu.hidden = true;
-        menu.style.cssText = 'position:absolute;z-index:9999;top:calc(100% - 18px);left:0;width:100%;padding:6px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 10px 25px rgba(15,23,42,.15);box-sizing:border-box;';
+            // Merchandise is a suggested calculation only. Never overwrite a manual value.
+            ensureMerchEditable();
+            const merch=el(IDS.merch);
+            if (merch && String(merch.value||"").trim()==="" && result.totalSales!=null && result.services!=null) {
+                merch.value=money(result.totalSales-result.services);
+            }
 
-        function option(text, icon, handler) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + text;
-            b.style.cssText = 'display:block;width:100%;padding:10px 12px;border:0;border-radius:7px;background:#fff;color:#1e293b;text-align:left;font-weight:700;cursor:pointer;';
-            b.onmouseenter = function () { b.style.background = '#f1f5f9'; };
-            b.onmouseleave = function () { b.style.background = '#fff'; };
-            b.onclick = function (e) { e.stopPropagation(); handler(); };
-            menu.appendChild(b);
+            try { if (typeof calculateDailySales === "function") calculateDailySales(); } catch (_) {}
+            setStatus(`Scan complete — ${filled} fields filled.`, false);
+        } catch (err) {
+            console.error("Daily Sales OCR error:",err);
+            setStatus("Unable to read document. Please try a clearer picture.",false);
+        } finally {
+            ensureMerchEditable();
+            ocrBusy=false;
         }
-        option('Gallery Picture', 'fa-image', function () { startInput(GALLERY_ID); });
-        option('Camera Picture', 'fa-camera', function () { startInput(CAMERA_ID); });
-        wrapper.appendChild(menu);
-
-        var gallery = document.createElement('input');
-        gallery.id = GALLERY_ID;
-        gallery.type = 'file';
-        gallery.accept = 'image/*';
-        gallery.style.display = 'none';
-        gallery.addEventListener('change', function () {
-            if (gallery.files && gallery.files[0]) {
-                window.__dsOcrPendingFile = gallery.files[0];
-                processFile(gallery.files[0]);
-            }
-        });
-        wrapper.appendChild(gallery);
-
-        var camera = document.createElement('input');
-        camera.id = CAMERA_ID;
-        camera.type = 'file';
-        camera.accept = 'image/*';
-        camera.setAttribute('capture', 'environment');
-        camera.style.display = 'none';
-        camera.addEventListener('change', function () {
-            if (camera.files && camera.files[0]) {
-                window.__dsOcrPendingFile = camera.files[0];
-                processFile(camera.files[0]);
-            }
-        });
-        wrapper.appendChild(camera);
-
-        document.addEventListener('click', function (e) {
-            if (!wrapper.contains(e.target)) closeMenu();
-        });
-        state.ready = true;
-    }
-
-    function findScanButton() {
-        var buttons = Array.prototype.slice.call(document.querySelectorAll('button'));
-        return buttons.find(function (b) {
-            return normalizeText(b.textContent).indexOf('scan / take picture') >= 0;
-        }) || null;
     }
 
     function init() {
-        var button = findScanButton();
-        if (button) buildControl(button);
+        const timer=setInterval(()=>{
+            const hasForm=!!el("dsTotalSales");
+            if (!hasForm) return;
+            ensureInputs();
+            ensureStatusAndButton();
+            ensureFileInputs();
+        },500);
+        setTimeout(()=>clearInterval(timer),30000);
     }
 
-    function observe() {
-        if (state.observer) return;
-        state.observer = new MutationObserver(function () {
-            if (!state.ready) init();
-        });
-        state.observer.observe(document.body, { childList: true, subtree: true });
-        init();
-    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",init);
+    else init();
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', observe);
-    } else {
-        observe();
-    }
-
-    window.openDailySalesScanner = function () {
-        var button = findScanButton();
-        if (button) {
-            if (!state.ready) buildControl(button);
-            showMenu();
+    // Re-run when the dynamic Daily Sales component is injected.
+    const observer=new MutationObserver(()=>{
+        if (el("dsTotalSales")) {
+            ensureInputs();
+            ensureStatusAndButton();
+            ensureFileInputs();
         }
-    };
+    });
+    observer.observe(document.documentElement,{childList:true,subtree:true});
+
+    window.openDailySalesScanner=openDailySalesScanner;
 })();
