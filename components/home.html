@@ -166,7 +166,7 @@
             <div class="sa-kpi-grid">
 
                 <!-- RED -->
-                <article class="sa-kpi sa-accent-orange">
+                <article class="sa-kpi sa-accent-red">
 
                     <div class="sa-kpi-icon">
                         <i class="fa-solid fa-chart-line"></i>
@@ -190,7 +190,7 @@
 
 
                 <!-- RED -->
-                <article class="sa-kpi sa-accent-red">
+                <article class="sa-kpi sa-accent-orange">
 
                     <div class="sa-kpi-icon">
                         <i class="fa-solid fa-chart-column"></i>
@@ -1368,6 +1368,23 @@
     background:#16A34A !important;
 }
 
-</style>
 
+/* ============================================================
+   DASHBOARD UI LOCK
+   ONLY: 4 KPI vertical accent colours
+   ============================================================ */
+.sa-dashboard-lock .sa-kpi.sa-accent-red::before{
+    background:#C1121F !important;
+}
+.sa-dashboard-lock .sa-kpi.sa-accent-orange::before{
+    background:#F59E0B !important;
+}
+.sa-dashboard-lock .sa-kpi.sa-accent-black::before{
+    background:#111827 !important;
+}
+.sa-dashboard-lock .sa-kpi.sa-accent-green::before{
+    background:#16A34A !important;
+}
+
+</style>
 
