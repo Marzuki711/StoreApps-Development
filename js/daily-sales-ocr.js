@@ -2,10 +2,12 @@
    STORE APPS - DAILY SALES OCR
    File: js/daily-sales-ocr.js
 
-   Adds Scan / Take Picture to the existing Daily Sales form.
-   It does NOT replace Daily Sales API/database logic.
-
-   OCR source: Tesseract.js loaded on demand from jsDelivr.
+   OCR is isolated from Daily Sales API / Save / Database logic.
+   - Keeps ONE Scan / Take Picture button (the first/top button).
+   - Keeps the Reading document / Scan complete status.
+   - Supply defaults to 0.00 when not present, but remains editable.
+   - Total Merchandise Sales remains editable. OCR only calculates it
+     when the field is empty.
 ========================================================== */
 (function () {
     "use strict";
@@ -15,21 +17,35 @@
         `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
 
     let tesseractPromise = null;
-    let lastContainer = null;
+    let observerStarted = false;
 
     const FIELD_MAP = [
-        { key: "services", ids: ["dsServices"], labels: ["services", "service"] },
-        { key: "food", ids: ["dsFood"], labels: ["food"] },
-        { key: "beverage", ids: ["dsBeverage"], labels: ["beverage", "beverages", "bevarage", "bevarages"] },
-        { key: "generalMerchandise", ids: ["dsGeneralMerchandise"], labels: ["general merchandise", "generalmerchandise"] },
-        { key: "tobacco", ids: ["dsTobacco"], labels: ["tobacco/alcoholic", "tobacco alcoholic", "tobacco", "tobacco/alcoholic"] },
-        { key: "supply", ids: ["dsSupply"], labels: ["supply"] },
-        { key: "foodService", ids: ["dsFoodService"], labels: ["food service", "foodservice"] },
-        { key: "alcoholic", ids: ["dsAlcoholic"], labels: ["alcoholic", "alcohol"] },
-        { key: "totalSales", ids: ["dsTotalSales"], labels: ["total gross sales (incl.gst)", "total gross sales incl.gst", "total gross sales", "gross sales"] }
+        { key: "services", id: "dsServices", labels: ["services", "service"] },
+        { key: "food", id: "dsFood", labels: ["food"] },
+        { key: "beverage", id: "dsBeverage", labels: ["beverage", "beverages", "bevarage", "bevarages"] },
+        { key: "generalMerchandise", id: "dsGeneralMerchandise", labels: ["general merchandise", "generalmerchandise"] },
+        { key: "tobacco", id: "dsTobacco", labels: ["tobacco/alcoholic", "tobacco alcoholic", "tobacco"] },
+        { key: "supply", id: "dsSupply", labels: ["supply"] },
+        { key: "foodService", id: "dsFoodService", labels: ["food service", "foodservice"] },
+        { key: "alcoholic", id: "dsAlcoholic", labels: ["alcoholic", "alcohol"] },
+        { key: "totalSales", id: "dsTotalSales", labels: ["total gross sales (incl.gst)", "total gross sales incl.gst", "total gross sales", "gross sales"] }
     ];
 
-    function $(id) { return document.getElementById(id); }
+    const DISPLAY_NAMES = {
+        totalSales: "Total Sales",
+        services: "Services",
+        food: "Food",
+        beverage: "Beverage",
+        generalMerchandise: "General Merchandise",
+        tobacco: "Tobacco",
+        supply: "Supply",
+        foodService: "Food Service",
+        alcoholic: "Alcoholic"
+    };
+
+    function $(id) {
+        return document.getElementById(id);
+    }
 
     function loadTesseract() {
         if (window.Tesseract) return Promise.resolve(window.Tesseract);
@@ -38,60 +54,105 @@
         tesseractPromise = new Promise((resolve, reject) => {
             const existing = document.querySelector('script[data-storeapps-tesseract="1"]');
             if (existing) {
-                existing.addEventListener("load", () => resolve(window.Tesseract));
-                existing.addEventListener("error", reject);
+                existing.addEventListener("load", () => resolve(window.Tesseract), { once: true });
+                existing.addEventListener("error", reject, { once: true });
                 return;
             }
+
             const script = document.createElement("script");
             script.src = TESSERACT_URL;
             script.async = true;
             script.dataset.storeappsTesseract = "1";
-            script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error("Tesseract.js failed to load."));
+            script.onload = () => {
+                if (window.Tesseract) resolve(window.Tesseract);
+                else reject(new Error("OCR engine failed to load."));
+            };
             script.onerror = () => reject(new Error("Unable to load OCR engine. Please check your internet connection."));
             document.head.appendChild(script);
         });
+
         return tesseractPromise;
     }
 
-    function ensureControls() {
-        const form = $("dailySalesFormWrapper");
-        if (!form) return false;
-        if ($("dsOcrFileInput") && $("dsScanButton")) return true;
+    function getScanButtons() {
+        return Array.from(document.querySelectorAll("button"))
+            .filter(btn => /scan\s*\/\s*take\s*picture/i.test((btn.textContent || "").trim()));
+    }
 
-        const salesTitle = Array.from(form.querySelectorAll(".ds-section-title"))
-            .find(el => /sales information/i.test(el.textContent || ""));
-        const grid = salesTitle ? salesTitle.nextElementSibling : null;
-        if (!grid || !grid.classList.contains("ds-grid")) return false;
+    function ensureScannerControls() {
+        const wrapper = $("dailySalesFormWrapper");
+        if (!wrapper) return false;
 
-        if (!$('dsScanButton')) {
-            const wrap = document.createElement("div");
-            wrap.className = "ds-field ds-field-wide";
-            wrap.innerHTML = `
-                <label>Scan Sales Report</label>
-                <button type="button" id="dsScanButton" class="ds-secondary-btn" style="width:100%;">
-                    <i class="fa-solid fa-camera"></i> Scan / Take Picture
-                </button>
-                <input id="dsOcrFileInput" type="file" accept="image/*" capture="environment" style="display:none;">
-                <small id="dsOcrStatus" style="display:block;margin-top:6px;opacity:.75;"></small>
-            `;
-            grid.insertBefore(wrap, grid.firstElementChild);
+        const buttons = getScanButtons();
+        if (!buttons.length) return false;
+
+        // Keep ONLY the first/top Scan / Take Picture button.
+        const mainButton = buttons[0];
+        buttons.slice(1).forEach(btn => btn.remove());
+
+        mainButton.type = "button";
+        mainButton.onclick = openDailySalesScanner;
+        mainButton.removeAttribute("disabled");
+
+        let fileInput = $("dsOcrFileInput");
+        if (!fileInput) {
+            fileInput = document.createElement("input");
+            fileInput.id = "dsOcrFileInput";
+            fileInput.type = "file";
+            fileInput.accept = "image/*";
+            fileInput.setAttribute("capture", "environment");
+            fileInput.style.display = "none";
+            document.body.appendChild(fileInput);
         }
 
-        $("dsScanButton").onclick = () => $("dsOcrFileInput")?.click();
-        $("dsOcrFileInput").onchange = handleFile;
+        fileInput.onchange = handleFile;
+
+        // Keep a single status line. If the HTML already has one, reuse it.
+        let status = $("dsOcrStatus");
+        if (!status) {
+            status = document.createElement("div");
+            status.id = "dsOcrStatus";
+            status.style.cssText = "margin-top:8px;font-size:13px;opacity:.8;";
+            mainButton.parentElement?.appendChild(status);
+        }
+
+        // Supply is always usable manually and starts at 0.00 when blank.
+        const supply = $("dsSupply");
+        if (supply && String(supply.value || "").trim() === "") {
+            supply.value = "0.00";
+        }
+
+        // Make sure these fields are editable.
+        ["dsTotalMerchandiseSales", "dsSupply"].forEach(id => {
+            const el = $(id);
+            if (!el) return;
+            el.readOnly = false;
+            el.disabled = false;
+            el.removeAttribute("readonly");
+            el.removeAttribute("disabled");
+        });
+
         return true;
     }
 
     function setStatus(message, busy) {
         const status = $("dsOcrStatus");
         if (status) status.textContent = message || "";
-        const btn = $("dsScanButton");
-        if (btn) {
-            btn.disabled = !!busy;
-            btn.innerHTML = busy
+
+        const buttons = getScanButtons();
+        const button = buttons[0];
+        if (button) {
+            button.disabled = !!busy;
+            button.innerHTML = busy
                 ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading Document...'
                 : '<i class="fa-solid fa-camera"></i> Scan / Take Picture';
         }
+    }
+
+    function openDailySalesScanner() {
+        ensureScannerControls();
+        const input = $("dsOcrFileInput");
+        if (input) input.click();
     }
 
     async function handleFile(event) {
@@ -99,14 +160,18 @@
         event.target.value = "";
         if (!file) return;
 
-        setStatus("Preparing OCR...", true);
+        setStatus("Reading document...", true);
+
         try {
             const Tesseract = await loadTesseract();
             const result = await Tesseract.recognize(file, "eng", {
-                logger: m => {
-                    if (m && m.status && typeof m.progress === "number") {
-                        const p = Math.round(m.progress * 100);
-                        setStatus(`Reading document... ${p}%`, true);
+                logger: message => {
+                    if (!message || !message.status) return;
+                    if (typeof message.progress === "number") {
+                        const percent = Math.max(0, Math.min(100, Math.round(message.progress * 100)));
+                        setStatus(`Reading document... ${percent}%`, true);
+                    } else {
+                        setStatus("Reading document...", true);
                     }
                 }
             });
@@ -115,89 +180,84 @@
             const values = parseReport(text);
             const filled = applyValues(values);
 
+            // Supply must always have a usable value, but remains editable.
+            const supply = $("dsSupply");
+            if (supply && String(supply.value || "").trim() === "") {
+                supply.value = "0.00";
+                supply.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+
             if (typeof window.calculateDailySales === "function") {
                 window.calculateDailySales();
             }
 
             if (!filled.length) {
-                setStatus("No matching sales data found. Please use a clearer image.", false);
-                await showInfo("No matching sales data found. Please take a clear photo of the OEOD sales report.");
+                setStatus("Scan complete — 0 fields filled. Please use a clearer image.", false);
                 return;
             }
 
             setStatus(`Scan complete — ${filled.length} fields filled.`, false);
-            await showInfo(`Scan Complete\n\n${filled.join("\n")}`);
         } catch (error) {
             console.error("Daily Sales OCR error:", error);
-            setStatus("OCR failed. Please try again.", false);
-            await showError(error?.message || "Unable to read the document.");
+            setStatus("Reading document failed. Please try again.", false);
         }
     }
 
-    function normalize(s) {
-        return String(s || "")
+    function normalize(value) {
+        return String(value || "")
             .toLowerCase()
             .replace(/[|]/g, " ")
-            .replace(/\s+/g, " ")
             .replace(/[‘’]/g, "'")
+            .replace(/\s+/g, " ")
             .trim();
     }
 
     function amountCandidates(line) {
         const matches = String(line || "").match(/(?:RM\s*)?\(?-?\d{1,3}(?:[, ]\d{3})*(?:\.\d{1,2})?\)?|(?:RM\s*)?\d+(?:\.\d{1,2})?/gi) || [];
         return matches.map(raw => {
-            let s = raw.replace(/RM/ig, "").replace(/[()]/g, "").trim();
-            s = s.replace(/\s/g, "");
-            if ((s.match(/,/g) || []).length > 0) s = s.replace(/,/g, "");
-            const n = Number(s);
-            return Number.isFinite(n) ? n : null;
+            let s = raw.replace(/RM/ig, "").replace(/[()]/g, "").replace(/\s/g, "");
+            s = s.replace(/,/g, "");
+            const number = Number(s);
+            return Number.isFinite(number) ? number : null;
         }).filter(v => v !== null);
     }
 
-    function lineMatchesLabel(line, labels) {
+    function isAlcoholicLine(line) {
         const n = normalize(line);
-        return labels.some(label => n.includes(normalize(label)));
+        // Do NOT let "Tobacco/Alcoholic" satisfy the Alcoholic field.
+        if (n.includes("tobacco")) return false;
+        return /(^|\s)alcoholic(\s|$)/.test(n) || /(^|\s)alcohol(\s|$)/.test(n);
+    }
+
+    function lineMatchesField(line, field) {
+        const n = normalize(line);
+        if (field.key === "alcoholic") return isAlcoholicLine(line);
+        if (field.key === "tobacco") return n.includes("tobacco");
+        return field.labels.some(label => n.includes(normalize(label)));
     }
 
     function parseReport(text) {
         const lines = String(text || "")
             .split(/\r?\n/)
-            .map(s => s.trim())
+            .map(line => line.trim())
             .filter(Boolean);
 
         const values = {};
 
-        // Prefer row-by-row parsing because OEOD reports put the PSA label and
-        // the Total amount on the same visual row in most scans.
         for (const field of FIELD_MAP) {
             for (let i = 0; i < lines.length; i++) {
-                if (!lineMatchesLabel(lines[i], field.labels)) continue;
+                if (!lineMatchesField(lines[i], field)) continue;
 
                 let nums = amountCandidates(lines[i]);
-                // If OCR split the amount onto the next line, inspect a few lines.
-                for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1) && nums.length === 0; j++) {
-                    nums = amountCandidates(lines[j]);
+                if (!nums.length) {
+                    for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
+                        nums = amountCandidates(lines[j]);
+                        if (nums.length) break;
+                    }
                 }
 
                 if (nums.length) {
-                    // The Total column is the rightmost amount on the row.
-                    values[field.key] = nums[nums.length - 1];
-                    break;
-                }
-            }
-        }
-
-        // Fallback: OCR can sometimes return the label and numbers on separate
-        // lines. Search the whole text around each label.
-        for (const field of FIELD_MAP) {
-            if (values[field.key] !== undefined) continue;
-            const joined = normalize(text);
-            for (const label of field.labels) {
-                const idx = joined.indexOf(normalize(label));
-                if (idx < 0) continue;
-                const nearby = joined.slice(idx, idx + 160);
-                const nums = amountCandidates(nearby);
-                if (nums.length) {
+                    // OEOD: right-most number on the row is the Total column.
                     values[field.key] = nums[nums.length - 1];
                     break;
                 }
@@ -208,80 +268,71 @@
     }
 
     function setNumber(id, value) {
-        const el = $(id);
-        if (!el || value === undefined || value === null) return false;
-        el.value = Number(value).toFixed(2);
-        el.dispatchEvent(new Event("input", { bubbles: true }));
+        const element = $(id);
+        if (!element || value === undefined || value === null) return false;
+        element.readOnly = false;
+        element.disabled = false;
+        element.value = Number(value).toFixed(2);
+        element.dispatchEvent(new Event("input", { bubbles: true }));
         return true;
     }
 
     function applyValues(values) {
         const filled = [];
-        const names = {
-            totalSales: "Total Sales",
-            services: "Services",
-            food: "Food",
-            beverage: "Beverage",
-            generalMerchandise: "General Merchandise",
-            tobacco: "Tobacco",
-            supply: "Supply",
-            foodService: "Food Service",
-            alcoholic: "Alcoholic"
-        };
 
         for (const field of FIELD_MAP) {
             if (values[field.key] === undefined) continue;
-            if (setNumber(field.ids[0], values[field.key])) filled.push(names[field.key] || field.key);
+            if (setNumber(field.id, values[field.key])) {
+                filled.push(DISPLAY_NAMES[field.key]);
+            }
         }
 
-        // Total Merchandise Sales is intentionally editable. OCR only calculates
-        // a suggested value when both Total Sales and Services were detected.
-        if (values.totalSales !== undefined && values.services !== undefined) {
-            const merchandise = values.totalSales - values.services;
-            if (Number.isFinite(merchandise)) {
-                setNumber("dsTotalMerchandiseSales", merchandise);
-                filled.push("Total Merchandise Sales (calculated)");
+        // Supply is required as a usable editable field even when the report
+        // does not show a Supply row.
+        if (values.supply === undefined) {
+            const supply = $("dsSupply");
+            if (supply && String(supply.value || "").trim() === "") {
+                setNumber("dsSupply", 0);
+                filled.push("Supply");
+            }
+        }
+
+        // Total Merchandise Sales is EDITABLE. Only calculate it if the user
+        // has not already entered a value.
+        const merchandise = $("dsTotalMerchandiseSales");
+        if (merchandise) {
+            merchandise.readOnly = false;
+            merchandise.disabled = false;
+
+            const current = String(merchandise.value || "").trim();
+            if (!current && values.totalSales !== undefined && values.services !== undefined) {
+                const calculated = values.totalSales - values.services;
+                if (Number.isFinite(calculated)) {
+                    setNumber("dsTotalMerchandiseSales", calculated);
+                    filled.push("Total Merchandise Sales");
+                }
             }
         }
 
         return filled;
     }
 
-    async function showInfo(message) {
-        if (typeof Swal !== "undefined") {
-            return Swal.fire({ icon: "info", title: "Daily Sales Scan", text: message, confirmButtonText: "OK" });
-        }
-        alert(message);
-    }
-
-    async function showError(message) {
-        if (typeof Swal !== "undefined") {
-            return Swal.fire({ icon: "error", title: "OCR Error", text: message, confirmButtonText: "OK" });
-        }
-        alert(message);
-    }
-
     function observe() {
-        ensureControls();
-        const root = document.body;
-        if (!root) return;
-        const observer = new MutationObserver(() => {
-            if (lastContainer !== $("dailySalesFormWrapper")) {
-                lastContainer = $("dailySalesFormWrapper");
-            }
-            ensureControls();
-        });
-        observer.observe(root, { childList: true, subtree: true });
+        if (observerStarted) return;
+        observerStarted = true;
+
+        const start = () => ensureScannerControls();
+        start();
+
+        const observer = new MutationObserver(() => start());
+        observer.observe(document.body, { childList: true, subtree: true });
     }
+
+    window.openDailySalesScanner = openDailySalesScanner;
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", observe);
+        document.addEventListener("DOMContentLoaded", observe, { once: true });
     } else {
         observe();
     }
-
-    window.openDailySalesScanner = function () {
-        ensureControls();
-        $("dsOcrFileInput")?.click();
-    };
 })();
