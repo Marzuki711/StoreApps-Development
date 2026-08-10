@@ -1,3 +1,4 @@
+<!-- DASHBOARD UI LOCKED -->
 <!-- =========================================================
  STORE APPS — HOME DASHBOARD
  FINAL LOCKED DESIGN
@@ -738,8 +739,9 @@
 
 .sa-welcome h2{
     margin:8px 0 9px;
-    font-size:29px;
-    line-height:1.17;
+    font-size:24px;
+    line-height:1.22;
+    font-weight:800;
 }
 
 .sa-welcome p{
@@ -822,10 +824,12 @@
 .sa-kpi{
     position:relative;
     min-height:150px;
-    padding:22px 18px 17px 28px;
+    padding:16px 18px 15px 28px;
     display:flex;
-    align-items:center;
-    gap:15px;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+    gap:9px;
     overflow:hidden;
     border:1px solid var(--sa-border);
     border-radius:15px;
@@ -851,15 +855,16 @@
 .sa-accent-purple:before{background:var(--sa-purple);}
 
 .sa-kpi-icon{
-    width:62px;
-    height:62px;
-    min-width:62px;
+    width:40px;
+    height:40px;
+    min-width:40px;
     display:grid;
     place-items:center;
-    border-radius:14px;
+    border-radius:11px;
     background:#FFF0F2;
     color:var(--sa-red);
-    font-size:27px;
+    font-size:18px;
+    flex:0 0 auto;
 }
 
 .sa-kpi-content{
@@ -876,7 +881,7 @@
 
 .sa-kpi-content strong{
     display:block;
-    margin-top:12px;
+    margin-top:6px;
     color:#101A2D;
     font-size:25px;
     line-height:1.05;
@@ -992,12 +997,18 @@
     flex-direction:column;
     gap:10px;
 }
+.sa-submission-status .submitted,
+.sa-submission-status .pending{
+    min-height:18px;
+    white-space:nowrap;
+}
 
 .sa-submission-status span{
     display:flex;
     align-items:center;
     gap:8px;
     font-size:11px;
+    font-weight:400;
     color:#536174;
 }
 
@@ -1286,7 +1297,7 @@
     }
 
     .sa-welcome h2{
-        font-size:22px;
+        font-size:20px;
     }
 
     .sa-welcome-graphic{
