@@ -108,6 +108,7 @@
 
                 <div class="sa-date-control">
 <input type="date" id="homeSalesDate">
+                    <i class="fa-regular fa-calendar sa-date-right-icon" aria-hidden="true"></i>
                 </div>
 
                 <button type="button"
@@ -1422,6 +1423,63 @@
 /* LOCKED: bottom operational cards are not part of Dashboard UI */
 .sa-dashboard-lock .sa-bottom-grid{
     display:none !important;
+}
+
+
+/* =========================================================
+   FINAL LOCK — ACCENT ONLY ON THE FOUR KPI CARDS
+   No vertical accent on Store Submission, Budget Performance,
+   or any other Dashboard card.
+   ========================================================= */
+.sa-dashboard-lock .sa-large-card::before,
+.sa-dashboard-lock .sa-bottom-card::before{
+    display:none !important;
+}
+
+/* =========================================================
+   FINAL LOCK — DATE CONTROL
+   One large Store Apps calendar icon on the RIGHT.
+   Native picker remains functional.
+   ========================================================= */
+.sa-dashboard-lock .sa-date-control{
+    position:relative;
+    padding:0 16px 0 18px;
+}
+
+.sa-dashboard-lock .sa-date-control input[type="date"]{
+    width:100%;
+    min-width:0;
+    height:100%;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:var(--sa-text);
+    font-size:13px;
+    font-weight:800;
+    text-align:center;
+    cursor:pointer;
+    -webkit-appearance:none;
+    appearance:none;
+}
+
+.sa-dashboard-lock .sa-date-control input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity:0;
+    position:absolute;
+    right:0;
+    width:100%;
+    height:100%;
+    cursor:pointer;
+}
+
+.sa-dashboard-lock .sa-date-right-icon{
+    position:absolute;
+    right:15px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#111827;
+    font-size:17px;
+    line-height:1;
+    pointer-events:none;
 }
 
 </style>
