@@ -1,15 +1,20 @@
-self.addEventListener("install", (event) => {
+const CACHE_NAME = 'store-apps-v1';
 
-    console.log("Service Worker Installed");
-
+self.addEventListener('install', function (event) {
+    console.log('Store Apps Service Worker Installed');
+    self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', function (event) {
+    console.log('Store Apps Service Worker Activated');
 
-    console.log("Service Worker Active");
-
+    event.waitUntil(
+        self.clients.claim()
+    );
 });
 
-self.addEventListener("fetch", (event) => {
-
+self.addEventListener('fetch', function (event) {
+    // Network-first.
+    // We intentionally do not cache application files here
+    // to avoid serving outdated Store Apps code.
 });
