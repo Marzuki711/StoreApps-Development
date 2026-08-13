@@ -512,16 +512,50 @@ function dsEnsureDateFilter() {
         label.style.color =
             "#334155";
 
+        const dateWrap =
+            document.createElement(
+                "div"
+            );
+
+        dateWrap.style.position =
+            "relative";
+
+        dateWrap.style.flex =
+            "1 1 auto";
+
+        dateWrap.style.minWidth =
+            "0";
+
         const input =
             document.createElement(
                 "input"
             );
 
+        /*
+         * LOCKED:
+         * Visible date is always DD/MM/YYYY.
+         * The internal value sent to backend remains ISO.
+         */
         input.type =
-            "date";
+            "text";
 
         input.id =
             "dsDateFilter";
+
+        input.inputMode =
+            "numeric";
+
+        input.autocomplete =
+            "off";
+
+        input.placeholder =
+            "dd/mm/yyyy";
+
+        input.maxLength =
+            10;
+
+        input.style.width =
+            "100%";
 
         input.style.height =
             "44px";
@@ -536,7 +570,7 @@ function dsEnsureDateFilter() {
             "10px";
 
         input.style.padding =
-            "0 12px";
+            "0 42px 0 12px";
 
         input.style.background =
             "#fff";
@@ -550,17 +584,246 @@ function dsEnsureDateFilter() {
         input.style.outline =
             "none";
 
-        input.addEventListener(
+        const picker =
+            document.createElement(
+                "input"
+            );
+
+        picker.type =
+            "date";
+
+        picker.id =
+            "dsDateFilterPicker";
+
+        picker.tabIndex =
+            -1;
+
+        picker.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        picker.style.position =
+            "absolute";
+
+        picker.style.right =
+            "8px";
+
+        picker.style.top =
+            "6px";
+
+        picker.style.width =
+            "32px";
+
+        picker.style.height =
+            "32px";
+
+        picker.style.opacity =
+            "0";
+
+        picker.style.cursor =
+            "pointer";
+
+        picker.addEventListener(
             "change",
             async function () {
 
+                const iso =
+                    picker.value ||
+                    dsYesterdayISO();
+
+                input.value =
+                    dsFilterISOToDisplay(
+                        iso
+                    );
+
                 dsSelectedDate =
-                    input.value ||
-                    dsTodayISO();
+                    iso;
 
                 await dsLoad(
-                    dsSelectedDate
+                    iso
                 );
+            }
+        );
+
+        const icon =
+            document.createElement(
+                "span"
+            );
+
+        icon.innerHTML =
+            '<i class="fa-regular fa-calendar"></i>';
+
+        icon.style.position =
+            "absolute";
+
+        icon.style.right =
+            "12px";
+
+        icon.style.top =
+            "50%";
+
+        icon.style.transform =
+            "translateY(-50%)";
+
+        icon.style.pointerEvents =
+            "none";
+
+        icon.style.color =
+            "#0F172A";
+
+        icon.style.fontSize =
+            "15px";
+
+        dateWrap.appendChild(
+            input
+        );
+
+        dateWrap.appendChild(
+            icon
+        );
+
+        dateWrap.appendChild(
+            picker
+        );
+
+        function dsFilterISOToDisplay(
+            iso
+        ) {
+            const m =
+                String(iso || "")
+                    .match(
+                        /^(\\d{4})-(\\d{2})-(\\d{2})$/
+                    );
+
+            return m
+                ? (
+                    m[3] + "/" +
+                    m[2] + "/" +
+                    m[1]
+                )
+                : String(iso || "");
+        }
+
+        function dsFilterDisplayToISO(
+            value
+        ) {
+            const m =
+                String(value || "")
+                    .trim()
+                    .match(
+                        /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/
+                    );
+
+            if (!m) {
+                return "";
+            }
+
+            const day =
+                Number(m[1]);
+
+            const month =
+                Number(m[2]);
+
+            const year =
+                Number(m[3]);
+
+            const d =
+                new Date(
+                    year,
+                    month - 1,
+                    day
+                );
+
+            if (
+                d.getFullYear() !== year ||
+                d.getMonth() !== month - 1 ||
+                d.getDate() !== day
+            ) {
+                return "";
+            }
+
+            return (
+                String(year).padStart(4,"0") +
+                "-" +
+                String(month).padStart(2,"0") +
+                "-" +
+                String(day).padStart(2,"0")
+            );
+        }
+
+        input.addEventListener(
+            "input",
+            function () {
+
+                let value =
+                    String(
+                        input.value || ""
+                    )
+                    .replace(
+                        /[^0-9]/g,
+                        ""
+                    )
+                    .slice(0,8);
+
+                if (value.length > 4) {
+                    value =
+                        value.slice(0,2) +
+                        "/" +
+                        value.slice(2,4) +
+                        "/" +
+                        value.slice(4);
+                } else if (
+                    value.length > 2
+                ) {
+                    value =
+                        value.slice(0,2) +
+                        "/" +
+                        value.slice(2);
+                }
+
+                input.value =
+                    value;
+
+                const iso =
+                    dsFilterDisplayToISO(
+                        value
+                    );
+
+                if (iso) {
+                    dsSelectedDate =
+                        iso;
+
+                    picker.value =
+                        iso;
+
+                    dsLoad(
+                        iso
+                    );
+                }
+            }
+        );
+
+        input.addEventListener(
+            "click",
+            function () {
+
+                picker.value =
+                    dsSelectedDate ||
+                    dsYesterdayISO();
+
+                try {
+                    if (
+                        typeof picker.showPicker ===
+                        "function"
+                    ) {
+                        picker.showPicker();
+                    } else {
+                        picker.click();
+                    }
+                } catch (e) {
+                    picker.click();
+                }
             }
         );
 
@@ -607,6 +870,11 @@ function dsEnsureDateFilter() {
                     dsYesterdayISO();
 
                 input.value =
+                    dsFilterISOToDisplay(
+                        yesterday
+                    );
+
+                picker.value =
                     yesterday;
 
                 dsSelectedDate =
@@ -635,14 +903,8 @@ function dsEnsureDateFilter() {
         dateControls.style.width =
             "100%";
 
-        input.style.flex =
-            "1 1 auto";
-
-        input.style.minWidth =
-            "0";
-
         dateControls.appendChild(
-            input
+            dateWrap
         );
 
         dateControls.appendChild(
@@ -658,6 +920,27 @@ function dsEnsureDateFilter() {
         );
 
         const searchWrap =
+            search.closest(
+                ".ds-search"
+            );
+
+        if (searchWrap) {
+
+            toolbar.insertBefore(
+                filter,
+                searchWrap
+            );
+
+        } else {
+
+            toolbar.insertBefore(
+                filter,
+                search
+            );
+        }
+    }
+
+            const searchWrap =
             search.closest(
                 ".ds-search"
             );
@@ -715,9 +998,24 @@ function dsEnsureDateFilter() {
 
     if (dateInput) {
 
-        dateInput.value =
+        const iso =
             dsSelectedDate ||
             dsYesterdayISO();
+
+        dateInput.value =
+            (typeof dsFilterISOToDisplay === "function")
+                ? dsFilterISOToDisplay(iso)
+                : iso;
+
+        const picker =
+            document.getElementById(
+                "dsDateFilterPicker"
+            );
+
+        if (picker) {
+            picker.value =
+                iso;
+        }
     }
 }
 
