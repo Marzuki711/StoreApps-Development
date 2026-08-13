@@ -116,8 +116,20 @@
             <div class="sa-header-actions">
 
                 <div class="sa-date-control">
-<input type="date" id="homeSalesDate">
-                    <i class="fa-regular fa-calendar sa-date-right-icon" aria-hidden="true"></i>
+                    <input type="text"
+                           id="homeSalesDate"
+                           inputmode="numeric"
+                           autocomplete="off"
+                           placeholder="dd/mm/yyyy"
+                           maxlength="10"
+                           aria-label="Dashboard Business Date">
+                    <input type="date"
+                           id="homeSalesDatePicker"
+                           class="sa-native-date-picker"
+                           tabindex="-1"
+                           aria-hidden="true">
+                    <i class="fa-regular fa-calendar sa-date-right-icon"
+                       aria-hidden="true"></i>
                 </div>
 
                 <button type="button"
@@ -657,6 +669,33 @@
     font-size:13px;
     font-weight:800;
 }
+
+/* DASHBOARD DATE FORMAT LOCK: visible dd/MM/yyyy */
+.sa-date-control{
+    position:relative;
+}
+
+.sa-date-control #homeSalesDate{
+    text-align:center;
+}
+
+.sa-date-control #homeSalesDatePicker{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    width:32px;
+    height:32px;
+    opacity:0;
+    cursor:pointer;
+    z-index:3;
+}
+
+.sa-date-control .sa-date-right-icon{
+    pointer-events:none;
+    z-index:2;
+}
+
 
 .sa-date-arrow{
     color:#111827;
