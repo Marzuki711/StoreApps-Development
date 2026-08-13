@@ -8,7 +8,7 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-<title>Store Apps</title>
+<title>Manual OT Claim</title>
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/user-management.css">
@@ -16,11 +16,9 @@
 
 <link rel="manifest" href="manifest.json">
 
-<link rel="icon" type="image/png" href="icons/Candidate Apps.png">
-
 <meta name="theme-color" content="#C1121F">
 
-<link rel="apple-touch-icon" href="icons/Candidate Apps.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -397,24 +395,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 <script src="js/account.js?v=4.5"></script>
 <script src="js/script-search.js"></script>
 <script src="js/user-management.js"></script>
-<script src="js/daily-sales.js?v=1.0.5"></script>
-<script src="js/daily-sales-ocr.js?v=2.0.0"></script>
+<script src="js/daily-sales.js?v=1.0.4"></script>
 <script src="js/home-dashboard.js?v=1.0.0"></script>
 <script src="js/script-init.js"></script>
-
-<script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js')
-            .then(function (registration) {
-                console.log('Store Apps Service Worker registered:', registration.scope);
-            })
-            .catch(function (error) {
-                console.error('Store Apps Service Worker registration failed:', error);
-            });
-    });
-}
-</script>
 
 </body>
 
