@@ -42,6 +42,63 @@ function homeYesterdayISO(){
     ].join("-");
 }
 
+
+/* DASHBOARD DATE FORMAT LOCK — only display/input conversion */
+function homeISOToDDMMYYYY(iso){
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso || "");
+}
+
+function homeDDMMYYYYToISO(value){
+    const m = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m) return "";
+
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    const year = Number(m[3]);
+    const d = new Date(year, month - 1, day);
+
+    if(
+        d.getFullYear() !== year ||
+        d.getMonth() !== month - 1 ||
+        d.getDate() !== day
+    ){
+        return "";
+    }
+
+    return `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+}
+
+function homeSetDashboardDatePicker(iso){
+    const picker = document.getElementById("homeSalesDatePicker");
+    if(picker) picker.value = iso || "";
+}
+
+function homeGetDashboardSelectedISO(){
+    const input = document.getElementById("homeSalesDate");
+    if(!input) return homeSalesDate || homeYesterdayISO();
+
+    const iso = homeDDMMYYYYToISO(input.value);
+    return iso || homeSalesDate || homeYesterdayISO();
+}
+
+function homeOpenDashboardDatePicker(){
+    const picker = document.getElementById("homeSalesDatePicker");
+    if(!picker) return;
+
+    homeSetDashboardDatePicker(homeGetDashboardSelectedISO());
+
+    try{
+        if(typeof picker.showPicker === "function"){
+            picker.showPicker();
+        }else{
+            picker.click();
+        }
+    }catch(e){
+        picker.click();
+    }
+}
+
 function homeMoney(value){
     const n = Number(String(value ?? "").replace(/,/g,"")) || 0;
 
@@ -127,9 +184,14 @@ function homeSetGreeting(){
 
 function homeSetDashboardDate(date){
     const input = document.getElementById("homeSalesDate");
+    const picker = document.getElementById("homeSalesDatePicker");
 
     if(input){
-        input.value = date;
+        input.value = homeISOToDDMMYYYY(date);
+    }
+
+    if(picker){
+        picker.value = date || "";
     }
 }
 
@@ -541,19 +603,65 @@ function initHomeSalesDashboard(){
 
     if(input){
 
-        input.value =
+        homeSetDashboardDate(
             homeSalesDate ||
-            homeYesterdayISO();
+            homeYesterdayISO()
+        );
 
         input.addEventListener(
-            "change",
+            "input",
             ()=>{
-                homeSalesDate = input.value;
+                input.value =
+                    String(input.value || "")
+                        .replace(/[^0-9]/g,"")
+                        .slice(0,8)
+                        .replace(/(\d{2})(\d)/,"$1/$2")
+                        .replace(/(\d{2})\/(\d{2})(\d)/,"$1/$2/$3");
 
-                loadHomeSalesDashboard(
-                    homeSalesDate
-                );
+                const iso =
+                    homeDDMMYYYYToISO(input.value);
+
+                if(iso){
+                    homeSalesDate = iso;
+
+                    loadHomeSalesDashboard(
+                        iso
+                    );
+                }
             }
+        );
+
+        const picker =
+            document.getElementById(
+                "homeSalesDatePicker"
+            );
+
+        if(picker){
+
+            picker.addEventListener(
+                "change",
+                ()=>{
+                    const iso =
+                        picker.value ||
+                        homeYesterdayISO();
+
+                    homeSalesDate = iso;
+
+                    homeSetDashboardDate(
+                        iso
+                    );
+
+                    loadHomeSalesDashboard(
+                        iso
+                    );
+                }
+            );
+
+        }
+
+        input.addEventListener(
+            "click",
+            homeOpenDashboardDatePicker
         );
 
     }
@@ -564,10 +672,7 @@ function initHomeSalesDashboard(){
             "click",
             ()=>{
                 const selectedDate =
-                    document.getElementById(
-                        "homeSalesDate"
-                    )?.value ||
-                    homeYesterdayISO();
+                    homeGetDashboardSelectedISO();
 
                 homeSalesDate = selectedDate;
 
@@ -589,8 +694,7 @@ function initHomeSalesDashboard(){
     setTimeout(
         ()=>{
             const selectedDate =
-                input?.value ||
-                homeYesterdayISO();
+                homeGetDashboardSelectedISO();
 
             homeSalesDate = selectedDate;
 
