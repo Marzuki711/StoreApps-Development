@@ -834,10 +834,32 @@ function dsSet(id, value) {
     const element =
         document.getElementById(id);
 
-    if (element) {
-        element.value =
-            value ?? "";
+    if (!element) {
+        return;
     }
+
+    if (id === "dsBusinessDate") {
+
+        element.value =
+            dsToDisplayDate(value);
+
+        const picker =
+            document.getElementById(
+                "dsBusinessDatePicker"
+            );
+
+        if (picker) {
+            picker.value =
+                dsDateDisplayToISO(
+                    element.value
+                );
+        }
+
+        return;
+    }
+
+    element.value =
+        value ?? "";
 }
 
 
@@ -986,7 +1008,7 @@ function dsOpenEdit(id) {
 
     dsSet(
         "dsBusinessDate",
-        dsToInputDate(
+        dsToDisplayDate(
             row.businessDate
         )
     );
@@ -1161,8 +1183,13 @@ async function dsSave() {
     const storeNo =
         dsGet("dsStoreNo");
 
-    const businessDate =
+    const businessDateDisplay =
         dsGet("dsBusinessDate");
+
+    const businessDate =
+        dsDateDisplayToISO(
+            businessDateDisplay
+        );
 
     if (!storeNo) {
 
@@ -1176,7 +1203,7 @@ async function dsSave() {
     if (!businessDate) {
 
         dsShowError(
-            "Please select Business Date."
+            "Please enter Business Date in dd/mm/yyyy format."
         );
 
         return;
@@ -1550,16 +1577,189 @@ function dsMoney(value) {
    DATE
 ========================================== */
 
-function dsToInputDate(value) {
+function dsToDisplayDate(value) {
 
-    const match =
-        String(value || "").match(
+    const raw =
+        String(value || "").trim();
+
+    if (!raw) {
+        return "";
+    }
+
+    /* ISO yyyy-mm-dd -> dd/mm/yyyy */
+    let match =
+        raw.match(
+            /^(\d{4})-(\d{2})-(\d{2})$/
+        );
+
+    if (match) {
+        return (
+            match[3] + "/" +
+            match[2] + "/" +
+            match[1]
+        );
+    }
+
+    /*
+     * Existing records are currently returned in
+     * US-style mm/dd/yyyy. Display them as dd/mm/yyyy.
+     */
+    match =
+        raw.match(
             /^(\d{2})\/(\d{2})\/(\d{4})$/
         );
 
-    return match
-        ? `${match[3]}-${match[2]}-${match[1]}`
-        : String(value || "");
+    if (match) {
+        return (
+            match[2] + "/" +
+            match[1] + "/" +
+            match[3]
+        );
+    }
+
+    return raw;
+}
+
+
+function dsDateDisplayToISO(value) {
+
+    const raw =
+        String(value || "").trim();
+
+    const match =
+        raw.match(
+            /^(\d{2})\/(\d{2})\/(\d{4})$/
+        );
+
+    if (!match) {
+        return "";
+    }
+
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+
+    const date =
+        new Date(
+            year,
+            month - 1,
+            day
+        );
+
+    if (
+        !Number.isInteger(day) ||
+        !Number.isInteger(month) ||
+        !Number.isInteger(year) ||
+        year < 1900 ||
+        year > 9999 ||
+        month < 1 ||
+        month > 12 ||
+        day < 1 ||
+        day > 31 ||
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+    ) {
+        return "";
+    }
+
+    return (
+        String(year).padStart(4, "0") + "-" +
+        String(month).padStart(2, "0") + "-" +
+        String(day).padStart(2, "0")
+    );
+}
+
+
+function dsNormalizeBusinessDateInput(input) {
+
+    if (!input) {
+        return;
+    }
+
+    let value =
+        String(input.value || "")
+            .replace(/[^0-9]/g, "")
+            .slice(0, 8);
+
+    if (value.length > 4) {
+        value =
+            value.slice(0, 2) + "/" +
+            value.slice(2, 4) + "/" +
+            value.slice(4);
+    } else if (value.length > 2) {
+        value =
+            value.slice(0, 2) + "/" +
+            value.slice(2);
+    }
+
+    input.value = value;
+}
+
+
+function dsBusinessDatePickerChanged(picker) {
+
+    const visible =
+        document.getElementById(
+            "dsBusinessDate"
+        );
+
+    if (!picker || !visible) {
+        return;
+    }
+
+    visible.value =
+        dsToDisplayDate(
+            picker.value
+        );
+}
+
+
+function dsSyncBusinessDatePicker() {
+
+    const visible =
+        document.getElementById(
+            "dsBusinessDate"
+        );
+
+    const picker =
+        document.getElementById(
+            "dsBusinessDatePicker"
+        );
+
+    if (!visible || !picker) {
+        return;
+    }
+
+    picker.value =
+        dsDateDisplayToISO(
+            visible.value
+        );
+}
+
+
+function dsOpenBusinessDatePicker() {
+
+    const picker =
+        document.getElementById(
+            "dsBusinessDatePicker"
+        );
+
+    if (!picker) {
+        return;
+    }
+
+    dsSyncBusinessDatePicker();
+
+    try {
+        if (typeof picker.showPicker === "function") {
+            picker.showPicker();
+        } else {
+            picker.click();
+        }
+    } catch (error) {
+        picker.click();
+    }
 }
 
 
