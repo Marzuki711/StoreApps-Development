@@ -1153,6 +1153,8 @@ function dsOpenAdd() {
         "0.00%"
     );
 
+    dsInitBusinessDatePicker();
+
     const saveButton =
         document.getElementById(
             "dsSaveButton"
@@ -1203,6 +1205,8 @@ function dsOpenEdit(id) {
         "dsFormTitle"
     ).textContent =
         "Edit Daily Sales";
+
+    dsInitBusinessDatePicker();
 
     dsSet(
         "dsDailySalesNo",
@@ -1393,8 +1397,13 @@ async function dsSave() {
     const storeNo =
         dsGet("dsStoreNo");
 
-    const businessDate =
+    const businessDateDisplay =
         dsGet("dsBusinessDate");
+
+    const businessDate =
+        dsBusinessDateToISO(
+            businessDateDisplay
+        );
 
     if (!storeNo) {
 
@@ -1649,14 +1658,177 @@ function dsMoney(value) {
 
 function dsToInputDate(value) {
 
-    const match =
-        String(value || "").match(
+    const raw =
+        String(value || "").trim();
+
+    if (!raw) {
+        return "";
+    }
+
+    let match =
+        raw.match(
+            /^(\d{4})-(\d{2})-(\d{2})$/
+        );
+
+    if (match) {
+        return (
+            match[3] + "/" +
+            match[2] + "/" +
+            match[1]
+        );
+    }
+
+    match =
+        raw.match(
             /^(\d{2})\/(\d{2})\/(\d{4})$/
         );
 
-    return match
-        ? `${match[3]}-${match[2]}-${match[1]}`
-        : String(value || "");
+    if (match) {
+        return (
+            match[2] + "/" +
+            match[1] + "/" +
+            match[3]
+        );
+    }
+
+    return raw;
+}
+
+function dsBusinessDateToISO(value) {
+
+    const match =
+        String(value || "")
+            .trim()
+            .match(
+                /^(\d{2})\/(\d{2})\/(\d{4})$/
+            );
+
+    if (!match) {
+        return "";
+    }
+
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const date = new Date(year, month - 1, day);
+
+    if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+    ) {
+        return "";
+    }
+
+    return (
+        String(year).padStart(4, "0") +
+        "-" +
+        String(month).padStart(2, "0") +
+        "-" +
+        String(day).padStart(2, "0")
+    );
+}
+
+function dsInitBusinessDatePicker() {
+
+    const input =
+        document.getElementById(
+            "dsBusinessDate"
+        );
+
+    const picker =
+        document.getElementById(
+            "dsBusinessDatePicker"
+        );
+
+    if (!input || !picker || input.dataset.dateReady === "1") {
+        return;
+    }
+
+    input.dataset.dateReady = "1";
+
+    input.addEventListener(
+        "input",
+        function () {
+
+            let value =
+                String(input.value || "")
+                    .replace(/[^0-9]/g, "")
+                    .slice(0, 8);
+
+            if (value.length > 4) {
+                value =
+                    value.slice(0, 2) +
+                    "/" +
+                    value.slice(2, 4) +
+                    "/" +
+                    value.slice(4);
+            } else if (value.length > 2) {
+                value =
+                    value.slice(0, 2) +
+                    "/" +
+                    value.slice(2);
+            }
+
+            input.value = value;
+
+            const iso =
+                dsBusinessDateToISO(value);
+
+            if (iso) {
+                picker.value = iso;
+            }
+        }
+    );
+
+    picker.addEventListener(
+        "change",
+        function () {
+
+            const iso =
+                picker.value || "";
+
+            const m =
+                iso.match(
+                    /^(\d{4})-(\d{2})-(\d{2})$/
+                );
+
+            if (m) {
+                input.value =
+                    m[3] + "/" +
+                    m[2] + "/" +
+                    m[1];
+            }
+        }
+    );
+
+    input.addEventListener(
+        "click",
+        function () {
+
+            const iso =
+                dsBusinessDateToISO(
+                    input.value
+                );
+
+            if (iso) {
+                picker.value = iso;
+            }
+
+            try {
+                if (
+                    typeof picker.showPicker ===
+                    "function"
+                ) {
+                    picker.showPicker();
+                } else {
+                    picker.click();
+                }
+            } catch (e) {
+                picker.click();
+            }
+        }
+    );
 }
 
 
