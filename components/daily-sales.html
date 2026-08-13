@@ -53,7 +53,25 @@
 
             <div class="ds-field">
                 <label>Business Date <span>*</span></label>
-                <input id="dsBusinessDate" type="date">
+                <div class="ds-date-input-wrap">
+                    <input id="dsBusinessDate"
+                           type="text"
+                           inputmode="numeric"
+                           autocomplete="off"
+                           placeholder="dd/mm/yyyy"
+                           maxlength="10"
+                           aria-label="Business Date"
+                           oninput="dsNormalizeBusinessDateInput(this)"
+                           onblur="dsSyncBusinessDatePicker()">
+                    <i class="fa-regular fa-calendar ds-date-icon"
+                       aria-hidden="true"></i>
+                    <input id="dsBusinessDatePicker"
+                           class="ds-native-date-picker"
+                           type="date"
+                           tabindex="-1"
+                           aria-hidden="true"
+                           onchange="dsBusinessDatePickerChanged(this)">
+                </div>
             </div>
 
             <div class="ds-field">
