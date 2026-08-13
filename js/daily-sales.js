@@ -1361,6 +1361,21 @@ function dsBuildShareReport() {
         ? `#${String(storeNo).replace(/^#/, "")} ${storeName}`.trim()
         : storeName;
 
+    /*
+     * SHARE REPORT TEMPLATE — LOCKED
+     *
+     * Only this report text format is changed.
+     * Daily Sales calculation, save, API, validation,
+     * search, reset and all other functions remain unchanged.
+     *
+     * Required format:
+     * - blank line between the major sections
+     * - NO blank line between "Breakdown by PSA :" and item 1
+     * - PSA items numbered 1-8
+     * - NO extra spaces after the item number
+     * - real newline characters are used
+     */
+
     return [
         `Store No : *${displayStore}*`,
         `Operating Hour : *${operatingHour}*`,
@@ -1372,18 +1387,18 @@ function dsBuildShareReport() {
         `Total Merchandise Sales : *RM${dsFormatAmount(merchandise)}*`,
         "",
         "Breakdown by PSA :",
-        `Services : ${dsFormatAmount(services)}`,
-        `Food : ${dsFormatAmount(food)}`,
-        `Beverages : ${dsFormatAmount(beverage)}`,
-        `General Merchandise : ${dsFormatAmount(generalMerchandise)}`,
-        `Tobacco/Alcoholic : ${dsFormatAmount(tobacco)}`,
-        `Supply : ${dsFormatAmount(supply)}`,
-        `Food Service : ${dsFormatAmount(foodService)} *(${percentage.toFixed(2)}%)*`,
-        `Alcoholic : ${dsFormatAmount(alcoholic)}`,
+        `1. Services : ${dsFormatAmount(services)}`,
+        `2. Food : ${dsFormatAmount(food)}`,
+        `3. Beverages : ${dsFormatAmount(beverage)}`,
+        `4. General Merchandise : ${dsFormatAmount(generalMerchandise)}`,
+        `5. Tobacco/Alcoholic : ${dsFormatAmount(tobacco)}`,
+        `6. Supply : ${dsFormatAmount(supply)}`,
+        `7. Food Service : ${dsFormatAmount(foodService)} *(${percentage.toFixed(2)}%)*`,
+        `8. Alcoholic : ${dsFormatAmount(alcoholic)}`,
         "",
         `Total Customer : ${customer.toLocaleString("en-MY")}`,
         `Transaction Size : ${transactionSize.toFixed(2)}`
-    ].join("\\n");
+    ].join("\n");
 }
 
 async function dsShareReport(report) {
