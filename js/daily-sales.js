@@ -434,6 +434,33 @@ function dsYesterdayISO() {
 }
 
 
+/* DATE ONLY FIX — display DD/MM/YYYY, keep API ISO */
+function dsDateISOToDisplay(iso) {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso || "");
+}
+
+function dsDateDisplayToISO(value) {
+    const m = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return "";
+
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    const year = Number(m[3]);
+    const d = new Date(year, month - 1, day);
+
+    if (
+        d.getFullYear() !== year ||
+        d.getMonth() !== month - 1 ||
+        d.getDate() !== day
+    ) {
+        return "";
+    }
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+
 function dsEnsureDateFilter() {
 
     const search =
@@ -531,11 +558,6 @@ function dsEnsureDateFilter() {
                 "input"
             );
 
-        /*
-         * LOCKED:
-         * Visible date is always DD/MM/YYYY.
-         * The internal value sent to backend remains ISO.
-         */
         input.type =
             "text";
 
@@ -554,11 +576,11 @@ function dsEnsureDateFilter() {
         input.maxLength =
             10;
 
-        input.style.width =
-            "100%";
-
         input.style.height =
             "44px";
+
+        input.style.width =
+            "100%";
 
         input.style.boxSizing =
             "border-box";
@@ -607,7 +629,7 @@ function dsEnsureDateFilter() {
             "absolute";
 
         picker.style.right =
-            "8px";
+            "7px";
 
         picker.style.top =
             "6px";
@@ -623,28 +645,6 @@ function dsEnsureDateFilter() {
 
         picker.style.cursor =
             "pointer";
-
-        picker.addEventListener(
-            "change",
-            async function () {
-
-                const iso =
-                    picker.value ||
-                    dsYesterdayISO();
-
-                input.value =
-                    dsFilterISOToDisplay(
-                        iso
-                    );
-
-                dsSelectedDate =
-                    iso;
-
-                await dsLoad(
-                    iso
-                );
-            }
-        );
 
         const icon =
             document.createElement(
@@ -675,82 +675,27 @@ function dsEnsureDateFilter() {
         icon.style.fontSize =
             "15px";
 
-        dateWrap.appendChild(
-            input
-        );
+        picker.addEventListener(
+            "change",
+            async function () {
 
-        dateWrap.appendChild(
-            icon
-        );
+                const iso =
+                    picker.value ||
+                    dsYesterdayISO();
 
-        dateWrap.appendChild(
-            picker
-        );
-
-        function dsFilterISOToDisplay(
-            iso
-        ) {
-            const m =
-                String(iso || "")
-                    .match(
-                        /^(\\d{4})-(\\d{2})-(\\d{2})$/
+                input.value =
+                    dsDateISOToDisplay(
+                        iso
                     );
 
-            return m
-                ? (
-                    m[3] + "/" +
-                    m[2] + "/" +
-                    m[1]
-                )
-                : String(iso || "");
-        }
+                dsSelectedDate =
+                    iso;
 
-        function dsFilterDisplayToISO(
-            value
-        ) {
-            const m =
-                String(value || "")
-                    .trim()
-                    .match(
-                        /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/
-                    );
-
-            if (!m) {
-                return "";
-            }
-
-            const day =
-                Number(m[1]);
-
-            const month =
-                Number(m[2]);
-
-            const year =
-                Number(m[3]);
-
-            const d =
-                new Date(
-                    year,
-                    month - 1,
-                    day
+                await dsLoad(
+                    iso
                 );
-
-            if (
-                d.getFullYear() !== year ||
-                d.getMonth() !== month - 1 ||
-                d.getDate() !== day
-            ) {
-                return "";
             }
-
-            return (
-                String(year).padStart(4,"0") +
-                "-" +
-                String(month).padStart(2,"0") +
-                "-" +
-                String(day).padStart(2,"0")
-            );
-        }
+        );
 
         input.addEventListener(
             "input",
@@ -764,20 +709,18 @@ function dsEnsureDateFilter() {
                         /[^0-9]/g,
                         ""
                     )
-                    .slice(0,8);
+                    .slice(0, 8);
 
                 if (value.length > 4) {
                     value =
-                        value.slice(0,2) +
+                        value.slice(0, 2) +
                         "/" +
-                        value.slice(2,4) +
+                        value.slice(2, 4) +
                         "/" +
                         value.slice(4);
-                } else if (
-                    value.length > 2
-                ) {
+                } else if (value.length > 2) {
                     value =
-                        value.slice(0,2) +
+                        value.slice(0, 2) +
                         "/" +
                         value.slice(2);
                 }
@@ -786,7 +729,7 @@ function dsEnsureDateFilter() {
                     value;
 
                 const iso =
-                    dsFilterDisplayToISO(
+                    dsDateDisplayToISO(
                         value
                     );
 
@@ -825,6 +768,18 @@ function dsEnsureDateFilter() {
                     picker.click();
                 }
             }
+        );
+
+        dateWrap.appendChild(
+            input
+        );
+
+        dateWrap.appendChild(
+            icon
+        );
+
+        dateWrap.appendChild(
+            picker
         );
 
         const todayButton =
@@ -870,7 +825,7 @@ function dsEnsureDateFilter() {
                     dsYesterdayISO();
 
                 input.value =
-                    dsFilterISOToDisplay(
+                    dsDateISOToDisplay(
                         yesterday
                     );
 
@@ -940,27 +895,6 @@ function dsEnsureDateFilter() {
         }
     }
 
-            const searchWrap =
-            search.closest(
-                ".ds-search"
-            );
-
-        if (searchWrap) {
-
-            toolbar.insertBefore(
-                filter,
-                searchWrap
-            );
-
-        } else {
-
-            toolbar.insertBefore(
-                filter,
-                search
-            );
-        }
-    }
-
     const searchWrap =
         search.closest(
             ".ds-search"
@@ -1003,9 +937,9 @@ function dsEnsureDateFilter() {
             dsYesterdayISO();
 
         dateInput.value =
-            (typeof dsFilterISOToDisplay === "function")
-                ? dsFilterISOToDisplay(iso)
-                : iso;
+            dsDateISOToDisplay(
+                iso
+            );
 
         const picker =
             document.getElementById(
@@ -1132,32 +1066,10 @@ function dsSet(id, value) {
     const element =
         document.getElementById(id);
 
-    if (!element) {
-        return;
-    }
-
-    if (id === "dsBusinessDate") {
-
+    if (element) {
         element.value =
-            dsToDisplayDate(value);
-
-        const picker =
-            document.getElementById(
-                "dsBusinessDatePicker"
-            );
-
-        if (picker) {
-            picker.value =
-                dsDateDisplayToISO(
-                    element.value
-                );
-        }
-
-        return;
+            value ?? "";
     }
-
-    element.value =
-        value ?? "";
 }
 
 
@@ -1304,21 +1216,12 @@ function dsOpenEdit(id) {
 
     dsStoreChanged();
 
-    /*
-     * LOCKED — EDIT FORM BUSINESS DATE
-     * Database may return:
-     *   yyyy-MM-dd
-     *   MM/dd/yyyy
-     * The form must ALWAYS display dd/MM/yyyy.
-     */
     dsSet(
         "dsBusinessDate",
-        dsToDisplayDate(
+        dsToInputDate(
             row.businessDate
         )
     );
-
-    dsSyncBusinessDatePicker();
 
     dsSet(
         "dsTotalSales",
@@ -1490,13 +1393,8 @@ async function dsSave() {
     const storeNo =
         dsGet("dsStoreNo");
 
-    const businessDateDisplay =
-        dsGet("dsBusinessDate");
-
     const businessDate =
-        dsDateDisplayToISO(
-            businessDateDisplay
-        );
+        dsGet("dsBusinessDate");
 
     if (!storeNo) {
 
@@ -1510,7 +1408,7 @@ async function dsSave() {
     if (!businessDate) {
 
         dsShowError(
-            "Please enter Business Date in dd/mm/yyyy format."
+            "Please select Business Date."
         );
 
         return;
@@ -1621,10 +1519,10 @@ async function dsSave() {
             return;
         }
 
-        // Capture the saved values before closing the form.
-        const savedReport = dsBuildShareReport();
-
-        await dsShowSaveSuccessDialog(savedReport);
+        dsShowSuccess(
+            response.message ||
+            "Daily Sales saved successfully."
+        );
 
         dsCloseForm();
 
@@ -1651,141 +1549,6 @@ async function dsSave() {
     }
 }
 
-
-/* ==========================================
-   SAVE SUCCESS + SHARE REPORT
-   LOCKED DAILY SALES CORE
-========================================== */
-
-function dsFormatAmount(value) {
-
-    const n = Number(value);
-
-    return Number.isFinite(n)
-        ? n.toLocaleString("en-MY", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })
-        : "0.00";
-}
-
-function dsBuildShareReport() {
-
-    const storeNo = dsGet("dsStoreNo");
-    const storeName = dsGet("dsStoreName");
-    const operatingHour = dsGet("dsOperatingHour");
-    const openingDate = dsGet("dsOpeningDate");
-    const businessDate = dsGet("dsBusinessDate");
-    const totalSales = dsNum("dsTotalSales");
-    const budgetSales = dsNum("dsBudgetSales");
-    const merchandise = dsNum("dsTotalMerchandiseSales");
-    const services = dsNum("dsServices");
-    const food = dsNum("dsFood");
-    const beverage = dsNum("dsBeverage");
-    const generalMerchandise = dsNum("dsGeneralMerchandise");
-    const tobacco = dsNum("dsTobacco");
-    const supply = dsNum("dsSupply");
-    const foodService = dsNum("dsFoodService");
-    const alcoholic = dsNum("dsAlcoholic");
-    const customer = dsNum("dsTotalCustomer");
-    const transactionSize = dsNum("dsTransactionSize");
-    const percentage = dsNum("dsPercentage");
-
-    const displayStore = storeNo
-        ? `#${String(storeNo).replace(/^#/, "")} ${storeName}`.trim()
-        : storeName;
-
-    /*
-     * SHARE REPORT TEMPLATE — LOCKED
-     *
-     * Only this report text format is changed.
-     * Daily Sales calculation, save, API, validation,
-     * search, reset and all other functions remain unchanged.
-     *
-     * Required format:
-     * - blank line between the major sections
-     * - NO blank line between "Breakdown by PSA :" and item 1
-     * - PSA items numbered 1-8
-     * - NO extra spaces after the item number
-     * - real newline characters are used
-     */
-
-    return [
-        `Store No : *${displayStore}*`,
-        `Operating Hour : *${operatingHour}*`,
-        `Reopening Date : *${openingDate}*`,
-        "",
-        `Business Date : *${businessDate}*`,
-        `Total Sales : *RM${dsFormatAmount(totalSales)}*`,
-        `Budget Sales : *RM${dsFormatAmount(budgetSales)}*`,
-        `Total Merchandise Sales : *RM${dsFormatAmount(merchandise)}*`,
-        "",
-        "Breakdown by PSA :",
-        `1. Services : ${dsFormatAmount(services)}`,
-        `2. Food : ${dsFormatAmount(food)}`,
-        `3. Beverages : ${dsFormatAmount(beverage)}`,
-        `4. General Merchandise : ${dsFormatAmount(generalMerchandise)}`,
-        `5. Tobacco/Alcoholic : ${dsFormatAmount(tobacco)}`,
-        `6. Supply : ${dsFormatAmount(supply)}`,
-        `7. Food Service : ${dsFormatAmount(foodService)} *(${percentage.toFixed(2)}%)*`,
-        `8. Alcoholic : ${dsFormatAmount(alcoholic)}`,
-        "",
-        `Total Customer : ${customer.toLocaleString("en-MY")}`,
-        `Transaction Size : ${transactionSize.toFixed(2)}`
-    ].join("\n");
-}
-
-async function dsShareReport(report) {
-
-    try {
-        if (navigator.share) {
-            await navigator.share({
-                title: "Daily Sales Report",
-                text: report
-            });
-            return;
-        }
-    } catch (error) {
-        if (error && error.name === "AbortError") return;
-        console.warn("Native share unavailable:", error);
-    }
-
-    const whatsappUrl =
-        "https://wa.me/?text=" + encodeURIComponent(report);
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-}
-
-async function dsShowSaveSuccessDialog(report) {
-
-    if (typeof Swal !== "undefined") {
-
-        const result = await Swal.fire({
-            icon: "success",
-            title: "Save Successfully",
-            text: "Daily Sales has been saved successfully.",
-            showCancelButton: true,
-            confirmButtonText: "OK",
-            cancelButtonText: "Share Report",
-            reverseButtons: true,
-            allowOutsideClick: false
-        });
-
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            await dsShareReport(report);
-        }
-
-        return;
-    }
-
-    const share = window.confirm(
-        "Save Successfully\\n\\nPress OK to continue, or Cancel to Share Report."
-    );
-
-    if (!share) {
-        await dsShareReport(report);
-    }
-}
 
 /* ==========================================
    CALCULATIONS
@@ -1884,200 +1647,16 @@ function dsMoney(value) {
    DATE
 ========================================== */
 
-function dsToDisplayDate(value) {
-
-    const raw =
-        String(value || "").trim();
-
-    if (!raw) {
-        return "";
-    }
-
-    /* ISO yyyy-mm-dd -> dd/mm/yyyy */
-    let match =
-        raw.match(
-            /^(\d{4})-(\d{2})-(\d{2})$/
-        );
-
-    if (match) {
-        return (
-            match[3] + "/" +
-            match[2] + "/" +
-            match[1]
-        );
-    }
-
-    /*
-     * Database legacy format is MM/dd/yyyy.
-     * Convert ONLY this value for display.
-     */
-    match =
-        raw.match(
-            /^(\d{2})\/(\d{2})\/(\d{4})$/
-        );
-
-    if (match) {
-        const first = Number(match[1]);
-        const second = Number(match[2]);
-
-        /*
-         * If first > 12 it is already dd/MM/yyyy.
-         * Otherwise the existing database format is MM/dd/yyyy.
-         */
-        if (first > 12) {
-            return raw;
-        }
-
-        return (
-            match[2] + "/" +
-            match[1] + "/" +
-            match[3]
-        );
-    }
-
-    return raw;
-}
-
-
-function dsDateDisplayToISO(value) {
-
-    const raw =
-        String(value || "").trim();
+function dsToInputDate(value) {
 
     const match =
-        raw.match(
+        String(value || "").match(
             /^(\d{2})\/(\d{2})\/(\d{4})$/
         );
 
-    if (!match) {
-        return "";
-    }
-
-    const day = Number(match[1]);
-    const month = Number(match[2]);
-    const year = Number(match[3]);
-
-    const date =
-        new Date(
-            year,
-            month - 1,
-            day
-        );
-
-    if (
-        !Number.isInteger(day) ||
-        !Number.isInteger(month) ||
-        !Number.isInteger(year) ||
-        year < 1900 ||
-        year > 9999 ||
-        month < 1 ||
-        month > 12 ||
-        day < 1 ||
-        day > 31 ||
-        date.getFullYear() !== year ||
-        date.getMonth() !== month - 1 ||
-        date.getDate() !== day
-    ) {
-        return "";
-    }
-
-    return (
-        String(year).padStart(4, "0") + "-" +
-        String(month).padStart(2, "0") + "-" +
-        String(day).padStart(2, "0")
-    );
-}
-
-
-function dsNormalizeBusinessDateInput(input) {
-
-    if (!input) {
-        return;
-    }
-
-    let value =
-        String(input.value || "")
-            .replace(/[^0-9]/g, "")
-            .slice(0, 8);
-
-    if (value.length > 4) {
-        value =
-            value.slice(0, 2) + "/" +
-            value.slice(2, 4) + "/" +
-            value.slice(4);
-    } else if (value.length > 2) {
-        value =
-            value.slice(0, 2) + "/" +
-            value.slice(2);
-    }
-
-    input.value = value;
-}
-
-
-function dsBusinessDatePickerChanged(picker) {
-
-    const visible =
-        document.getElementById(
-            "dsBusinessDate"
-        );
-
-    if (!picker || !visible) {
-        return;
-    }
-
-    visible.value =
-        dsToDisplayDate(
-            picker.value
-        );
-}
-
-
-function dsSyncBusinessDatePicker() {
-
-    const visible =
-        document.getElementById(
-            "dsBusinessDate"
-        );
-
-    const picker =
-        document.getElementById(
-            "dsBusinessDatePicker"
-        );
-
-    if (!visible || !picker) {
-        return;
-    }
-
-    picker.value =
-        dsDateDisplayToISO(
-            visible.value
-        );
-}
-
-
-function dsOpenBusinessDatePicker() {
-
-    const picker =
-        document.getElementById(
-            "dsBusinessDatePicker"
-        );
-
-    if (!picker) {
-        return;
-    }
-
-    dsSyncBusinessDatePicker();
-
-    try {
-        if (typeof picker.showPicker === "function") {
-            picker.showPicker();
-        } else {
-            picker.click();
-        }
-    } catch (error) {
-        picker.click();
-    }
+    return match
+        ? `${match[3]}-${match[2]}-${match[1]}`
+        : String(value || "");
 }
 
 
