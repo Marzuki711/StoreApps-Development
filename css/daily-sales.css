@@ -430,3 +430,39 @@
         justify-content: center;
     }
 }
+
+
+/* ==========================================
+   BUSINESS DATE - DD/MM/YYYY
+========================================== */
+
+.ds-date-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.ds-date-input-wrap #dsBusinessDate {
+    padding-right: 48px;
+}
+
+.ds-date-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    font-size: 15px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.ds-native-date-picker {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 44px;
+    height: 44px;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
