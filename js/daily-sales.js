@@ -1006,12 +1006,21 @@ function dsOpenEdit(id) {
 
     dsStoreChanged();
 
+    /*
+     * LOCKED — EDIT FORM BUSINESS DATE
+     * Database may return:
+     *   yyyy-MM-dd
+     *   MM/dd/yyyy
+     * The form must ALWAYS display dd/MM/yyyy.
+     */
     dsSet(
         "dsBusinessDate",
         dsToDisplayDate(
             row.businessDate
         )
     );
+
+    dsSyncBusinessDatePicker();
 
     dsSet(
         "dsTotalSales",
@@ -1601,8 +1610,8 @@ function dsToDisplayDate(value) {
     }
 
     /*
-     * Existing records are currently returned in
-     * US-style mm/dd/yyyy. Display them as dd/mm/yyyy.
+     * Database legacy format is MM/dd/yyyy.
+     * Convert ONLY this value for display.
      */
     match =
         raw.match(
@@ -1610,6 +1619,17 @@ function dsToDisplayDate(value) {
         );
 
     if (match) {
+        const first = Number(match[1]);
+        const second = Number(match[2]);
+
+        /*
+         * If first > 12 it is already dd/MM/yyyy.
+         * Otherwise the existing database format is MM/dd/yyyy.
+         */
+        if (first > 12) {
+            return raw;
+        }
+
         return (
             match[2] + "/" +
             match[1] + "/" +
