@@ -214,7 +214,13 @@ function homeResetDashboard(){
         homeBudgetCaption:"0.00% of Budget Achieved",
 
         homeTotalRecord:"0",
-        homeBusinessDate:"—"
+        homeBusinessDate:"—",
+        homeWeekSalesCurrent:"RM 0.00",
+        homeWeekSalesPrevious:"RM 0.00",
+        homeWeekSalesChange:"—",
+        homeWeekCustomerCurrent:"0",
+        homeWeekCustomerPrevious:"0",
+        homeWeekCustomerChange:"—"
     };
 
     Object.keys(values).forEach(id=>{
@@ -231,6 +237,147 @@ function homeResetDashboard(){
 
     if(budget){
         budget.style.width = "0%";
+    }
+}
+
+function homeSubtractDaysISO(iso, days) {
+    const parts = String(iso || "").split("-");
+    if (parts.length !== 3) return "";
+
+    const date = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        Number(parts[2])
+    );
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    date.setDate(date.getDate() - Number(days || 0));
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+function homeCalculateSalesMetrics(rows, totalStores) {
+
+    const safeRows =
+        Array.isArray(rows) ? rows : [];
+
+    const sales =
+        safeRows.reduce(
+            (sum, r) =>
+                sum +
+                (
+                    Number(
+                        String(
+                            r.totalMerchandiseSales ?? ""
+                        ).replace(/,/g, "")
+                    ) || 0
+                ),
+            0
+        );
+
+    const customer =
+        safeRows.reduce(
+            (sum, r) =>
+                sum +
+                (
+                    Number(
+                        String(
+                            r.totalCustomer ?? ""
+                        ).replace(/,/g, "")
+                    ) || 0
+                ),
+            0
+        );
+
+    return {
+        totalSales: sales,
+        totalCustomer: customer,
+        apsdSales:
+            totalStores > 0
+                ? sales / totalStores
+                : 0,
+        apsdCustomer:
+            totalStores > 0
+                ? customer / totalStores
+                : 0
+    };
+}
+
+function homeComparisonPercent(current, previous) {
+
+    const c = Number(current) || 0;
+    const p = Number(previous) || 0;
+
+    if (p === 0) {
+        return null;
+    }
+
+    return ((c - p) / Math.abs(p)) * 100;
+}
+
+function homeComparisonText(current, previous, formatter) {
+
+    const pct =
+        homeComparisonPercent(current, previous);
+
+    const value =
+        formatter(current);
+
+    if (pct === null) {
+        return {
+            value: value,
+            change: "—"
+        };
+    }
+
+    const sign = pct > 0 ? "+" : "";
+
+    return {
+        value: value,
+        change: sign + pct.toFixed(2) + "%"
+    };
+}
+
+function homeSetComparison(idValue, idChange, current, previous, formatter) {
+
+    const result =
+        homeComparisonText(
+            current,
+            previous,
+            formatter
+        );
+
+    homeSetText(idValue, result.value);
+    homeSetText(idChange, result.change);
+
+    const changeEl =
+        document.getElementById(idChange);
+
+    if (changeEl) {
+        const pct =
+            homeComparisonPercent(
+                current,
+                previous
+            );
+
+        changeEl.classList.remove(
+            "is-up",
+            "is-down",
+            "is-flat"
+        );
+
+        changeEl.classList.add(
+            pct === null || pct === 0
+                ? "is-flat"
+                : pct > 0
+                    ? "is-up"
+                    : "is-down"
+        );
     }
 }
 
@@ -265,7 +412,13 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
     try{
 
-        const [storeResponse,listResponse] = await Promise.all([
+        const previousWeekDate =
+            homeSubtractDaysISO(
+                homeSalesDate,
+                7
+            );
+
+        const [storeResponse,listResponse,previousWeekResponse] = await Promise.all([
 
             callDailySalesAPI(
                 "getDailySalesStores",
@@ -281,6 +434,15 @@ async function loadHomeSalesDashboard(dateOverride=""){
                     username,
                     role,
                     date:homeSalesDate
+                }
+            ),
+
+            callDailySalesAPI(
+                "getDailySalesList",
+                {
+                    username,
+                    role,
+                    date:previousWeekDate
                 }
             )
 
@@ -429,6 +591,60 @@ async function loadHomeSalesDashboard(dateOverride=""){
         homeSetText(
             "homeSalesLabel",
             homeDisplayDate(homeSalesDate)
+        );
+
+        /*
+         * WEEK-ON-WEEK COMPARISON — ADDITIVE ONLY
+         * Compare selected date against the same weekday
+         * from the previous week.
+         */
+        const previousWeekRows =
+            previousWeekResponse?.status &&
+            Array.isArray(previousWeekResponse.rows)
+                ? previousWeekResponse.rows
+                : [];
+
+        const currentMetrics =
+            homeCalculateSalesMetrics(
+                rows,
+                totalStores
+            );
+
+        const previousMetrics =
+            homeCalculateSalesMetrics(
+                previousWeekRows,
+                totalStores
+            );
+
+        homeSetComparison(
+            "homeWeekSalesCurrent",
+            "homeWeekSalesChange",
+            currentMetrics.apsdSales,
+            previousMetrics.apsdSales,
+            homeMoney
+        );
+
+        homeSetComparison(
+            "homeWeekCustomerCurrent",
+            "homeWeekCustomerChange",
+            currentMetrics.apsdCustomer,
+            previousMetrics.apsdCustomer,
+            homeNumber
+        );
+
+        homeSetText(
+            "homeWeekSalesPrevious",
+            homeMoney(previousMetrics.apsdSales)
+        );
+
+        homeSetText(
+            "homeWeekCustomerPrevious",
+            homeNumber(previousMetrics.apsdCustomer)
+        );
+
+        homeSetText(
+            "homeWeekComparisonDate",
+            "vs " + homeDisplayDate(previousWeekDate)
         );
 
         /*
