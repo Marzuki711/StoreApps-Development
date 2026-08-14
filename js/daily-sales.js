@@ -740,7 +740,19 @@ function dsPopulateStoreSelect() {
     select.innerHTML =
         '<option value="">Select Store No</option>';
 
-    dsStores.forEach(
+    dsStores
+        .slice()
+        .sort(function(a, b) {
+            return String(a?.storeNo ?? "").localeCompare(
+                String(b?.storeNo ?? ""),
+                undefined,
+                {
+                    numeric: true,
+                    sensitivity: "base"
+                }
+            );
+        })
+        .forEach(
         function (store) {
 
             const option =
@@ -1885,6 +1897,8 @@ function dsRenderTable() {
         body.innerHTML =
             '<tr><td colspan="7" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
+        dsRenderTableSummary([]);
+
         return;
     }
 
@@ -1972,6 +1986,118 @@ function dsRenderTable() {
                 `;
             }
         ).join("");
+
+    dsRenderTableSummary(rows);
+}
+
+/* ==========================================
+   TABLE SUMMARY — ADDITIVE ONLY
+========================================== */
+
+function dsRenderTableSummary(rows) {
+
+    const body =
+        document.getElementById("dsTableBody");
+
+    const table =
+        body?.closest("table");
+
+    if (!table) {
+        return;
+    }
+
+    let tfoot =
+        table.querySelector("#dsTableSummary");
+
+    if (!tfoot) {
+        tfoot = document.createElement("tfoot");
+        tfoot.id = "dsTableSummary";
+        table.appendChild(tfoot);
+    }
+
+    const dataRows = Array.isArray(rows) ? rows : [];
+
+    let totalSales = 0;
+    let totalCustomer = 0;
+    let totalBudget = 0;
+    let percentageSum = 0;
+
+    dataRows.forEach(function(row) {
+
+        const sales =
+            Number(
+                String(row.totalMerchandiseSales ?? "")
+                    .replace(/,/g, "")
+            ) || 0;
+
+        const customer =
+            Number(
+                String(row.totalCustomer ?? "")
+                    .replace(/,/g, "")
+            ) || 0;
+
+        const budget =
+            Number(
+                String(row.budgetSales ?? "")
+                    .replace(/,/g, "")
+            ) || 0;
+
+        const percentage =
+            budget > 0
+                ? (sales / budget) * 100
+                : 0;
+
+        totalSales += sales;
+        totalCustomer += customer;
+        totalBudget += budget;
+        percentageSum += percentage;
+    });
+
+    const rowCount = dataRows.length;
+    const averageSales =
+        rowCount > 0 ? totalSales / rowCount : 0;
+    const averageCustomer =
+        rowCount > 0 ? totalCustomer / rowCount : 0;
+    const averagePercentage =
+        rowCount > 0 ? percentageSum / rowCount : 0;
+    const totalPercentage =
+        totalBudget > 0
+            ? (totalSales / totalBudget) * 100
+            : 0;
+
+    tfoot.innerHTML = `
+        <tr class="ds-summary-row">
+            <td colspan="3">
+                <strong>TOTAL / AVERAGE</strong>
+            </td>
+
+            <td class="ds-number">
+                <strong>${dsMoney(totalSales)}</strong>
+                <small>Avg: ${dsMoney(averageSales)}</small>
+            </td>
+
+            <td class="ds-number">
+                <strong>${dsEsc(totalCustomer)}</strong>
+                <small>Avg: ${dsNumber(averageCustomer)}</small>
+            </td>
+
+            <td class="ds-number">
+                <strong>${totalPercentage.toFixed(2)}%</strong>
+                <small>Avg: ${averagePercentage.toFixed(2)}%</small>
+            </td>
+
+            <td></td>
+        </tr>
+    `;
+}
+
+function dsNumber(value) {
+
+    const n = Number(value) || 0;
+
+    return n.toLocaleString("en-MY", {
+        maximumFractionDigits: 2
+    });
 }
 
 /* ==========================================
