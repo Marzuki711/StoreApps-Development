@@ -247,6 +247,58 @@
     white-space: nowrap;
 }
 
+
+/* ==========================================
+   TABLE SUMMARY — PREMIUM / ALIGNED WITH TABLE
+========================================== */
+
+.ds-table tfoot {
+    border-top: 2px solid #CBD5E1;
+}
+
+.ds-summary-row td {
+    background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+    border-bottom: 0;
+    padding: 12px 12px;
+    vertical-align: middle;
+}
+
+.ds-summary-label {
+    color: #0F172A !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .02em;
+}
+
+.ds-summary-label span,
+.ds-summary-label small,
+.ds-summary-value strong,
+.ds-summary-value small {
+    display: block;
+}
+
+.ds-summary-label small,
+.ds-summary-value small {
+    margin-top: 3px;
+    color: #64748B;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.ds-summary-value {
+    color: #0F172A !important;
+}
+
+.ds-summary-value strong {
+    font-size: 13px;
+    line-height: 1.15;
+    font-weight: 900;
+}
+
+.ds-summary-value small {
+    text-align: right;
+}
+
 .ds-edit-btn {
     border: 0;
     background: #EEF2FF;
