@@ -286,68 +286,50 @@
 
 
             <!-- ================= WEEK-ON-WEEK COMPARISON ================= -->
-            <section id="homeWeekComparison"
-                     class="sa-week-comparison">
-
-                <div class="sa-week-comparison-heading">
+            <section class="sa-wow-card" aria-label="Week-on-week comparison">
+                <div class="sa-wow-head">
                     <div>
-                        <strong>WEEK-ON-WEEK COMPARISON</strong>
-                        <span id="homeWeekComparisonDate">
-                            vs previous week
-                        </span>
+                        <span class="sa-wow-eyebrow">PERFORMANCE TREND</span>
+                        <h3>Week-on-Week Comparison</h3>
+                        <p>Selected date compared with the same day last week.</p>
+                    </div>
+                    <div class="sa-wow-period">
+                        <span>THIS WEEK</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <span>LAST WEEK</span>
                     </div>
                 </div>
 
-                <div class="sa-week-comparison-grid">
-
-                    <article class="sa-week-comparison-card">
-                        <div class="sa-week-comparison-label">
-                            APSD SALES
+                <div class="sa-wow-grid">
+                    <article class="sa-wow-item sa-wow-sales">
+                        <div class="sa-wow-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="sa-wow-main">
+                            <span class="sa-wow-title">APSD SALES</span>
+                            <div class="sa-wow-values">
+                                <strong id="homeWowApsdSales">RM 0.00</strong>
+                                <span>vs <b id="homeWowLastApsdSales">RM 0.00</b> last week</span>
+                            </div>
                         </div>
-
-                        <div class="sa-week-comparison-values">
-                            <strong id="homeWeekSalesCurrent">
-                                RM 0.00
-                            </strong>
-
-                            <span>
-                                Last Week:
-                                <b id="homeWeekSalesPrevious">
-                                    RM 0.00
-                                </b>
-                            </span>
+                        <div class="sa-wow-change" id="homeWowSalesChange">
+                            <i class="fa-solid fa-minus"></i>
+                            <strong>0.00%</strong>
                         </div>
-
-                        <small id="homeWeekSalesChange"
-                               class="is-flat">
-                            —
-                        </small>
                     </article>
 
-                    <article class="sa-week-comparison-card">
-                        <div class="sa-week-comparison-label">
-                            APSD CUSTOMER
+                    <article class="sa-wow-item sa-wow-customer">
+                        <div class="sa-wow-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="sa-wow-main">
+                            <span class="sa-wow-title">APSD CUSTOMER</span>
+                            <div class="sa-wow-values">
+                                <strong id="homeWowApsdCustomer">0</strong>
+                                <span>vs <b id="homeWowLastApsdCustomer">0</b> last week</span>
+                            </div>
                         </div>
-
-                        <div class="sa-week-comparison-values">
-                            <strong id="homeWeekCustomerCurrent">
-                                0
-                            </strong>
-
-                            <span>
-                                Last Week:
-                                <b id="homeWeekCustomerPrevious">
-                                    0
-                                </b>
-                            </span>
+                        <div class="sa-wow-change" id="homeWowCustomerChange">
+                            <i class="fa-solid fa-minus"></i>
+                            <strong>0.00%</strong>
                         </div>
-
-                        <small id="homeWeekCustomerChange"
-                               class="is-flat">
-                            —
-                        </small>
                     </article>
-
                 </div>
             </section>
 
@@ -1012,6 +994,139 @@
 
 /* ================= MIDDLE ================= */
 
+
+/* ================= WEEK-ON-WEEK COMPARISON ================= */
+
+.sa-wow-card{
+    margin-top:14px;
+    padding:20px;
+    border:1px solid var(--sa-border);
+    border-radius:16px;
+    background:linear-gradient(135deg,#FFFFFF 0%,#F8FAFC 100%);
+    box-shadow:0 8px 24px rgba(15,23,42,.045);
+}
+
+.sa-wow-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    padding-bottom:15px;
+    border-bottom:1px solid #E2E8F0;
+}
+
+.sa-wow-eyebrow{
+    display:block;
+    color:var(--sa-red);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+}
+
+.sa-wow-head h3{
+    margin:4px 0 3px;
+    color:#101A2D;
+    font-size:16px;
+    line-height:1.2;
+}
+
+.sa-wow-head p{
+    margin:0;
+    color:#64748B;
+    font-size:11px;
+}
+
+.sa-wow-period{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:8px 11px;
+    border:1px solid #E2E8F0;
+    border-radius:10px;
+    background:#fff;
+    color:#64748B;
+    font-size:9px;
+    font-weight:900;
+    white-space:nowrap;
+}
+
+.sa-wow-period i{color:#C1121F;font-size:10px;}
+
+.sa-wow-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:14px;
+}
+
+.sa-wow-item{
+    min-width:0;
+    display:grid;
+    grid-template-columns:42px minmax(0,1fr) auto;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+    border:1px solid #E2E8F0;
+    border-radius:13px;
+    background:#fff;
+}
+
+.sa-wow-icon{
+    width:42px;
+    height:42px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    background:#FFF1F2;
+    color:#C1121F;
+    font-size:16px;
+}
+
+.sa-wow-customer .sa-wow-icon{
+    background:#ECFDF5;
+    color:#16A34A;
+}
+
+.sa-wow-title{
+    display:block;
+    color:#475569;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.03em;
+}
+
+.sa-wow-values strong{
+    display:inline-block;
+    margin-top:4px;
+    color:#111827;
+    font-size:18px;
+    line-height:1.1;
+}
+
+.sa-wow-values span{
+    display:block;
+    margin-top:3px;
+    color:#64748B;
+    font-size:10px;
+}
+
+.sa-wow-values b{color:#334155;}
+
+.sa-wow-change{
+    min-width:78px;
+    padding:8px 9px;
+    border-radius:9px;
+    text-align:center;
+    background:#F1F5F9;
+    color:#64748B;
+}
+
+.sa-wow-change i{font-size:10px;margin-right:3px;}
+.sa-wow-change strong{font-size:11px;}
+.sa-wow-change.is-up{background:#ECFDF5;color:#15803D;}
+.sa-wow-change.is-down{background:#FEF2F2;color:#B91C1C;}
+.sa-wow-change.is-flat{background:#F1F5F9;color:#64748B;}
+
 .sa-middle-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -1417,6 +1532,15 @@
     .sa-welcome-graphic{
         width:220px;
         height:150px;
+    }
+
+    .sa-wow-grid{
+        grid-template-columns:1fr;
+    }
+
+    .sa-wow-head{
+        align-items:flex-start;
+        flex-direction:column;
     }
 
     .sa-middle-grid{
