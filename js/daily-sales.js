@@ -433,6 +433,19 @@ function dsYesterdayISO() {
     );
 }
 
+function dsFormatDisplayDate(iso) {
+
+    const value = String(iso || "");
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!match) {
+        return value;
+    }
+
+    return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+
 
 function dsEnsureDateFilter() {
 
@@ -518,10 +531,22 @@ function dsEnsureDateFilter() {
             );
 
         input.type =
-            "date";
+            "text";
 
         input.id =
             "dsDateFilter";
+
+        input.inputMode =
+            "numeric";
+
+        input.autocomplete =
+            "off";
+
+        input.placeholder =
+            "dd/mm/yyyy";
+
+        input.maxLength =
+            10;
 
         input.style.height =
             "44px";
@@ -550,19 +575,111 @@ function dsEnsureDateFilter() {
         input.style.outline =
             "none";
 
+        input.style.fontWeight =
+            "500";
+
+        input.value =
+            dsFormatDisplayDate(
+                dsSelectedDate ||
+                dsYesterdayISO()
+            );
+
+        input.addEventListener(
+            "input",
+            function () {
+
+                const digits =
+                    String(input.value || "")
+                        .replace(/\D/g, "")
+                        .slice(0, 8);
+
+                if (digits.length > 4) {
+                    input.value =
+                        digits.slice(0, 2) + "/" +
+                        digits.slice(2, 4) + "/" +
+                        digits.slice(4);
+                } else if (digits.length > 2) {
+                    input.value =
+                        digits.slice(0, 2) + "/" +
+                        digits.slice(2);
+                } else {
+                    input.value = digits;
+                }
+            }
+        );
+
         input.addEventListener(
             "change",
             async function () {
 
-                dsSelectedDate =
-                    input.value ||
-                    dsTodayISO();
+                const m =
+                    String(input.value || "")
+                        .match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
 
-                await dsLoad(
-                    dsSelectedDate
-                );
+                if (!m) {
+                    input.value =
+                        dsFormatDisplayDate(
+                            dsSelectedDate ||
+                            dsYesterdayISO()
+                        );
+                    return;
+                }
+
+                const iso = `${m[3]}-${m[2]}-${m[1]}`;
+                const d = new Date(iso + "T00:00:00");
+
+                if (
+                    Number.isNaN(d.getTime()) ||
+                    d.getFullYear() !== Number(m[3]) ||
+                    d.getMonth() + 1 !== Number(m[2]) ||
+                    d.getDate() !== Number(m[1])
+                ) {
+                    input.value =
+                        dsFormatDisplayDate(
+                            dsSelectedDate ||
+                            dsYesterdayISO()
+                        );
+                    return;
+                }
+
+                dsSelectedDate = iso;
+                await dsLoad(iso);
             }
         );
+
+        const picker = document.createElement("input");
+        picker.type = "date";
+        picker.tabIndex = -1;
+        picker.setAttribute("aria-hidden", "true");
+        picker.style.position = "absolute";
+        picker.style.opacity = "0";
+        picker.style.pointerEvents = "none";
+        picker.style.width = "1px";
+        picker.style.height = "1px";
+
+        picker.addEventListener(
+            "change",
+            async function () {
+                if (!picker.value) return;
+                dsSelectedDate = picker.value;
+                input.value = dsFormatDisplayDate(picker.value);
+                await dsLoad(picker.value);
+            }
+        );
+
+        input.addEventListener(
+            "click",
+            function () {
+                picker.value =
+                    dsSelectedDate ||
+                    dsYesterdayISO();
+                if (typeof picker.showPicker === "function") {
+                    picker.showPicker();
+                }
+            }
+        );
+
+        filter.appendChild(picker);
 
         const todayButton =
             document.createElement(
@@ -607,7 +724,7 @@ function dsEnsureDateFilter() {
                     dsYesterdayISO();
 
                 input.value =
-                    yesterday;
+                    dsFormatDisplayDate(yesterday);
 
                 dsSelectedDate =
                     yesterday;
@@ -716,8 +833,10 @@ function dsEnsureDateFilter() {
     if (dateInput) {
 
         dateInput.value =
-            dsSelectedDate ||
-            dsYesterdayISO();
+            dsFormatDisplayDate(
+                dsSelectedDate ||
+                dsYesterdayISO()
+            );
     }
 }
 
@@ -743,12 +862,28 @@ function dsPopulateStoreSelect() {
     [...dsStores]
         .sort(
             function (a, b) {
-                return String(a.storeNo || "")
-                    .localeCompare(
-                        String(b.storeNo || ""),
-                        undefined,
-                        { numeric: true, sensitivity: "base" }
-                    );
+                const aNo =
+                        String(a.storeNo || "")
+                            .replace(/\D/g, "");
+                    const bNo =
+                        String(b.storeNo || "")
+                            .replace(/\D/g, "");
+
+                    const aNum =
+                        aNo ? Number(aNo) : Number.MAX_SAFE_INTEGER;
+                    const bNum =
+                        bNo ? Number(bNo) : Number.MAX_SAFE_INTEGER;
+
+                    if (aNum !== bNum) {
+                        return aNum - bNum;
+                    }
+
+                    return String(a.storeNo || "")
+                        .localeCompare(
+                            String(b.storeNo || ""),
+                            undefined,
+                            { sensitivity: "base" }
+                        );
             }
         )
         .forEach(
@@ -1869,12 +2004,8 @@ function dsRenderTable() {
                 function (row) {
 
                     return [
-                        row.dsId,
-                        row.dailySalesNo,
                         row.storeNo,
-                        row.storeName,
-                        row.businessDate,
-                        row.personInCharge
+                        row.storeName
                     ]
                         .join(" ")
                         .toLowerCase()
@@ -1883,11 +2014,27 @@ function dsRenderTable() {
             )
             .sort(
                 function (a, b) {
+                    const aNo =
+                        String(a.storeNo || "")
+                            .replace(/\D/g, "");
+                    const bNo =
+                        String(b.storeNo || "")
+                            .replace(/\D/g, "");
+
+                    const aNum =
+                        aNo ? Number(aNo) : Number.MAX_SAFE_INTEGER;
+                    const bNum =
+                        bNo ? Number(bNo) : Number.MAX_SAFE_INTEGER;
+
+                    if (aNum !== bNum) {
+                        return aNum - bNum;
+                    }
+
                     return String(a.storeNo || "")
                         .localeCompare(
                             String(b.storeNo || ""),
                             undefined,
-                            { numeric: true, sensitivity: "base" }
+                            { sensitivity: "base" }
                         );
                 }
             );
