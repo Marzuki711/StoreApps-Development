@@ -740,18 +740,17 @@ function dsPopulateStoreSelect() {
     select.innerHTML =
         '<option value="">Select Store No</option>';
 
-    dsStores
-        .slice()
-        .sort(function(a, b) {
-            return String(a?.storeNo ?? "").localeCompare(
-                String(b?.storeNo ?? ""),
-                undefined,
-                {
-                    numeric: true,
-                    sensitivity: "base"
-                }
-            );
-        })
+    [...dsStores]
+        .sort(
+            function (a, b) {
+                return String(a.storeNo || "")
+                    .localeCompare(
+                        String(b.storeNo || ""),
+                        undefined,
+                        { numeric: true, sensitivity: "base" }
+                    );
+            }
+        )
         .forEach(
         function (store) {
 
@@ -1865,22 +1864,33 @@ function dsRenderTable() {
             .toLowerCase();
 
     const rows =
-        dsRows.filter(
-            function (row) {
+        dsRows
+            .filter(
+                function (row) {
 
-                return [
-                    row.dsId,
-                    row.dailySalesNo,
-                    row.storeNo,
-                    row.storeName,
-                    row.businessDate,
-                    row.personInCharge
-                ]
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(query);
-            }
-        );
+                    return [
+                        row.dsId,
+                        row.dailySalesNo,
+                        row.storeNo,
+                        row.storeName,
+                        row.businessDate,
+                        row.personInCharge
+                    ]
+                        .join(" ")
+                        .toLowerCase()
+                        .includes(query);
+                }
+            )
+            .sort(
+                function (a, b) {
+                    return String(a.storeNo || "")
+                        .localeCompare(
+                            String(b.storeNo || ""),
+                            undefined,
+                            { numeric: true, sensitivity: "base" }
+                        );
+                }
+            );
 
     if (count) {
 
@@ -1897,7 +1907,8 @@ function dsRenderTable() {
         body.innerHTML =
             '<tr><td colspan="7" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
-        dsRenderTableSummary([]);
+        const emptyFoot = table?.querySelector("tfoot#dsTableFoot");
+        if (emptyFoot) emptyFoot.innerHTML = "";
 
         return;
     }
@@ -1987,117 +1998,71 @@ function dsRenderTable() {
             }
         ).join("");
 
-    dsRenderTableSummary(rows);
-}
+    /*
+     * TABLE SUMMARY — display only.
+     * Existing row data/calculations remain unchanged.
+     */
+    let foot = table?.querySelector("tfoot#dsTableFoot");
 
-/* ==========================================
-   TABLE SUMMARY — ADDITIVE ONLY
-========================================== */
-
-function dsRenderTableSummary(rows) {
-
-    const body =
-        document.getElementById("dsTableBody");
-
-    const table =
-        body?.closest("table");
-
-    if (!table) {
-        return;
+    if (!foot && table) {
+        foot = document.createElement("tfoot");
+        foot.id = "dsTableFoot";
+        table.appendChild(foot);
     }
 
-    let tfoot =
-        table.querySelector("#dsTableSummary");
+    if (foot) {
+        const totalMerchandiseSales = rows.reduce(
+            (sum, row) => sum + (Number(String(row.totalMerchandiseSales ?? "").replace(/,/g, "")) || 0),
+            0
+        );
 
-    if (!tfoot) {
-        tfoot = document.createElement("tfoot");
-        tfoot.id = "dsTableSummary";
-        table.appendChild(tfoot);
-    }
+        const totalCustomer = rows.reduce(
+            (sum, row) => sum + (Number(String(row.totalCustomer ?? "").replace(/,/g, "")) || 0),
+            0
+        );
 
-    const dataRows = Array.isArray(rows) ? rows : [];
+        const totalBudget = rows.reduce(
+            (sum, row) => sum + (Number(String(row.budgetSales ?? "").replace(/,/g, "")) || 0),
+            0
+        );
 
-    let totalSales = 0;
-    let totalCustomer = 0;
-    let totalBudget = 0;
-    let percentageSum = 0;
-
-    dataRows.forEach(function(row) {
-
-        const sales =
-            Number(
-                String(row.totalMerchandiseSales ?? "")
-                    .replace(/,/g, "")
-            ) || 0;
-
-        const customer =
-            Number(
-                String(row.totalCustomer ?? "")
-                    .replace(/,/g, "")
-            ) || 0;
-
-        const budget =
-            Number(
-                String(row.budgetSales ?? "")
-                    .replace(/,/g, "")
-            ) || 0;
-
-        const percentage =
-            budget > 0
-                ? (sales / budget) * 100
-                : 0;
-
-        totalSales += sales;
-        totalCustomer += customer;
-        totalBudget += budget;
-        percentageSum += percentage;
-    });
-
-    const rowCount = dataRows.length;
-    const averageSales =
-        rowCount > 0 ? totalSales / rowCount : 0;
-    const averageCustomer =
-        rowCount > 0 ? totalCustomer / rowCount : 0;
-    const averagePercentage =
-        rowCount > 0 ? percentageSum / rowCount : 0;
-    const totalPercentage =
-        totalBudget > 0
-            ? (totalSales / totalBudget) * 100
+        const recordCount = rows.length;
+        const avgSales = recordCount ? totalMerchandiseSales / recordCount : 0;
+        const avgCustomer = recordCount ? totalCustomer / recordCount : 0;
+        const totalPercentage = totalBudget > 0
+            ? (totalMerchandiseSales / totalBudget) * 100
             : 0;
 
-    tfoot.innerHTML = `
-        <tr class="ds-summary-row">
-            <td colspan="3">
-                <strong>TOTAL / AVERAGE</strong>
-            </td>
+        const avgPercentage = recordCount
+            ? rows.reduce((sum, row) => {
+                const sales = Number(String(row.totalMerchandiseSales ?? "").replace(/,/g, "")) || 0;
+                const budget = Number(String(row.budgetSales ?? "").replace(/,/g, "")) || 0;
+                return sum + (budget > 0 ? (sales / budget) * 100 : 0);
+            }, 0) / recordCount
+            : 0;
 
-            <td class="ds-number">
-                <strong>${dsMoney(totalSales)}</strong>
-                <small>Avg: ${dsMoney(averageSales)}</small>
-            </td>
-
-            <td class="ds-number">
-                <strong>${dsEsc(totalCustomer)}</strong>
-                <small>Avg: ${dsNumber(averageCustomer)}</small>
-            </td>
-
-            <td class="ds-number">
-                <strong>${totalPercentage.toFixed(2)}%</strong>
-                <small>Avg: ${averagePercentage.toFixed(2)}%</small>
-            </td>
-
-            <td></td>
-        </tr>
-    `;
-}
-
-function dsNumber(value) {
-
-    const n = Number(value) || 0;
-
-    return n.toLocaleString("en-MY", {
-        maximumFractionDigits: 2
-    });
+        foot.innerHTML = `
+            <tr class="ds-summary-row">
+                <td colspan="3" class="ds-summary-label">
+                    <span>TOTAL / AVERAGE</span>
+                    <small>${recordCount.toLocaleString("en-MY")} stores submitted</small>
+                </td>
+                <td class="ds-number ds-summary-value">
+                    <strong>${dsMoney(totalMerchandiseSales)}</strong>
+                    <small>Avg ${dsMoney(avgSales)}</small>
+                </td>
+                <td class="ds-number ds-summary-value">
+                    <strong>${totalCustomer.toLocaleString("en-MY")}</strong>
+                    <small>Avg ${avgCustomer.toLocaleString("en-MY", { maximumFractionDigits: 2 })}</small>
+                </td>
+                <td class="ds-number ds-summary-value">
+                    <strong>${totalPercentage.toFixed(2)}%</strong>
+                    <small>Avg ${avgPercentage.toFixed(2)}%</small>
+                </td>
+                <td></td>
+            </tr>
+        `;
+    }
 }
 
 /* ==========================================
