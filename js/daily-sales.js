@@ -502,7 +502,7 @@ function dsEnsureDateFilter() {
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "minmax(430px, 480px) minmax(360px, 1fr) auto";
+        "400px minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -564,20 +564,8 @@ function dsEnsureDateFilter() {
         input.id =
             "dsDateFilter";
 
-        // STORE LIST BUSINESS DATE: select from calendar only.
-        // Keep the existing dsSelectedDate / dsLoad flow unchanged.
-        input.readOnly = true;
-        input.tabIndex = -1;
-        input.setAttribute("aria-readonly", "true");
-        input.onkeydown = function () { return false; };
-        input.onkeypress = function () { return false; };
-        input.onbeforeinput = function () { return false; };
-        input.onpaste = function () { return false; };
-        input.oncut = function () { return false; };
-        input.ondrop = function () { return false; };
-
         input.inputMode =
-            "none";
+            "numeric";
 
         input.autocomplete =
             "off";
@@ -713,15 +701,8 @@ function dsEnsureDateFilter() {
                 picker.value =
                     dsSelectedDate ||
                     dsYesterdayISO();
-
-                try {
-                    if (typeof picker.showPicker === "function") {
-                        picker.showPicker();
-                    } else {
-                        picker.click();
-                    }
-                } catch (e) {
-                    picker.click();
+                if (typeof picker.showPicker === "function") {
+                    picker.showPicker();
                 }
             }
         );
@@ -750,10 +731,6 @@ function dsEnsureDateFilter() {
 
         todayButton.style.padding =
             "0 14px";
-        todayButton.style.flex =
-            "0 0 auto";
-        todayButton.style.whiteSpace =
-            "nowrap";
 
         todayButton.style.background =
             "#E2E8F0";
@@ -801,58 +778,24 @@ function dsEnsureDateFilter() {
             "8px";
 
         dateControls.style.width =
-            "100%";
+            "400px";
         dateControls.style.maxWidth =
-            "500px";
+            "400px";
 
         input.style.flex =
-            "0 0 380px";
+            "0 0 350px";
+
         input.style.width =
-            "380px";
+            "350px";
 
         input.style.minWidth =
-            "0";
+            "350px";
+
         input.style.maxWidth =
-            "380px";
+            "350px";
 
         dateControls.appendChild(
             input
-        );
-
-        const calendarIcon =
-            document.createElement("span");
-
-        calendarIcon.innerHTML =
-            '<i class="fa-regular fa-calendar"></i>';
-
-        calendarIcon.style.display =
-            "inline-flex";
-
-        calendarIcon.style.alignItems =
-            "center";
-
-        calendarIcon.style.justifyContent =
-            "center";
-
-        calendarIcon.style.width =
-            "24px";
-
-        calendarIcon.style.marginLeft =
-            "-42px";
-        calendarIcon.style.flex =
-            "0 0 24px";
-
-        calendarIcon.style.pointerEvents =
-            "none";
-
-        calendarIcon.style.color =
-            "#475569";
-
-        calendarIcon.style.zIndex =
-            "2";
-
-        dateControls.appendChild(
-            calendarIcon
         );
 
         dateControls.appendChild(
