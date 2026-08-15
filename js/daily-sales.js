@@ -750,6 +750,10 @@ function dsEnsureDateFilter() {
 
         todayButton.style.padding =
             "0 14px";
+        todayButton.style.flex =
+            "0 0 auto";
+        todayButton.style.whiteSpace =
+            "nowrap";
 
         todayButton.style.background =
             "#E2E8F0";
@@ -798,12 +802,18 @@ function dsEnsureDateFilter() {
 
         dateControls.style.width =
             "100%";
+        dateControls.style.maxWidth =
+            "540px";
 
         input.style.flex =
-            "1 1 auto";
+            "0 1 430px";
+        input.style.width =
+            "430px";
 
         input.style.minWidth =
             "0";
+        input.style.maxWidth =
+            "430px";
 
         dateControls.appendChild(
             input
@@ -829,6 +839,8 @@ function dsEnsureDateFilter() {
 
         calendarIcon.style.marginLeft =
             "-42px";
+        calendarIcon.style.flex =
+            "0 0 24px";
 
         calendarIcon.style.pointerEvents =
             "none";
