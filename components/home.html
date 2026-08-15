@@ -562,6 +562,39 @@
 
             </div>
 
+            <!-- ================= MTD STORE PERFORMANCE ================= -->
+            <section id="homeMtdStorePerformance"
+                     class="sa-mtd-card"
+                     aria-label="MTD store performance"
+                     style="display:none;">
+                <div class="sa-mtd-head">
+                    <div>
+                        <span class="sa-mtd-eyebrow">STORE PERFORMANCE</span>
+                        <h3>MTD Store Performance</h3>
+                        <p id="homeMtdStorePeriod">MTD THROUGH —</p>
+                    </div>
+                    <div id="homeMtdStoreCount" class="sa-mtd-count">0 STORES</div>
+                </div>
+
+                <div class="sa-mtd-table-wrap">
+                    <table class="sa-mtd-table">
+                        <thead>
+                            <tr>
+                                <th>Unit</th>
+                                <th>Store</th>
+                                <th>MTD Sales</th>
+                                <th>Customer</th>
+                                <th>APSD Sales</th>
+                                <th>APSD Budget</th>
+                                <th>Variance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="homeMtdStoreBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
         </section>
 
 
@@ -1478,6 +1511,43 @@
 }
 
 
+/* ================= MTD STORE PERFORMANCE ================= */
+.sa-mtd-card{
+    margin-top:14px;
+    padding:0;
+    border:1px solid var(--sa-border);
+    border-radius:16px;
+    background:#fff;
+    overflow:hidden;
+    box-shadow:0 8px 24px rgba(15,23,42,.045);
+}
+.sa-mtd-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    padding:18px 20px 15px;
+    background:linear-gradient(135deg,#FFFFFF 0%,#F8FAFC 100%);
+    border-bottom:1px solid #E2E8F0;
+}
+.sa-mtd-eyebrow{display:block;color:var(--sa-red);font-size:10px;font-weight:900;letter-spacing:.08em;}
+.sa-mtd-head h3{margin:4px 0 3px;color:#101A2D;font-size:16px;line-height:1.2;}
+.sa-mtd-head p{margin:0;color:#64748B;font-size:11px;}
+.sa-mtd-count{padding:8px 12px;border-radius:999px;background:#EEF2FF;color:#334155;font-size:10px;font-weight:900;white-space:nowrap;}
+.sa-mtd-table-wrap{width:100%;overflow-x:auto;}
+.sa-mtd-table{width:100%;border-collapse:collapse;min-width:760px;font-size:11px;}
+.sa-mtd-table th{padding:12px 14px;background:#F8FAFC;color:#334155;border-bottom:1px solid #E2E8F0;text-align:left;font-weight:900;white-space:nowrap;}
+.sa-mtd-table td{padding:12px 14px;color:#334155;border-bottom:1px solid #E2E8F0;white-space:nowrap;}
+.sa-mtd-table tbody tr:last-child td{border-bottom:0;}
+.sa-mtd-table tbody tr:hover{background:#FAFBFC;}
+.sa-mtd-table .sa-mtd-number{text-align:right;font-variant-numeric:tabular-nums;}
+.sa-mtd-table .sa-mtd-unit{font-weight:800;color:#475569;}
+.sa-mtd-table .is-negative{color:#DC2626;font-weight:800;}
+.sa-mtd-table .is-positive{color:#15803D;font-weight:800;}
+.sa-mtd-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800;}
+.sa-mtd-status.is-achieved{color:#15803D;background:#ECFDF5;}
+.sa-mtd-status.is-not-achieved{color:#DC2626;background:#FEF2F2;}
+
 /* ================= BOTTOM ================= */
 
 .sa-bottom-grid{
@@ -2113,3 +2183,13 @@
 
 })();
 </script>
+
+<style>
+/* MTD STORE PERFORMANCE — CUSTOMER + SUMMARY ROWS */
+.sa-mtd-table{min-width:850px;}
+.sa-mtd-summary td{font-weight:900;background:#F8FAFC;border-top:1px solid #CBD5E1;}
+.sa-mtd-total-row td{padding-top:14px;padding-bottom:12px;}
+.sa-mtd-avg-row td{padding-top:10px;padding-bottom:14px;border-bottom:0!important;color:#475569;}
+.sa-mtd-summary-label{color:#101A2D!important;}
+.sa-mtd-avg-row .sa-mtd-summary-label{font-weight:800;}
+</style>
