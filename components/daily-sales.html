@@ -61,18 +61,28 @@
                            autocomplete="off"
                            placeholder="dd/mm/yyyy"
                            maxlength="10"
-                           onclick="var p=document.getElementById(\'dsBusinessDatePicker\');if(p&&p.showPicker){p.showPicker();}"
-                           style="padding-right:42px;cursor:pointer;">
+                           tabindex="-1"
+                           onkeydown="return false;"
+                           onkeypress="return false;"
+                           onbeforeinput="return false;"
+                           onpaste="return false;"
+                           oncut="return false;"
+                           ondrop="return false;"
+                           ondragstart="return false;"
+                           onclick="var p=document.getElementById('dsBusinessDatePicker');if(p){if(p.showPicker){p.showPicker();}else{p.click();}}"
+                           style="padding-right:42px;cursor:pointer;caret-color:transparent;user-select:none;">
                     <input id="dsBusinessDatePicker"
                            type="date"
                            tabindex="-1"
                            aria-hidden="true"
                            onchange="if(this.value){var p=this.value.split('-');var t=document.getElementById('dsBusinessDate');if(t&&p.length===3){t.value=p[2]+'/'+p[1]+'/'+p[0];t.dispatchEvent(new Event('input',{bubbles:true}));t.dispatchEvent(new Event('change',{bubbles:true}));}}"
-                           style="position:absolute;right:7px;top:6px;width:32px;height:32px;opacity:0;cursor:pointer;">
+                           style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;">
                     <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#0F172A;">
                         <i class="fa-regular fa-calendar"></i>
                     </span>
                 </div>
+            </div>
+
             </div>
 
             <div class="ds-field">
