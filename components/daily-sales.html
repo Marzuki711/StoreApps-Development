@@ -56,11 +56,13 @@
                 <div style="position:relative;">
                     <input id="dsBusinessDate"
                            type="text"
-                           inputmode="numeric"
+                           readonly
+                           inputmode="none"
                            autocomplete="off"
                            placeholder="dd/mm/yyyy"
                            maxlength="10"
-                           style="padding-right:42px;">
+                           onclick="var p=document.getElementById(\'dsBusinessDatePicker\');if(p&&p.showPicker){p.showPicker();}"
+                           style="padding-right:42px;cursor:pointer;">
                     <input id="dsBusinessDatePicker"
                            type="date"
                            tabindex="-1"
