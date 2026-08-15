@@ -291,18 +291,12 @@
                     <div>
                         <span class="sa-wow-eyebrow">PERFORMANCE TREND</span>
                         <h3>Week-on-Week Comparison</h3>
-                        <p>APSD based on actual available days with submitted data.</p>
+                        <p>Selected date compared with the same day last week.</p>
                     </div>
                     <div class="sa-wow-period">
-                        <div>
-                            <span>THIS WEEK</span>
-                            <b id="homeWowThisRange">—</b>
-                        </div>
+                        <span>THIS WEEK</span>
                         <i class="fa-solid fa-arrow-right"></i>
-                        <div>
-                            <span>LAST WEEK</span>
-                            <b id="homeWowLastRange">—</b>
-                        </div>
+                        <span>LAST WEEK</span>
                     </div>
                 </div>
 
@@ -313,7 +307,7 @@
                             <span class="sa-wow-title">APSD SALES</span>
                             <div class="sa-wow-values">
                                 <strong id="homeWowApsdSales">RM 0.00</strong>
-                                <span><b id="homeWowThisSalesDays">0 DAYS</b> AVAILABLE • LAST WEEK <b id="homeWowLastSalesDays">0 DAYS</b></span>
+                                <span>vs <b id="homeWowLastApsdSales">RM 0.00</b> last week</span>
                             </div>
                         </div>
                         <div class="sa-wow-change" id="homeWowSalesChange">
@@ -328,10 +322,61 @@
                             <span class="sa-wow-title">APSD CUSTOMER</span>
                             <div class="sa-wow-values">
                                 <strong id="homeWowApsdCustomer">0</strong>
-                                <span><b id="homeWowThisCustomerDays">0 DAYS</b> AVAILABLE • LAST WEEK <b id="homeWowLastCustomerDays">0 DAYS</b></span>
+                                <span>vs <b id="homeWowLastApsdCustomer">0</b> last week</span>
                             </div>
                         </div>
                         <div class="sa-wow-change" id="homeWowCustomerChange">
+                            <i class="fa-solid fa-minus"></i>
+                            <strong>0.00%</strong>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+
+            <!-- ================= WEEKLY APSD COMPARISON ================= -->
+            <section class="sa-wow-card sa-weekly-apsd-card" aria-label="Weekly APSD comparison">
+                <div class="sa-wow-head">
+                    <div>
+                        <span class="sa-wow-eyebrow">WEEKLY PERFORMANCE</span>
+                        <h3>Weekly APSD Comparison</h3>
+                        <p>Average per store per day for the selected 7-day period vs the previous 7-day period.</p>
+                    </div>
+                    <div class="sa-wow-period">
+                        <span id="homeWeeklyApsdThisPeriod">THIS WEEK</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <span id="homeWeeklyApsdLastPeriod">LAST WEEK</span>
+                    </div>
+                </div>
+
+                <div class="sa-wow-grid">
+                    <article class="sa-wow-item sa-wow-sales">
+                        <div class="sa-wow-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="sa-wow-main">
+                            <span class="sa-wow-title">APSD SALES</span>
+                            <div class="sa-wow-values">
+                                <strong id="homeWeeklyApsdSales">RM 0.00</strong>
+                                <span>vs <b id="homeWeeklyLastApsdSales">RM 0.00</b> last week</span>
+                            </div>
+                            <small id="homeWeeklyApsdSalesNote" class="sa-weekly-apsd-note">Per store per day</small>
+                        </div>
+                        <div class="sa-wow-change" id="homeWeeklyApsdSalesChange">
+                            <i class="fa-solid fa-minus"></i>
+                            <strong>0.00%</strong>
+                        </div>
+                    </article>
+
+                    <article class="sa-wow-item sa-wow-customer">
+                        <div class="sa-wow-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="sa-wow-main">
+                            <span class="sa-wow-title">APSD CUSTOMER</span>
+                            <div class="sa-wow-values">
+                                <strong id="homeWeeklyApsdCustomer">0</strong>
+                                <span>vs <b id="homeWeeklyLastApsdCustomer">0</b> last week</span>
+                            </div>
+                            <small id="homeWeeklyApsdCustomerNote" class="sa-weekly-apsd-note">Per store per day</small>
+                        </div>
+                        <div class="sa-wow-change" id="homeWeeklyApsdCustomerChange">
                             <i class="fa-solid fa-minus"></i>
                             <strong>0.00%</strong>
                         </div>
@@ -1057,8 +1102,6 @@
 }
 
 .sa-wow-period i{color:#C1121F;font-size:10px;}
-.sa-wow-period div{display:flex;flex-direction:column;gap:2px;}
-.sa-wow-period b{color:#1E293B;font-size:9px;letter-spacing:0;}
 
 .sa-wow-grid{
     display:grid;
@@ -1134,6 +1177,18 @@
 .sa-wow-change.is-up{background:#ECFDF5;color:#15803D;}
 .sa-wow-change.is-down{background:#FEF2F2;color:#B91C1C;}
 .sa-wow-change.is-flat{background:#F1F5F9;color:#64748B;}
+
+.sa-weekly-apsd-card{
+    margin-top:14px;
+}
+
+.sa-weekly-apsd-note{
+    display:block;
+    margin-top:5px;
+    color:#94A3B8;
+    font-size:9px;
+    font-weight:700;
+}
 
 .sa-middle-grid{
     display:grid;
