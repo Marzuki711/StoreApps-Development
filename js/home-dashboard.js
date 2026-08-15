@@ -56,47 +56,72 @@ function homePreviousWeekISO(iso){
     ].join("-");
 }
 
-function homeAddDaysISO(iso, days){
-    const parts = String(iso || "").split("-").map(Number);
-    if(parts.length !== 3 || parts.some(Number.isNaN)) return "";
+function homeWeeklyDates(endISO){
+    const parts = String(endISO || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(Number.isNaN)) return [];
 
-    const d = new Date(parts[0], parts[1] - 1, parts[2]);
-    d.setDate(d.getDate() + Number(days || 0));
+    const end = new Date(parts[0], parts[1] - 1, parts[2]);
+    const dates = [];
 
-    return [
-        d.getFullYear(),
-        String(d.getMonth()+1).padStart(2,"0"),
-        String(d.getDate()).padStart(2,"0")
-    ].join("-");
+    for(let i = 6; i >= 0; i--){
+        const d = new Date(end);
+        d.setDate(end.getDate() - i);
+        dates.push([
+            d.getFullYear(),
+            String(d.getMonth()+1).padStart(2,"0"),
+            String(d.getDate()).padStart(2,"0")
+        ].join("-"));
+    }
+
+    return dates;
 }
 
-function homeWeekRange(selectedISO){
-    const end = String(selectedISO || "");
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(end)) return null;
+function homeWeeklyApsdFromResponses(responses,totalStores){
+    const storeCount = Number(totalStores) || 0;
+    if(!storeCount) return { sales:0, customer:0 };
+
+    let sales = 0;
+    let customer = 0;
+
+    (Array.isArray(responses) ? responses : []).forEach(response => {
+        const rows =
+            response && response.status && Array.isArray(response.rows)
+                ? response.rows
+                : [];
+
+        rows.forEach(row => {
+            sales +=
+                Number(String(row.totalMerchandiseSales ?? "").replace(/,/g,"")) || 0;
+            customer +=
+                Number(String(row.totalCustomer ?? "").replace(/,/g,"")) || 0;
+        });
+    });
+
+    // APSD is based on ALL stores and ALL 7 days in the period.
+    // A store that has not submitted contributes zero for that day;
+    // the denominator remains total stores x 7.
+    const denominator = storeCount * 7;
 
     return {
-        thisStart: homeAddDaysISO(end, -6),
-        thisEnd: end,
-        lastStart: homeAddDaysISO(end, -13),
-        lastEnd: homeAddDaysISO(end, -7)
+        sales: sales / denominator,
+        customer: customer / denominator
     };
 }
 
-function homeDateRangeLabel(startISO, endISO){
-    const start = homeISOToDDMMYYYY(startISO);
-    const end = homeISOToDDMMYYYY(endISO);
-    return start + " – " + end;
+function homeSetWeeklyApsdPeriod(id,startISO,endISO){
+    homeSetText(
+        id,
+        homeDisplayDate(startISO) + " – " + homeDisplayDate(endISO)
+    );
+}
+
+function homeSetWeeklyApsdChange(id,current,previous){
+    homeSetWowChange(id,current,previous);
 }
 
 function homeSetWowChange(id, current, previous){
     const el = document.getElementById(id);
     if(!el) return;
-
-    if(current === null || current === undefined || previous === null || previous === undefined){
-        el.className = "sa-wow-change is-flat";
-        el.innerHTML = '<i class="fa-solid fa-minus"></i><strong>N/A</strong>';
-        return;
-    }
 
     const now = Number(current) || 0;
     const old = Number(previous) || 0;
@@ -278,6 +303,11 @@ function homeResetDashboard(){
         homeWowApsdCustomer:"0",
         homeWowLastApsdCustomer:"0",
 
+        homeWeeklyApsdSales:"RM 0.00",
+        homeWeeklyLastApsdSales:"RM 0.00",
+        homeWeeklyApsdCustomer:"0",
+        homeWeeklyLastApsdCustomer:"0",
+
         homeSubmittedStores:"0",
         homeTotalStores:"0",
         homeSubmittedLabel:"0 SUBMITTED",
@@ -341,28 +371,35 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
     try{
 
-        const weekRange = homeWeekRange(homeSalesDate);
-        const weeklyDates = weekRange
-            ? [
-                ...Array.from({length:7}, (_,i) => homeAddDaysISO(weekRange.thisStart, i)),
-                ...Array.from({length:7}, (_,i) => homeAddDaysISO(weekRange.lastStart, i))
-            ]
-            : [homeSalesDate, homePreviousWeekISO(homeSalesDate)];
+        const previousWeekDate = homePreviousWeekISO(homeSalesDate);
 
-        const weeklyListResponses = await Promise.all(
-            weeklyDates.map(date =>
-                callDailySalesAPI(
-                    "getDailySalesList",
-                    {
-                        username,
-                        role,
-                        date
-                    }
-                )
+        const currentWeekDates = homeWeeklyDates(homeSalesDate);
+        const lastWeekEndDate = previousWeekDate;
+        const lastWeekDates = homeWeeklyDates(lastWeekEndDate);
+
+        const currentWeekRequests = currentWeekDates.map(date =>
+            callDailySalesAPI(
+                "getDailySalesList",
+                {
+                    username,
+                    role,
+                    date
+                }
             )
         );
 
-        const [storeResponse,listResponse] = await Promise.all([
+        const lastWeekRequests = lastWeekDates.map(date =>
+            callDailySalesAPI(
+                "getDailySalesList",
+                {
+                    username,
+                    role,
+                    date
+                }
+            )
+        );
+
+        const [storeResponse,listResponse,previousListResponse,currentWeekResponses,lastWeekResponses] = await Promise.all([
 
             callDailySalesAPI(
                 "getDailySalesStores",
@@ -379,7 +416,19 @@ async function loadHomeSalesDashboard(dateOverride=""){
                     role,
                     date:homeSalesDate
                 }
-            )
+            ),
+
+            callDailySalesAPI(
+                "getDailySalesList",
+                {
+                    username,
+                    role,
+                    date:previousWeekDate
+                }
+            ),
+
+            Promise.all(currentWeekRequests),
+            Promise.all(lastWeekRequests)
 
         ]);
 
@@ -408,6 +457,27 @@ async function loadHomeSalesDashboard(dateOverride=""){
                 : [];
 
         const totalStores = homeSalesStores.length;
+
+        /*
+         * ADDITIVE WEEKLY APSD COMPARISON
+         * --------------------------------
+         * Current period = selected date and the 6 days before it.
+         * Previous period = the 7 days immediately before that.
+         * APSD uses ALL stores as the denominator, even when some
+         * stores have not submitted on one or more days.
+         * Existing Week-on-Week comparison below remains unchanged.
+         */
+        const weeklyApsd =
+            homeWeeklyApsdFromResponses(
+                currentWeekResponses,
+                totalStores
+            );
+
+        const lastWeeklyApsd =
+            homeWeeklyApsdFromResponses(
+                lastWeekResponses,
+                totalStores
+            );
 
         /*
          * One submitted store = one unique Store No.
@@ -458,75 +528,52 @@ async function loadHomeSalesDashboard(dateOverride=""){
             );
 
         /*
-         * WEEK-ON-WEEK COMPARISON
-         *
-         * LOCKED RULE:
-         * Weekly APSD uses ONLY days that actually have submitted data.
-         *
-         * Example:
-         *   7 available days -> total / 7
-         *   6 available days -> total / 6
-         *   5 available days -> total / 5
-         *   0 available days -> N/A
-         *
-         * Existing daily KPI calculations above remain unchanged.
+         * Week-on-week comparison uses the same selected date
+         * against the date exactly 7 days earlier.
+         * Existing KPI calculations remain unchanged.
          */
-        const weeklyResponses = weeklyListResponses || [];
-        const thisWeekResponses = weeklyResponses.slice(0,7);
-        const lastWeekResponses = weeklyResponses.slice(7,14);
+        const previousRows =
+            previousListResponse?.status && Array.isArray(previousListResponse.rows)
+                ? previousListResponse.rows
+                : [];
 
-        function homeWeeklyAverage(responses, field){
-            let weeklyTotal = 0;
-            let availableDays = 0;
-
-            responses.forEach(response => {
-                const dayRows =
-                    response?.status && Array.isArray(response.rows)
-                        ? response.rows
-                        : [];
-
-                // A day counts ONLY when there is at least one submitted row.
-                if(dayRows.length === 0){
-                    return;
-                }
-
-                const dayTotal = dayRows.reduce((sum,r) => {
-                    return sum + (
+        const previousMerchandiseSales =
+            previousRows.reduce(
+                (sum,r) =>
+                    sum +
+                    (
                         Number(
-                            String(r?.[field] ?? "").replace(/,/g,"")
+                            String(
+                                r.totalMerchandiseSales ?? ""
+                            ).replace(/,/g,"")
                         ) || 0
-                    );
-                },0);
+                    ),
+                0
+            );
 
-                weeklyTotal += dayTotal;
-                availableDays += 1;
-            });
+        const previousCustomer =
+            previousRows.reduce(
+                (sum,r) =>
+                    sum +
+                    (
+                        Number(
+                            String(
+                                r.totalCustomer ?? ""
+                            ).replace(/,/g,"")
+                        ) || 0
+                    ),
+                0
+            );
 
-            return {
-                value: availableDays > 0
-                    ? weeklyTotal / availableDays
-                    : null,
-                availableDays: availableDays,
-                total: weeklyTotal
-            };
-        }
+        const previousApsdSales =
+            totalStores
+                ? previousMerchandiseSales / totalStores
+                : 0;
 
-        const thisWeekSales =
-            homeWeeklyAverage(thisWeekResponses,"totalMerchandiseSales");
-
-        const lastWeekSales =
-            homeWeeklyAverage(lastWeekResponses,"totalMerchandiseSales");
-
-        const thisWeekCustomer =
-            homeWeeklyAverage(thisWeekResponses,"totalCustomer");
-
-        const lastWeekCustomer =
-            homeWeeklyAverage(lastWeekResponses,"totalCustomer");
-
-        const weeklyApsdSales = thisWeekSales.value;
-        const lastWeeklyApsdSales = lastWeekSales.value;
-        const weeklyApsdCustomer = thisWeekCustomer.value;
-        const lastWeeklyApsdCustomer = lastWeekCustomer.value;
+        const previousApsdCustomer =
+            totalStores
+                ? previousCustomer / totalStores
+                : 0;
 
         /*
          * Budget comes from the Area/store list.
@@ -599,66 +646,83 @@ async function loadHomeSalesDashboard(dateOverride=""){
          */
         homeSetText(
             "homeWowApsdSales",
-            weeklyApsdSales === null ? "N/A" : homeMoney(weeklyApsdSales)
+            homeMoney(apsdSales)
         );
 
         homeSetText(
             "homeWowLastApsdSales",
-            lastWeeklyApsdSales === null ? "N/A" : homeMoney(lastWeeklyApsdSales)
+            homeMoney(previousApsdSales)
         );
 
         homeSetText(
             "homeWowApsdCustomer",
-            weeklyApsdCustomer === null ? "N/A" : homeNumber(weeklyApsdCustomer)
+            homeNumber(apsdCustomer)
         );
 
         homeSetText(
             "homeWowLastApsdCustomer",
-            lastWeeklyApsdCustomer === null ? "N/A" : homeNumber(lastWeeklyApsdCustomer)
-        );
-
-        homeSetText(
-            "homeWowThisSalesDays",
-            thisWeekSales.availableDays + (thisWeekSales.availableDays === 1 ? " DAY" : " DAYS")
-        );
-
-        homeSetText(
-            "homeWowLastSalesDays",
-            lastWeekSales.availableDays + (lastWeekSales.availableDays === 1 ? " DAY" : " DAYS")
-        );
-
-        homeSetText(
-            "homeWowThisCustomerDays",
-            thisWeekCustomer.availableDays + (thisWeekCustomer.availableDays === 1 ? " DAY" : " DAYS")
-        );
-
-        homeSetText(
-            "homeWowLastCustomerDays",
-            lastWeekCustomer.availableDays + (lastWeekCustomer.availableDays === 1 ? " DAY" : " DAYS")
+            homeNumber(previousApsdCustomer)
         );
 
         homeSetWowChange(
             "homeWowSalesChange",
-            weeklyApsdSales,
-            lastWeeklyApsdSales
+            apsdSales,
+            previousApsdSales
         );
 
         homeSetWowChange(
             "homeWowCustomerChange",
-            weeklyApsdCustomer,
-            lastWeeklyApsdCustomer
+            apsdCustomer,
+            previousApsdCustomer
         );
 
-        if(weekRange){
-            homeSetText(
-                "homeWowThisRange",
-                homeDateRangeLabel(weekRange.thisStart,weekRange.thisEnd)
-            );
-            homeSetText(
-                "homeWowLastRange",
-                homeDateRangeLabel(weekRange.lastStart,weekRange.lastEnd)
-            );
-        }
+        /*
+         * ADDITIVE WEEKLY APSD COMPARISON
+         * Do not replace/remove the existing Week-on-Week section.
+         */
+        homeSetText(
+            "homeWeeklyApsdSales",
+            homeMoney(weeklyApsd.sales)
+        );
+
+        homeSetText(
+            "homeWeeklyLastApsdSales",
+            homeMoney(lastWeeklyApsd.sales)
+        );
+
+        homeSetText(
+            "homeWeeklyApsdCustomer",
+            homeNumber(weeklyApsd.customer)
+        );
+
+        homeSetText(
+            "homeWeeklyLastApsdCustomer",
+            homeNumber(lastWeeklyApsd.customer)
+        );
+
+        homeSetWeeklyApsdChange(
+            "homeWeeklyApsdSalesChange",
+            weeklyApsd.sales,
+            lastWeeklyApsd.sales
+        );
+
+        homeSetWeeklyApsdChange(
+            "homeWeeklyApsdCustomerChange",
+            weeklyApsd.customer,
+            lastWeeklyApsd.customer
+        );
+
+        homeSetWeeklyApsdPeriod(
+            "homeWeeklyApsdThisPeriod",
+            currentWeekDates[0],
+            currentWeekDates[6]
+        );
+
+        homeSetWeeklyApsdPeriod(
+            "homeWeeklyApsdLastPeriod",
+            lastWeekDates[0],
+            lastWeekDates[6]
+        );
 
         homeSetText(
             "homeSalesLabel",
