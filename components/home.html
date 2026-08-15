@@ -291,12 +291,18 @@
                     <div>
                         <span class="sa-wow-eyebrow">PERFORMANCE TREND</span>
                         <h3>Week-on-Week Comparison</h3>
-                        <p>Selected date compared with the same day last week.</p>
+                        <p>APSD based on actual available days with submitted data.</p>
                     </div>
                     <div class="sa-wow-period">
-                        <span>THIS WEEK</span>
+                        <div>
+                            <span>THIS WEEK</span>
+                            <b id="homeWowThisRange">—</b>
+                        </div>
                         <i class="fa-solid fa-arrow-right"></i>
-                        <span>LAST WEEK</span>
+                        <div>
+                            <span>LAST WEEK</span>
+                            <b id="homeWowLastRange">—</b>
+                        </div>
                     </div>
                 </div>
 
@@ -307,7 +313,7 @@
                             <span class="sa-wow-title">APSD SALES</span>
                             <div class="sa-wow-values">
                                 <strong id="homeWowApsdSales">RM 0.00</strong>
-                                <span>vs <b id="homeWowLastApsdSales">RM 0.00</b> last week</span>
+                                <span><b id="homeWowThisSalesDays">0 DAYS</b> AVAILABLE • LAST WEEK <b id="homeWowLastSalesDays">0 DAYS</b></span>
                             </div>
                         </div>
                         <div class="sa-wow-change" id="homeWowSalesChange">
@@ -322,7 +328,7 @@
                             <span class="sa-wow-title">APSD CUSTOMER</span>
                             <div class="sa-wow-values">
                                 <strong id="homeWowApsdCustomer">0</strong>
-                                <span>vs <b id="homeWowLastApsdCustomer">0</b> last week</span>
+                                <span><b id="homeWowThisCustomerDays">0 DAYS</b> AVAILABLE • LAST WEEK <b id="homeWowLastCustomerDays">0 DAYS</b></span>
                             </div>
                         </div>
                         <div class="sa-wow-change" id="homeWowCustomerChange">
@@ -1051,6 +1057,8 @@
 }
 
 .sa-wow-period i{color:#C1121F;font-size:10px;}
+.sa-wow-period div{display:flex;flex-direction:column;gap:2px;}
+.sa-wow-period b{color:#1E293B;font-size:9px;letter-spacing:0;}
 
 .sa-wow-grid{
     display:grid;
