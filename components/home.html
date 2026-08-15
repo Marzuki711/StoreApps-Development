@@ -2034,6 +2034,43 @@
     }
 }
 
+/* =========================================================
+   WEEKLY APSD PERIOD — MOBILE ONLY
+   Keep the comparison card inside the viewport.
+   No data, calculation or other card styles are changed.
+   ========================================================= */
+@media (max-width:560px){
+    .sa-weekly-apsd-card .sa-wow-period{
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
+        align-items:center !important;
+        justify-items:center !important;
+        gap:6px !important;
+        padding:9px 10px !important;
+        white-space:normal !important;
+        overflow:hidden !important;
+        text-align:center !important;
+        line-height:1.25 !important;
+    }
+
+    .sa-weekly-apsd-card .sa-wow-period span{
+        min-width:0 !important;
+        max-width:100% !important;
+        overflow-wrap:anywhere !important;
+        word-break:normal !important;
+        text-align:center !important;
+    }
+
+    .sa-weekly-apsd-card .sa-wow-period i{
+        flex:none !important;
+        white-space:nowrap !important;
+    }
+}
+
 </style>
 
 
