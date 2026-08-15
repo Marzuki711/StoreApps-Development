@@ -570,6 +570,9 @@ function dsEnsureDateFilter() {
             "8px";
 
         dateControls.style.width =
+            "100%";
+
+        dateControls.style.maxWidth =
             "430px";
 
         dateControls.style.height =
@@ -655,13 +658,13 @@ function dsEnsureDateFilter() {
             "300px";
 
         input.style.minWidth =
-            "300px";
+            "0";
 
         input.style.maxWidth =
             "300px";
 
         input.style.flex =
-            "0 0 300px";
+            "1 1 300px";
 
         input.style.boxSizing =
             "border-box";
@@ -877,8 +880,11 @@ function dsEnsureDateFilter() {
         todayButton.style.width =
             "112px";
 
+        todayButton.style.minWidth =
+            "112px";
+
         todayButton.style.flex =
-            "0 0 112px";
+            "0 1 112px";
 
         todayButton.style.boxSizing =
             "border-box";
@@ -986,6 +992,50 @@ function dsEnsureDateFilter() {
         filter.style.gridRow =
             "1";
 
+        filter.style.maxWidth =
+            "100%";
+
+        const mobileStyleId =
+            "dsStoreListDateMobileStyle";
+
+        if (!document.getElementById(mobileStyleId)) {
+
+            const style =
+                document.createElement("style");
+
+            style.id =
+                mobileStyleId;
+
+            style.textContent = `
+                @media (max-width: 600px) {
+                    #dsDateFilterWrap {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                    }
+
+                    #dsDateFilterWrap > div {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        gap: 8px !important;
+                    }
+
+                    #dsDateFilter {
+                        width: calc(100% - 120px) !important;
+                        min-width: 0 !important;
+                        max-width: none !important;
+                        flex: 1 1 auto !important;
+                    }
+
+                    #dsDateFilterWrap button {
+                        width: 112px !important;
+                        min-width: 112px !important;
+                        flex: 0 0 112px !important;
+                    }
+                }
+            `;
+
+            document.head.appendChild(style);
+        }
     }
 
     if (searchWrap) {
