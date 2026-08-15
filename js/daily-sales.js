@@ -9,6 +9,8 @@
 
 let dsStores = [];
 let dsRows = [];
+// ADDITIVE: dedicated master-store cache for Store Not Submitted.
+let dsSubmissionMasterStores = [];
 let dsEditId = "";
 let dsSelectedDate = "";
 
@@ -364,6 +366,32 @@ async function dsLoad(
 
         dsPopulateStoreSelect();
         dsRenderTable();
+
+        // ADDITIVE ONLY: refresh the full Area/master store list for the
+        // Store Not Submitted section. This is kept separate from the
+        // existing Daily Sales list/store logic so no existing function
+        // behaviour is changed.
+        try {
+            const masterResponse =
+                await callDailySalesAPI(
+                    "getDailySalesStores",
+                    {
+                        username: username,
+                        role: user.role || ""
+                    }
+                );
+
+            if (masterResponse?.status) {
+                dsSubmissionMasterStores =
+                    Array.isArray(masterResponse.stores)
+                        ? masterResponse.stores
+                        : [];
+
+                dsRenderNotSubmittedStores();
+            }
+        } catch (_) {
+            // Existing Daily Sales loading must not be affected.
+        }
 
     } finally {
 
@@ -2057,6 +2085,8 @@ function dsRenderTable() {
         const emptyFoot = table?.querySelector("tfoot#dsTableFoot");
         if (emptyFoot) emptyFoot.innerHTML = "";
 
+        // ADDITIVE: still show stores that have not submitted when there are zero rows.
+        dsRenderNotSubmittedStores();
         return;
     }
 
@@ -2210,6 +2240,82 @@ function dsRenderTable() {
             </tr>
         `;
     }
+
+    // ADDITIVE: render stores that have not submitted for the selected date.
+    dsRenderNotSubmittedStores();
+}
+
+/* ==========================================
+   STORE NOT SUBMITTED — ADDITIVE ONLY
+========================================== */
+
+function dsRenderNotSubmittedStores() {
+
+    const section = document.getElementById("dsNotSubmittedSection");
+    const body = document.getElementById("dsNotSubmittedBody");
+    const count = document.getElementById("dsNotSubmittedCount");
+    const subtitle = document.getElementById("dsNotSubmittedSubtitle");
+
+    if (!section || !body) {
+        return;
+    }
+
+    const submitted = new Set(
+        (dsRows || []).map(function (row) {
+            return String(row.storeNo || "")
+                .replace(/\D/g, "")
+                .padStart(4, "0")
+                .slice(-4);
+        }).filter(Boolean)
+    );
+
+    // Prefer the dedicated full master-store list. Fall back to the
+    // existing store cache only if the additive request has not returned.
+    const masterStores =
+        (Array.isArray(dsSubmissionMasterStores) && dsSubmissionMasterStores.length)
+            ? dsSubmissionMasterStores
+            : (dsStores || []);
+
+    const missing = masterStores
+        .filter(function (store) {
+            const normalized = String(store.storeNo || "")
+                .replace(/\D/g, "")
+                .padStart(4, "0")
+                .slice(-4);
+            return normalized && !submitted.has(normalized);
+        })
+        .sort(function (a, b) {
+            const aNo = String(a.storeNo || "").replace(/\D/g, "");
+            const bNo = String(b.storeNo || "").replace(/\D/g, "");
+            return (Number(aNo || 999999) - Number(bNo || 999999));
+        });
+
+    if (!missing.length) {
+        section.hidden = true;
+        body.innerHTML = "";
+        if (count) count.textContent = "";
+        if (subtitle) subtitle.textContent = "";
+        return;
+    }
+
+    section.hidden = false;
+
+    if (count) {
+        count.textContent = `${missing.length} STORE${missing.length === 1 ? "" : "S"}`;
+    }
+
+    if (subtitle) {
+        subtitle.textContent = `Stores without Daily Sales submission for ${dsFormatDisplayDate(dsSelectedDate)}`;
+    }
+
+    body.innerHTML = missing.map(function (store) {
+        return `
+            <tr>
+                <td>${dsEsc(store.storeNo)}</td>
+                <td>${dsEsc(store.storeName)}</td>
+            </tr>
+        `;
+    }).join("");
 }
 
 /* ==========================================
