@@ -198,7 +198,7 @@ function homeOpenDashboardDatePicker(){
 function homeMoney(value){
     const n = Number(String(value ?? "").replace(/,/g,"")) || 0;
 
-    return "RM " + n.toLocaleString("en-MY",{
+    return n.toLocaleString("en-MY",{
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
@@ -293,18 +293,18 @@ function homeSetDashboardDate(date){
 
 function homeResetDashboard(){
     const values = {
-        homeTotalSales:"RM 0.00",
-        homeApsdSales:"RM 0.00",
+        homeTotalSales:"0.00",
+        homeApsdSales:"0.00",
         homeTotalCustomer:"0",
         homeApsdCustomer:"0",
 
-        homeWowApsdSales:"RM 0.00",
-        homeWowLastApsdSales:"RM 0.00",
+        homeWowApsdSales:"0.00",
+        homeWowLastApsdSales:"0.00",
         homeWowApsdCustomer:"0",
         homeWowLastApsdCustomer:"0",
 
-        homeWeeklyApsdSales:"RM 0.00",
-        homeWeeklyLastApsdSales:"RM 0.00",
+        homeWeeklyApsdSales:"0.00",
+        homeWeeklyLastApsdSales:"0.00",
         homeWeeklyApsdCustomer:"0",
         homeWeeklyLastApsdCustomer:"0",
 
@@ -315,8 +315,8 @@ function homeResetDashboard(){
         homeSubmissionPct:"0%",
 
         homeBudgetPct:"0.00%",
-        homeApsdBudgetActual:"RM 0.00",
-        homeApsdBudgetTarget:"RM 0.00",
+        homeApsdBudgetActual:"0.00",
+        homeApsdBudgetTarget:"0.00",
         homeBudgetCaption:"0.00% of Budget Achieved",
 
         homeTotalRecord:"0",
