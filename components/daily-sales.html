@@ -68,14 +68,14 @@
                            onpaste="return false;"
                            oncut="return false;"
                            ondrop="return false;"
-                           style="padding-right:42px;cursor:pointer;caret-color:transparent;user-select:none;">
+                           style="padding-right:48px;cursor:default;caret-color:transparent;user-select:none;pointer-events:none;">
                     <input id="dsBusinessDatePicker"
                            type="date"
                            tabindex="0"
                            aria-label="Select Business Date"
                            onchange="if(this.value){var p=this.value.split('-');var t=document.getElementById('dsBusinessDate');if(t&&p.length===3){t.value=p[2]+'/'+p[1]+'/'+p[0];t.dispatchEvent(new Event('input',{bubbles:true}));t.dispatchEvent(new Event('change',{bubbles:true}));}}"
-                           style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;">
-                    <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#0F172A;">
+                           style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;z-index:2;">
+                    <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#0F172A;z-index:3;font-size:16px;">
                         <i class="fa-regular fa-calendar"></i>
                     </span>
                 </div>
