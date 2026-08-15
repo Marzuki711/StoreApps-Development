@@ -501,7 +501,7 @@ function dsEnsureDateFilter() {
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "455px minmax(360px, 1fr) auto";
+        "430px minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -533,7 +533,7 @@ function dsEnsureDateFilter() {
             "8px";
 
         filter.style.width =
-            "455px";
+            "430px";
 
         filter.style.minWidth =
             "0";
@@ -570,10 +570,13 @@ function dsEnsureDateFilter() {
             "8px";
 
         dateControls.style.width =
-            "455px";
+            "430px";
 
         dateControls.style.height =
             "44px";
+
+        dateControls.style.position =
+            "relative";
 
         const input =
             document.createElement(
@@ -649,16 +652,16 @@ function dsEnsureDateFilter() {
             "44px";
 
         input.style.width =
-            "335px";
+            "300px";
 
         input.style.minWidth =
-            "335px";
+            "300px";
 
         input.style.maxWidth =
-            "335px";
+            "300px";
 
         input.style.flex =
-            "0 0 335px";
+            "0 0 300px";
 
         input.style.boxSizing =
             "border-box";
@@ -688,7 +691,10 @@ function dsEnsureDateFilter() {
             "500";
 
         input.style.cursor =
-            "pointer";
+            "default";
+
+        input.style.pointerEvents =
+            "none";
 
         input.style.caretColor =
             "transparent";
@@ -719,22 +725,28 @@ function dsEnsureDateFilter() {
         );
 
         picker.style.position =
-            "fixed";
+            "absolute";
 
         picker.style.left =
-            "-10000px";
+            "0";
 
         picker.style.top =
-            "-10000px";
+            "0";
 
         picker.style.width =
-            "1px";
+            "300px";
 
         picker.style.height =
-            "1px";
+            "44px";
 
         picker.style.opacity =
             "0";
+
+        picker.style.cursor =
+            "pointer";
+
+        picker.style.zIndex =
+            "4";
 
         picker.addEventListener(
             "change",
@@ -780,8 +792,17 @@ function dsEnsureDateFilter() {
         calendarButton.style.position =
             "relative";
 
+        calendarButton.style.position =
+            "absolute";
+
+        calendarButton.style.left =
+            "274px";
+
+        calendarButton.style.top =
+            "10px";
+
         calendarButton.style.marginLeft =
-            "-44px";
+            "0";
 
         calendarButton.style.zIndex =
             "3";
@@ -808,7 +829,10 @@ function dsEnsureDateFilter() {
             "0";
 
         calendarButton.style.cursor =
-            "pointer";
+            "default";
+
+        calendarButton.style.pointerEvents =
+            "none";
 
         calendarButton.addEventListener(
             "click",
@@ -833,15 +857,6 @@ function dsEnsureDateFilter() {
 
                     picker.click();
                 }
-            }
-        );
-
-        input.addEventListener(
-            "click",
-            function () {
-
-                calendarButton.click();
-
             }
         );
 
@@ -915,6 +930,10 @@ function dsEnsureDateFilter() {
 
         dateControls.appendChild(
             input
+        );
+
+        dateControls.appendChild(
+            picker
         );
 
         dateControls.appendChild(
