@@ -501,7 +501,7 @@ function dsEnsureDateFilter() {
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "510px minmax(360px, 1fr) auto";
+        "455px minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -533,7 +533,7 @@ function dsEnsureDateFilter() {
             "8px";
 
         filter.style.width =
-            "510px";
+            "455px";
 
         filter.style.minWidth =
             "0";
@@ -570,7 +570,7 @@ function dsEnsureDateFilter() {
             "8px";
 
         dateControls.style.width =
-            "510px";
+            "455px";
 
         dateControls.style.height =
             "44px";
@@ -649,16 +649,16 @@ function dsEnsureDateFilter() {
             "44px";
 
         input.style.width =
-            "390px";
+            "335px";
 
         input.style.minWidth =
-            "390px";
+            "335px";
 
         input.style.maxWidth =
-            "390px";
+            "335px";
 
         input.style.flex =
-            "0 0 390px";
+            "0 0 335px";
 
         input.style.boxSizing =
             "border-box";
@@ -775,22 +775,22 @@ function dsEnsureDateFilter() {
         );
 
         calendarButton.innerHTML =
-            "&#128197;";
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 9h18"></path></svg>';
 
         calendarButton.style.position =
             "relative";
 
         calendarButton.style.marginLeft =
-            "-48px";
+            "-44px";
 
         calendarButton.style.zIndex =
             "3";
 
         calendarButton.style.width =
-            "32px";
+            "24px";
 
         calendarButton.style.height =
-            "32px";
+            "24px";
 
         calendarButton.style.border =
             "0";
@@ -799,10 +799,10 @@ function dsEnsureDateFilter() {
             "transparent";
 
         calendarButton.style.color =
-            "#475569";
+            "#0F172A";
 
         calendarButton.style.fontSize =
-            "18px";
+            "0";
 
         calendarButton.style.padding =
             "0";
