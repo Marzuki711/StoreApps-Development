@@ -176,9 +176,17 @@
 
 
         <!-- LOADING -->
-        <div id="homeSalesLoading" class="sa-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Loading Sales Dashboard...</span>
+        <div id="homeSalesLoading" class="sa-loading" aria-live="polite">
+            <div class="sa-loading-card">
+                <span class="sa-loading-orbit" aria-hidden="true">
+                    <i class="fa-solid fa-chart-line"></i>
+                </span>
+                <span class="sa-loading-copy">
+                    <strong>Loading Sales Dashboard</strong>
+                    <small>Updating your latest sales performance</small>
+                </span>
+                <span class="sa-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
         </div>
 
 
@@ -946,17 +954,100 @@
 /* ================= LOADING ================= */
 
 .sa-loading{
-    min-height:35px;
+    min-height:54px;
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:9px;
+    padding:8px 0 12px;
     color:var(--sa-muted);
+}
+
+.sa-loading-card{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    min-width:300px;
+    padding:9px 13px;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:14px;
+    background:rgba(255,255,255,.78);
+    box-shadow:0 8px 22px rgba(15,23,42,.06);
+    backdrop-filter:blur(8px);
+}
+
+.sa-loading-orbit{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    color:var(--sa-red);
+    background:#FEF2F2;
+    border:1px solid rgba(193,18,31,.10);
+    position:relative;
+}
+
+.sa-loading-orbit::after{
+    content:"";
+    position:absolute;
+    inset:-3px;
+    border:2px solid transparent;
+    border-top-color:var(--sa-red);
+    border-radius:50%;
+    animation:saLoadingSpin .9s linear infinite;
+}
+
+.sa-loading-orbit i{
+    color:var(--sa-red);
     font-size:12px;
 }
 
-.sa-loading i{
-    color:var(--sa-red);
+.sa-loading-copy{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+}
+
+.sa-loading-copy strong{
+    color:#172033;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.01em;
+}
+
+.sa-loading-copy small{
+    color:#94A3B8;
+    font-size:9px;
+    font-weight:600;
+}
+
+.sa-loading-dots{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+
+.sa-loading-dots i{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--sa-red);
+    animation:saLoadingPulse 1s ease-in-out infinite;
+}
+
+.sa-loading-dots i:nth-child(2){animation-delay:.15s;}
+.sa-loading-dots i:nth-child(3){animation-delay:.30s;}
+
+@keyframes saLoadingSpin{
+    to{transform:rotate(360deg);}
+}
+
+@keyframes saLoadingPulse{
+    0%,100%{opacity:.25;transform:translateY(0);}
+    50%{opacity:1;transform:translateY(-2px);}
 }
 
 
