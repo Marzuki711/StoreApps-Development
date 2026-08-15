@@ -2249,6 +2249,106 @@ function dsRenderTable() {
    STORE NOT SUBMITTED — ADDITIVE ONLY
 ========================================== */
 
+/* ==========================================
+   STORE NOT SUBMITTED — SHARE (ADDITIVE ONLY)
+========================================== */
+
+function dsGetNotSubmittedStores_() {
+
+    const submitted = new Set(
+        (dsRows || []).map(function (row) {
+            return String(row.storeNo || "")
+                .replace(/\D/g, "")
+                .padStart(4, "0")
+                .slice(-4);
+        }).filter(Boolean)
+    );
+
+    const masterStores =
+        (Array.isArray(dsSubmissionMasterStores) && dsSubmissionMasterStores.length)
+            ? dsSubmissionMasterStores
+            : (dsStores || []);
+
+    return masterStores
+        .filter(function (store) {
+            const normalized = String(store.storeNo || "")
+                .replace(/\D/g, "")
+                .padStart(4, "0")
+                .slice(-4);
+            return normalized && !submitted.has(normalized);
+        })
+        .sort(function (a, b) {
+            const aNo = String(a.storeNo || "").replace(/\D/g, "");
+            const bNo = String(b.storeNo || "").replace(/\D/g, "");
+            return (Number(aNo || 999999) - Number(bNo || 999999));
+        });
+}
+
+async function dsShareNotSubmittedStores() {
+
+    const missing = dsGetNotSubmittedStores_();
+
+    if (!missing.length) {
+        return;
+    }
+
+    const businessDate =
+        dsFormatDisplayDate(dsSelectedDate);
+
+    const lines = [
+        "STORE NOT SUBMITTED",
+        "Business Date : " + businessDate,
+        "Total : " + missing.length + " STORE" + (missing.length === 1 ? "" : "S"),
+        "",
+        "Store Details :"
+    ];
+
+    missing.forEach(function (store, index) {
+        lines.push(
+            (index + 1) + ". " +
+            String(store.storeNo || "").trim() + " - " +
+            String(store.storeName || "").trim()
+        );
+    });
+
+    const text = lines.join("\n");
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: "Store Not Submitted - " + businessDate,
+                text: text
+            });
+            return;
+        }
+    } catch (error) {
+        if (error && error.name === "AbortError") {
+            return;
+        }
+    }
+
+    try {
+        await navigator.clipboard.writeText(text);
+
+        if (typeof Swal !== "undefined") {
+            await Swal.fire({
+                icon: "success",
+                title: "Details Copied",
+                text: "Store Not Submitted details have been copied. You can paste them into WhatsApp, Email, Teams or any platform.",
+                confirmButtonText: "OK"
+            });
+        } else {
+            alert("Store Not Submitted details copied to clipboard.");
+        }
+    } catch (error) {
+        const fallback = window.prompt(
+            "Copy the Store Not Submitted details below:",
+            text
+        );
+        void fallback;
+    }
+}
+
 function dsRenderNotSubmittedStores() {
 
     const section = document.getElementById("dsNotSubmittedSection");
