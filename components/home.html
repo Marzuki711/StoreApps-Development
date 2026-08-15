@@ -208,7 +208,7 @@
                         </span>
 
                         <strong id="homeTotalSales">
-                            RM 0.00
+                            0.00
                         </strong>
 
                         <small id="homeSalesLabel">
@@ -232,7 +232,7 @@
                         </span>
 
                         <strong id="homeApsdSales">
-                            RM 0.00
+                            0.00
                         </strong>
 
                         <small>
@@ -314,8 +314,8 @@
                         <div class="sa-wow-main">
                             <span class="sa-wow-title">APSD SALES</span>
                             <div class="sa-wow-values">
-                                <strong id="homeWowApsdSales">RM 0.00</strong>
-                                <span>vs <b id="homeWowLastApsdSales">RM 0.00</b> last week</span>
+                                <strong id="homeWowApsdSales">0.00</strong>
+                                <span>vs <b id="homeWowLastApsdSales">0.00</b> last week</span>
                             </div>
                         </div>
                         <div class="sa-wow-change" id="homeWowSalesChange">
@@ -363,8 +363,8 @@
                         <div class="sa-wow-main">
                             <span class="sa-wow-title">APSD SALES</span>
                             <div class="sa-wow-values">
-                                <strong id="homeWeeklyApsdSales">RM 0.00</strong>
-                                <span>vs <b id="homeWeeklyLastApsdSales">RM 0.00</b> last week</span>
+                                <strong id="homeWeeklyApsdSales">0.00</strong>
+                                <span>vs <b id="homeWeeklyLastApsdSales">0.00</b> last week</span>
                             </div>
                             <small id="homeWeeklyApsdSalesNote" class="sa-weekly-apsd-note">Per store per day</small>
                         </div>
@@ -470,14 +470,14 @@
 
                             <div>
                                 <strong id="homeApsdBudgetActual">
-                                    RM 0.00
+                                    0.00
                                 </strong>
                                 <span>Merchandise Sales</span>
                             </div>
 
                             <div>
                                 <strong id="homeApsdBudgetTarget">
-                                    RM 0.00
+                                    0.00
                                 </strong>
                                 <span>Budget</span>
                             </div>
@@ -554,7 +554,7 @@
                     <div>
                         <span>APSD BUDGET</span>
                         <strong id="homeApsdBudgetBottom">
-                            RM 0.00
+                            0.00
                         </strong>
                     </div>
 
@@ -1542,9 +1542,9 @@
 .sa-mtd-table tbody tr:hover{background:#FAFBFC;}
 .sa-mtd-table .sa-mtd-number{text-align:right;font-variant-numeric:tabular-nums;}
 .sa-mtd-table .sa-mtd-unit{font-weight:800;color:#475569;}
-.sa-mtd-table .is-negative{color:#DC2626;font-weight:800;}
-.sa-mtd-table .is-positive{color:#15803D;font-weight:800;}
-.sa-mtd-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800;}
+.sa-mtd-table .is-negative{color:#DC2626;font-weight:400;}
+.sa-mtd-table .is-positive{color:#15803D;font-weight:400;}
+.sa-mtd-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:400;}
 .sa-mtd-status.is-achieved{color:#15803D;background:#ECFDF5;}
 .sa-mtd-status.is-not-achieved{color:#DC2626;background:#FEF2F2;}
 
@@ -2051,7 +2051,7 @@
 
     function formatRM(value){
         var n=Number(value||0);
-        return "RM " + n.toLocaleString("en-MY",{
+        return n.toLocaleString("en-MY",{
             minimumFractionDigits:2,
             maximumFractionDigits:2
         });
