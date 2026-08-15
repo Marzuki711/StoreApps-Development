@@ -564,8 +564,20 @@ function dsEnsureDateFilter() {
         input.id =
             "dsDateFilter";
 
+        // STORE LIST BUSINESS DATE: select from calendar only.
+        // Keep the existing dsSelectedDate / dsLoad flow unchanged.
+        input.readOnly = true;
+        input.tabIndex = -1;
+        input.setAttribute("aria-readonly", "true");
+        input.onkeydown = function () { return false; };
+        input.onkeypress = function () { return false; };
+        input.onbeforeinput = function () { return false; };
+        input.onpaste = function () { return false; };
+        input.oncut = function () { return false; };
+        input.ondrop = function () { return false; };
+
         input.inputMode =
-            "numeric";
+            "none";
 
         input.autocomplete =
             "off";
@@ -701,8 +713,15 @@ function dsEnsureDateFilter() {
                 picker.value =
                     dsSelectedDate ||
                     dsYesterdayISO();
-                if (typeof picker.showPicker === "function") {
-                    picker.showPicker();
+
+                try {
+                    if (typeof picker.showPicker === "function") {
+                        picker.showPicker();
+                    } else {
+                        picker.click();
+                    }
+                } catch (e) {
+                    picker.click();
                 }
             }
         );
@@ -788,6 +807,40 @@ function dsEnsureDateFilter() {
 
         dateControls.appendChild(
             input
+        );
+
+        const calendarIcon =
+            document.createElement("span");
+
+        calendarIcon.innerHTML =
+            '<i class="fa-regular fa-calendar"></i>';
+
+        calendarIcon.style.display =
+            "inline-flex";
+
+        calendarIcon.style.alignItems =
+            "center";
+
+        calendarIcon.style.justifyContent =
+            "center";
+
+        calendarIcon.style.width =
+            "24px";
+
+        calendarIcon.style.marginLeft =
+            "-42px";
+
+        calendarIcon.style.pointerEvents =
+            "none";
+
+        calendarIcon.style.color =
+            "#475569";
+
+        calendarIcon.style.zIndex =
+            "2";
+
+        dateControls.appendChild(
+            calendarIcon
         );
 
         dateControls.appendChild(
