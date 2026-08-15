@@ -62,21 +62,26 @@
                            autocomplete="off"
                            placeholder="dd/mm/yyyy"
                            maxlength="10"
+                           aria-label="Business Date"
                            onkeydown="return false;"
                            onkeypress="return false;"
                            onbeforeinput="return false;"
                            onpaste="return false;"
                            oncut="return false;"
                            ondrop="return false;"
-                           style="padding-right:48px;cursor:default;caret-color:transparent;user-select:none;pointer-events:none;">
+                           onclick="var p=document.getElementById('dsBusinessDatePicker');if(p){if(typeof p.showPicker==='function'){p.showPicker();}else{p.click();}}"
+                           style="padding-right:48px;cursor:pointer;caret-color:transparent;user-select:none;">
                     <input id="dsBusinessDatePicker"
                            type="date"
-                           tabindex="0"
+                           tabindex="-1"
                            aria-label="Select Business Date"
                            onchange="if(this.value){var p=this.value.split('-');var t=document.getElementById('dsBusinessDate');if(t&&p.length===3){t.value=p[2]+'/'+p[1]+'/'+p[0];t.dispatchEvent(new Event('input',{bubbles:true}));t.dispatchEvent(new Event('change',{bubbles:true}));}}"
-                           style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;z-index:2;">
-                    <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#0F172A;z-index:3;font-size:16px;">
-                        <i class="fa-regular fa-calendar"></i>
+                           style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;opacity:0;cursor:pointer;z-index:2;">
+                    <span aria-hidden="true" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;z-index:3;width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:#0F172A;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+                            <path d="M16 2v4M8 2v4M3 9h18"></path>
+                        </svg>
                     </span>
                 </div>
             </div>
