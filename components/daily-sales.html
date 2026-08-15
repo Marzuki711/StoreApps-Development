@@ -248,7 +248,19 @@
                 </div>
                 <div id="dsNotSubmittedSubtitle" class="ds-not-submitted-subtitle"></div>
             </div>
-            <div id="dsNotSubmittedCount" class="ds-not-submitted-count"></div>
+            <div class="ds-not-submitted-actions">
+                <div id="dsNotSubmittedCount" class="ds-not-submitted-count"></div>
+                <button
+                    type="button"
+                    id="dsNotSubmittedShareBtn"
+                    class="ds-not-submitted-share"
+                    onclick="dsShareNotSubmittedStores()"
+                    title="Share Store Not Submitted details"
+                    aria-label="Share Store Not Submitted details">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>Share</span>
+                </button>
+            </div>
         </div>
 
         <div class="ds-table-wrap">
