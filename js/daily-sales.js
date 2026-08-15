@@ -803,17 +803,17 @@ function dsEnsureDateFilter() {
         dateControls.style.width =
             "100%";
         dateControls.style.maxWidth =
-            "540px";
+            "500px";
 
         input.style.flex =
-            "0 1 430px";
+            "0 0 380px";
         input.style.width =
-            "430px";
+            "380px";
 
         input.style.minWidth =
             "0";
         input.style.maxWidth =
-            "430px";
+            "380px";
 
         dateControls.appendChild(
             input
