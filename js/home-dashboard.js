@@ -56,9 +56,47 @@ function homePreviousWeekISO(iso){
     ].join("-");
 }
 
+function homeAddDaysISO(iso, days){
+    const parts = String(iso || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(Number.isNaN)) return "";
+
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setDate(d.getDate() + Number(days || 0));
+
+    return [
+        d.getFullYear(),
+        String(d.getMonth()+1).padStart(2,"0"),
+        String(d.getDate()).padStart(2,"0")
+    ].join("-");
+}
+
+function homeWeekRange(selectedISO){
+    const end = String(selectedISO || "");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(end)) return null;
+
+    return {
+        thisStart: homeAddDaysISO(end, -6),
+        thisEnd: end,
+        lastStart: homeAddDaysISO(end, -13),
+        lastEnd: homeAddDaysISO(end, -7)
+    };
+}
+
+function homeDateRangeLabel(startISO, endISO){
+    const start = homeISOToDDMMYYYY(startISO);
+    const end = homeISOToDDMMYYYY(endISO);
+    return start + " – " + end;
+}
+
 function homeSetWowChange(id, current, previous){
     const el = document.getElementById(id);
     if(!el) return;
+
+    if(current === null || current === undefined || previous === null || previous === undefined){
+        el.className = "sa-wow-change is-flat";
+        el.innerHTML = '<i class="fa-solid fa-minus"></i><strong>N/A</strong>';
+        return;
+    }
 
     const now = Number(current) || 0;
     const old = Number(previous) || 0;
@@ -303,9 +341,28 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
     try{
 
-        const previousWeekDate = homePreviousWeekISO(homeSalesDate);
+        const weekRange = homeWeekRange(homeSalesDate);
+        const weeklyDates = weekRange
+            ? [
+                ...Array.from({length:7}, (_,i) => homeAddDaysISO(weekRange.thisStart, i)),
+                ...Array.from({length:7}, (_,i) => homeAddDaysISO(weekRange.lastStart, i))
+            ]
+            : [homeSalesDate, homePreviousWeekISO(homeSalesDate)];
 
-        const [storeResponse,listResponse,previousListResponse] = await Promise.all([
+        const weeklyListResponses = await Promise.all(
+            weeklyDates.map(date =>
+                callDailySalesAPI(
+                    "getDailySalesList",
+                    {
+                        username,
+                        role,
+                        date
+                    }
+                )
+            )
+        );
+
+        const [storeResponse,listResponse] = await Promise.all([
 
             callDailySalesAPI(
                 "getDailySalesStores",
@@ -321,15 +378,6 @@ async function loadHomeSalesDashboard(dateOverride=""){
                     username,
                     role,
                     date:homeSalesDate
-                }
-            ),
-
-            callDailySalesAPI(
-                "getDailySalesList",
-                {
-                    username,
-                    role,
-                    date:previousWeekDate
                 }
             )
 
@@ -410,52 +458,75 @@ async function loadHomeSalesDashboard(dateOverride=""){
             );
 
         /*
-         * Week-on-week comparison uses the same selected date
-         * against the date exactly 7 days earlier.
-         * Existing KPI calculations remain unchanged.
+         * WEEK-ON-WEEK COMPARISON
+         *
+         * LOCKED RULE:
+         * Weekly APSD uses ONLY days that actually have submitted data.
+         *
+         * Example:
+         *   7 available days -> total / 7
+         *   6 available days -> total / 6
+         *   5 available days -> total / 5
+         *   0 available days -> N/A
+         *
+         * Existing daily KPI calculations above remain unchanged.
          */
-        const previousRows =
-            previousListResponse?.status && Array.isArray(previousListResponse.rows)
-                ? previousListResponse.rows
-                : [];
+        const weeklyResponses = weeklyListResponses || [];
+        const thisWeekResponses = weeklyResponses.slice(0,7);
+        const lastWeekResponses = weeklyResponses.slice(7,14);
 
-        const previousMerchandiseSales =
-            previousRows.reduce(
-                (sum,r) =>
-                    sum +
-                    (
+        function homeWeeklyAverage(responses, field){
+            let weeklyTotal = 0;
+            let availableDays = 0;
+
+            responses.forEach(response => {
+                const dayRows =
+                    response?.status && Array.isArray(response.rows)
+                        ? response.rows
+                        : [];
+
+                // A day counts ONLY when there is at least one submitted row.
+                if(dayRows.length === 0){
+                    return;
+                }
+
+                const dayTotal = dayRows.reduce((sum,r) => {
+                    return sum + (
                         Number(
-                            String(
-                                r.totalMerchandiseSales ?? ""
-                            ).replace(/,/g,"")
+                            String(r?.[field] ?? "").replace(/,/g,"")
                         ) || 0
-                    ),
-                0
-            );
+                    );
+                },0);
 
-        const previousCustomer =
-            previousRows.reduce(
-                (sum,r) =>
-                    sum +
-                    (
-                        Number(
-                            String(
-                                r.totalCustomer ?? ""
-                            ).replace(/,/g,"")
-                        ) || 0
-                    ),
-                0
-            );
+                weeklyTotal += dayTotal;
+                availableDays += 1;
+            });
 
-        const previousApsdSales =
-            totalStores
-                ? previousMerchandiseSales / totalStores
-                : 0;
+            return {
+                value: availableDays > 0
+                    ? weeklyTotal / availableDays
+                    : null,
+                availableDays: availableDays,
+                total: weeklyTotal
+            };
+        }
 
-        const previousApsdCustomer =
-            totalStores
-                ? previousCustomer / totalStores
-                : 0;
+        const thisWeekSales =
+            homeWeeklyAverage(thisWeekResponses,"totalMerchandiseSales");
+
+        const lastWeekSales =
+            homeWeeklyAverage(lastWeekResponses,"totalMerchandiseSales");
+
+        const thisWeekCustomer =
+            homeWeeklyAverage(thisWeekResponses,"totalCustomer");
+
+        const lastWeekCustomer =
+            homeWeeklyAverage(lastWeekResponses,"totalCustomer");
+
+        const weeklyApsdSales = thisWeekSales.value;
+        const lastWeeklyApsdSales = lastWeekSales.value;
+        const weeklyApsdCustomer = thisWeekCustomer.value;
+        const lastWeeklyApsdCustomer = lastWeekCustomer.value;
 
         /*
          * Budget comes from the Area/store list.
@@ -528,35 +599,66 @@ async function loadHomeSalesDashboard(dateOverride=""){
          */
         homeSetText(
             "homeWowApsdSales",
-            homeMoney(apsdSales)
+            weeklyApsdSales === null ? "N/A" : homeMoney(weeklyApsdSales)
         );
 
         homeSetText(
             "homeWowLastApsdSales",
-            homeMoney(previousApsdSales)
+            lastWeeklyApsdSales === null ? "N/A" : homeMoney(lastWeeklyApsdSales)
         );
 
         homeSetText(
             "homeWowApsdCustomer",
-            homeNumber(apsdCustomer)
+            weeklyApsdCustomer === null ? "N/A" : homeNumber(weeklyApsdCustomer)
         );
 
         homeSetText(
             "homeWowLastApsdCustomer",
-            homeNumber(previousApsdCustomer)
+            lastWeeklyApsdCustomer === null ? "N/A" : homeNumber(lastWeeklyApsdCustomer)
+        );
+
+        homeSetText(
+            "homeWowThisSalesDays",
+            thisWeekSales.availableDays + (thisWeekSales.availableDays === 1 ? " DAY" : " DAYS")
+        );
+
+        homeSetText(
+            "homeWowLastSalesDays",
+            lastWeekSales.availableDays + (lastWeekSales.availableDays === 1 ? " DAY" : " DAYS")
+        );
+
+        homeSetText(
+            "homeWowThisCustomerDays",
+            thisWeekCustomer.availableDays + (thisWeekCustomer.availableDays === 1 ? " DAY" : " DAYS")
+        );
+
+        homeSetText(
+            "homeWowLastCustomerDays",
+            lastWeekCustomer.availableDays + (lastWeekCustomer.availableDays === 1 ? " DAY" : " DAYS")
         );
 
         homeSetWowChange(
             "homeWowSalesChange",
-            apsdSales,
-            previousApsdSales
+            weeklyApsdSales,
+            lastWeeklyApsdSales
         );
 
         homeSetWowChange(
             "homeWowCustomerChange",
-            apsdCustomer,
-            previousApsdCustomer
+            weeklyApsdCustomer,
+            lastWeeklyApsdCustomer
         );
+
+        if(weekRange){
+            homeSetText(
+                "homeWowThisRange",
+                homeDateRangeLabel(weekRange.thisStart,weekRange.thisEnd)
+            );
+            homeSetText(
+                "homeWowLastRange",
+                homeDateRangeLabel(weekRange.lastStart,weekRange.lastEnd)
+            );
+        }
 
         homeSetText(
             "homeSalesLabel",
