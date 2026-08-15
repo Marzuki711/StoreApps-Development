@@ -879,7 +879,7 @@ function initHomeSalesDashboard(){
             );
 
         loadHomeSalesDashboard(
-            input?.value ||
+            homeGetDashboardSelectedISO() ||
             homeSalesDate ||
             homeYesterdayISO()
         );
