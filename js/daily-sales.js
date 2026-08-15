@@ -496,13 +496,12 @@ function dsEnsureDateFilter() {
     }
 
     /*
-     * Keep Business Date and Search on the same horizontal row.
-     * The date label stays above the date controls, while the
-     * search field is vertically aligned with the date input.
+     * STORE LIST BUSINESS DATE ONLY
+     * Keep the Add Daily Sales form untouched.
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "400px minmax(360px, 1fr) auto";
+        "510px minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -533,6 +532,9 @@ function dsEnsureDateFilter() {
         filter.style.gap =
             "8px";
 
+        filter.style.width =
+            "510px";
+
         filter.style.minWidth =
             "0";
 
@@ -553,6 +555,26 @@ function dsEnsureDateFilter() {
         label.style.color =
             "#334155";
 
+        const dateControls =
+            document.createElement(
+                "div"
+            );
+
+        dateControls.style.display =
+            "flex";
+
+        dateControls.style.alignItems =
+            "center";
+
+        dateControls.style.gap =
+            "8px";
+
+        dateControls.style.width =
+            "510px";
+
+        dateControls.style.height =
+            "44px";
+
         const input =
             document.createElement(
                 "input"
@@ -564,11 +586,58 @@ function dsEnsureDateFilter() {
         input.id =
             "dsDateFilter";
 
-        input.inputMode =
-            "numeric";
+        /* SELECT ONLY — never a typing field */
+        input.readOnly = true;
+        input.disabled = false;
+        input.tabIndex = -1;
+        input.inputMode = "none";
+        input.autocomplete = "off";
+        input.setAttribute(
+            "aria-readonly",
+            "true"
+        );
 
-        input.autocomplete =
-            "off";
+        input.onkeydown =
+            function () {
+                return false;
+            };
+
+        input.onkeypress =
+            function () {
+                return false;
+            };
+
+        input.onbeforeinput =
+            function () {
+                return false;
+            };
+
+        input.oninput =
+            function () {
+                input.value =
+                    dsFormatDisplayDate(
+                        dsSelectedDate ||
+                        dsYesterdayISO()
+                    );
+            };
+
+        input.onpaste =
+            function (event) {
+                event.preventDefault();
+                return false;
+            };
+
+        input.oncut =
+            function (event) {
+                event.preventDefault();
+                return false;
+            };
+
+        input.ondrop =
+            function (event) {
+                event.preventDefault();
+                return false;
+            };
 
         input.placeholder =
             "dd/mm/yyyy";
@@ -578,6 +647,18 @@ function dsEnsureDateFilter() {
 
         input.style.height =
             "44px";
+
+        input.style.width =
+            "390px";
+
+        input.style.minWidth =
+            "390px";
+
+        input.style.maxWidth =
+            "390px";
+
+        input.style.flex =
+            "0 0 390px";
 
         input.style.boxSizing =
             "border-box";
@@ -589,7 +670,7 @@ function dsEnsureDateFilter() {
             "10px";
 
         input.style.padding =
-            "0 12px";
+            "0 42px 0 12px";
 
         input.style.background =
             "#fff";
@@ -606,108 +687,163 @@ function dsEnsureDateFilter() {
         input.style.fontWeight =
             "500";
 
+        input.style.cursor =
+            "pointer";
+
+        input.style.caretColor =
+            "transparent";
+
+        input.style.userSelect =
+            "none";
+
         input.value =
             dsFormatDisplayDate(
                 dsSelectedDate ||
                 dsYesterdayISO()
             );
 
-        input.addEventListener(
-            "input",
-            function () {
+        const picker =
+            document.createElement(
+                "input"
+            );
 
-                const digits =
-                    String(input.value || "")
-                        .replace(/\D/g, "")
-                        .slice(0, 8);
+        picker.type =
+            "date";
 
-                if (digits.length > 4) {
-                    input.value =
-                        digits.slice(0, 2) + "/" +
-                        digits.slice(2, 4) + "/" +
-                        digits.slice(4);
-                } else if (digits.length > 2) {
-                    input.value =
-                        digits.slice(0, 2) + "/" +
-                        digits.slice(2);
-                } else {
-                    input.value = digits;
-                }
-            }
+        picker.tabIndex =
+            -1;
+
+        picker.setAttribute(
+            "aria-hidden",
+            "true"
         );
 
-        input.addEventListener(
-            "change",
-            async function () {
+        picker.style.position =
+            "fixed";
 
-                const m =
-                    String(input.value || "")
-                        .match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        picker.style.left =
+            "-10000px";
 
-                if (!m) {
-                    input.value =
-                        dsFormatDisplayDate(
-                            dsSelectedDate ||
-                            dsYesterdayISO()
-                        );
-                    return;
-                }
+        picker.style.top =
+            "-10000px";
 
-                const iso = `${m[3]}-${m[2]}-${m[1]}`;
-                const d = new Date(iso + "T00:00:00");
+        picker.style.width =
+            "1px";
 
-                if (
-                    Number.isNaN(d.getTime()) ||
-                    d.getFullYear() !== Number(m[3]) ||
-                    d.getMonth() + 1 !== Number(m[2]) ||
-                    d.getDate() !== Number(m[1])
-                ) {
-                    input.value =
-                        dsFormatDisplayDate(
-                            dsSelectedDate ||
-                            dsYesterdayISO()
-                        );
-                    return;
-                }
+        picker.style.height =
+            "1px";
 
-                dsSelectedDate = iso;
-                await dsLoad(iso);
-            }
-        );
-
-        const picker = document.createElement("input");
-        picker.type = "date";
-        picker.tabIndex = -1;
-        picker.setAttribute("aria-hidden", "true");
-        picker.style.position = "absolute";
-        picker.style.opacity = "0";
-        picker.style.pointerEvents = "none";
-        picker.style.width = "1px";
-        picker.style.height = "1px";
+        picker.style.opacity =
+            "0";
 
         picker.addEventListener(
             "change",
             async function () {
-                if (!picker.value) return;
-                dsSelectedDate = picker.value;
-                input.value = dsFormatDisplayDate(picker.value);
-                await dsLoad(picker.value);
+
+                if (!picker.value) {
+                    return;
+                }
+
+                dsSelectedDate =
+                    picker.value;
+
+                input.value =
+                    dsFormatDisplayDate(
+                        picker.value
+                    );
+
+                await dsLoad(
+                    picker.value
+                );
+            }
+        );
+
+        const calendarButton =
+            document.createElement(
+                "button"
+            );
+
+        calendarButton.type =
+            "button";
+
+        calendarButton.title =
+            "Select Business Date";
+
+        calendarButton.setAttribute(
+            "aria-label",
+            "Select Business Date"
+        );
+
+        calendarButton.innerHTML =
+            "&#128197;";
+
+        calendarButton.style.position =
+            "relative";
+
+        calendarButton.style.marginLeft =
+            "-48px";
+
+        calendarButton.style.zIndex =
+            "3";
+
+        calendarButton.style.width =
+            "32px";
+
+        calendarButton.style.height =
+            "32px";
+
+        calendarButton.style.border =
+            "0";
+
+        calendarButton.style.background =
+            "transparent";
+
+        calendarButton.style.color =
+            "#475569";
+
+        calendarButton.style.fontSize =
+            "18px";
+
+        calendarButton.style.padding =
+            "0";
+
+        calendarButton.style.cursor =
+            "pointer";
+
+        calendarButton.addEventListener(
+            "click",
+            function () {
+
+                picker.value =
+                    dsSelectedDate ||
+                    dsYesterdayISO();
+
+                try {
+
+                    if (
+                        typeof picker.showPicker ===
+                        "function"
+                    ) {
+                        picker.showPicker();
+                    } else {
+                        picker.click();
+                    }
+
+                } catch (error) {
+
+                    picker.click();
+                }
             }
         );
 
         input.addEventListener(
             "click",
             function () {
-                picker.value =
-                    dsSelectedDate ||
-                    dsYesterdayISO();
-                if (typeof picker.showPicker === "function") {
-                    picker.showPicker();
-                }
+
+                calendarButton.click();
+
             }
         );
-
-        filter.appendChild(picker);
 
         const todayButton =
             document.createElement(
@@ -722,6 +858,15 @@ function dsEnsureDateFilter() {
 
         todayButton.style.height =
             "44px";
+
+        todayButton.style.width =
+            "112px";
+
+        todayButton.style.flex =
+            "0 0 112px";
+
+        todayButton.style.boxSizing =
+            "border-box";
 
         todayButton.style.border =
             "0";
@@ -744,6 +889,9 @@ function dsEnsureDateFilter() {
         todayButton.style.cursor =
             "pointer";
 
+        todayButton.style.whiteSpace =
+            "nowrap";
+
         todayButton.addEventListener(
             "click",
             async function () {
@@ -752,7 +900,9 @@ function dsEnsureDateFilter() {
                     dsYesterdayISO();
 
                 input.value =
-                    dsFormatDisplayDate(yesterday);
+                    dsFormatDisplayDate(
+                        yesterday
+                    );
 
                 dsSelectedDate =
                     yesterday;
@@ -763,39 +913,12 @@ function dsEnsureDateFilter() {
             }
         );
 
-        const dateControls =
-            document.createElement(
-                "div"
-            );
-
-        dateControls.style.display =
-            "flex";
-
-        dateControls.style.alignItems =
-            "center";
-
-        dateControls.style.gap =
-            "8px";
-
-        dateControls.style.width =
-            "400px";
-        dateControls.style.maxWidth =
-            "400px";
-
-        input.style.flex =
-            "0 0 350px";
-
-        input.style.width =
-            "350px";
-
-        input.style.minWidth =
-            "350px";
-
-        input.style.maxWidth =
-            "350px";
-
         dateControls.appendChild(
             input
+        );
+
+        dateControls.appendChild(
+            calendarButton
         );
 
         dateControls.appendChild(
@@ -837,49 +960,51 @@ function dsEnsureDateFilter() {
         );
 
     if (filter) {
-        filter.style.gridColumn = "1";
-        filter.style.gridRow = "1";
+
+        filter.style.gridColumn =
+            "1";
+
+        filter.style.gridRow =
+            "1";
+
     }
 
     if (searchWrap) {
-        searchWrap.style.gridColumn = "2";
-        searchWrap.style.gridRow = "1";
-        searchWrap.style.alignSelf = "end";
-        searchWrap.style.width = "100%";
-        searchWrap.style.boxSizing = "border-box";
+
+        searchWrap.style.gridColumn =
+            "2";
+
+        searchWrap.style.gridRow =
+            "1";
+
+        searchWrap.style.alignSelf =
+            "end";
+
+        searchWrap.style.width =
+            "100%";
+
+        searchWrap.style.boxSizing =
+            "border-box";
     }
 
     const count =
         document.getElementById(
-            "dsCount"
+            "dsRecordCount"
         );
 
     if (count) {
-        count.style.gridColumn = "3";
-        count.style.gridRow = "1";
-        count.style.alignSelf = "center";
-        count.style.whiteSpace = "nowrap";
-    }
 
-    const dateInput =
-        document.getElementById(
-            "dsDateFilter"
-        );
+        count.style.gridColumn =
+            "3";
 
-    if (dateInput) {
+        count.style.gridRow =
+            "1";
 
-        dateInput.value =
-            dsFormatDisplayDate(
-                dsSelectedDate ||
-                dsYesterdayISO()
-            );
+        count.style.alignSelf =
+            "center";
     }
 }
 
-
-/* ==========================================
-   STORE SELECT
-========================================== */
 
 function dsPopulateStoreSelect() {
 
