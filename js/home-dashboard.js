@@ -340,6 +340,193 @@ function homeResetDashboard(){
     }
 }
 
+
+function homeMtdDates(endISO){
+    const parts = String(endISO || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(Number.isNaN)) return [];
+    const end = new Date(parts[0], parts[1] - 1, parts[2]);
+    const start = new Date(parts[0], parts[1] - 1, 1);
+    const dates = [];
+    for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+        dates.push([
+            d.getFullYear(),
+            String(d.getMonth()+1).padStart(2,"0"),
+            String(d.getDate()).padStart(2,"0")
+        ].join("-"));
+    }
+    return dates;
+}
+
+function homeParseDateISO(value){
+    const text = String(value || "").trim();
+    let m = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if(m){
+        const y=Number(m[1]), mo=Number(m[2]), d=Number(m[3]);
+        const dt=new Date(y,mo-1,d);
+        return (dt.getFullYear()===y && dt.getMonth()===mo-1 && dt.getDate()===d)
+            ? `${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}` : "";
+    }
+    m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m){
+        const d=Number(m[1]), mo=Number(m[2]), y=Number(m[3]);
+        const dt=new Date(y,mo-1,d);
+        return (dt.getFullYear()===y && dt.getMonth()===mo-1 && dt.getDate()===d)
+            ? `${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}` : "";
+    }
+    return "";
+}
+
+function homeCalendarDaysInclusive(startISO,endISO){
+    const a=String(startISO||"").split("-").map(Number);
+    const b=String(endISO||"").split("-").map(Number);
+    if(a.length!==3 || b.length!==3 || a.some(Number.isNaN) || b.some(Number.isNaN)) return 0;
+    const start=new Date(a[0],a[1]-1,a[2]);
+    const end=new Date(b[0],b[1]-1,b[2]);
+    const diff=Math.round((end-start)/86400000)+1;
+    return diff>0 ? diff : 0;
+}
+
+function homeStoreKey(value){
+    const digits=String(value || "").replace(/\D/g,"");
+    return digits ? digits.padStart(4,"0") : "";
+}
+
+function homeRenderMtdStorePerformance(records, selectedDate){
+    const section=document.getElementById("homeMtdStorePerformance");
+    const body=document.getElementById("homeMtdStoreBody");
+    const count=document.getElementById("homeMtdStoreCount");
+    const period=document.getElementById("homeMtdStorePeriod");
+    if(!section || !body) return;
+
+    const rows=Array.isArray(records) ? records.slice() : [];
+    rows.sort((a,b)=>{
+        const diff=(Number(b.mtdSales)||0)-(Number(a.mtdSales)||0);
+        if(diff!==0) return diff;
+        return String(a.storeNo||"").localeCompare(String(b.storeNo||""),undefined,{numeric:true,sensitivity:"base"});
+    });
+
+    if(count) count.textContent=`${rows.length} STORE${rows.length===1?"":"S"}`;
+    if(period) period.textContent=`MTD THROUGH ${homeDisplayDate(selectedDate)}`;
+
+    if(!rows.length){
+        section.style.display="none";
+        body.innerHTML="";
+        return;
+    }
+
+    section.style.display="block";
+
+    const totalSales=rows.reduce((sum,row)=>sum+(Number(row.mtdSales)||0),0);
+    const totalCustomer=rows.reduce((sum,row)=>sum+(Number(row.customer)||0),0);
+    const totalApsdSales=rows.reduce((sum,row)=>sum+(Number(row.apsdSales)||0),0);
+    const totalApsdBudget=rows.reduce((sum,row)=>sum+(Number(row.apsdBudget)||0),0);
+    const totalVariance=totalApsdSales-totalApsdBudget;
+    const storeCount=rows.length;
+    const avgSales=storeCount ? totalSales/storeCount : 0;
+    const avgCustomer=storeCount ? totalCustomer/storeCount : 0;
+    const avgApsdSales=storeCount ? totalApsdSales/storeCount : 0;
+    const avgApsdBudget=storeCount ? totalApsdBudget/storeCount : 0;
+    const avgVariance=avgApsdSales-avgApsdBudget;
+
+    const renderStatus=(variance)=>{
+        const numeric=Number(variance);
+        const status=Number.isFinite(numeric) ? (numeric<0 ? "Not Achieved" : "Achieved") : "";
+        const statusClass=numeric<0 ? "is-not-achieved" : "is-achieved";
+        return `<span class="sa-mtd-status ${statusClass}">${status}</span>`;
+    };
+
+    const renderVariance=(variance)=>{
+        const numeric=Number(variance)||0;
+        const varianceClass=numeric<0 ? "is-negative" : "is-positive";
+        return `<td class="sa-mtd-number ${varianceClass}">${homeMoney(numeric)}</td>`;
+    };
+
+    const dataRows=rows.map(row=>{
+        const variance=Number(row.variance);
+        return `
+            <tr>
+                <td class="sa-mtd-unit">${String(row.storeNo||"")}</td>
+                <td>${String(row.storeName||"")}</td>
+                <td class="sa-mtd-number">${homeMoney(row.mtdSales)}</td>
+                <td class="sa-mtd-number">${Number(row.customer||0).toLocaleString("en-US")}</td>
+                <td class="sa-mtd-number">${homeMoney(row.apsdSales)}</td>
+                <td class="sa-mtd-number">${homeMoney(row.apsdBudget)}</td>
+                ${renderVariance(variance)}
+                <td>${renderStatus(variance)}</td>
+            </tr>`;
+    }).join("");
+
+    const totalStatus=renderStatus(totalVariance);
+    const avgStatus=renderStatus(avgVariance);
+
+    body.innerHTML=dataRows + `
+        <tr class="sa-mtd-summary sa-mtd-total-row">
+            <td class="sa-mtd-unit">${storeCount} STORE${storeCount===1?"":"S"}</td>
+            <td class="sa-mtd-summary-label">Total MTD</td>
+            <td class="sa-mtd-number">${homeMoney(totalSales)}</td>
+            <td class="sa-mtd-number">${totalCustomer.toLocaleString("en-US")}</td>
+            <td class="sa-mtd-number">${homeMoney(totalApsdSales)}</td>
+            <td class="sa-mtd-number">${homeMoney(totalApsdBudget)}</td>
+            ${renderVariance(totalVariance)}
+            <td>${totalStatus}</td>
+        </tr>
+        <tr class="sa-mtd-summary sa-mtd-avg-row">
+            <td></td>
+            <td class="sa-mtd-summary-label">Avg</td>
+            <td class="sa-mtd-number">${homeMoney(avgSales)}</td>
+            <td class="sa-mtd-number">${avgCustomer.toLocaleString("en-US",{maximumFractionDigits:0})}</td>
+            <td class="sa-mtd-number">${homeMoney(avgApsdSales)}</td>
+            <td class="sa-mtd-number">${homeMoney(avgApsdBudget)}</td>
+            ${renderVariance(avgVariance)}
+            <td>${avgStatus}</td>
+        </tr>`;
+}
+
+async function homeLoadMtdStorePerformance(selectedDate, username, role){
+    const section=document.getElementById("homeMtdStorePerformance");
+    const body=document.getElementById("homeMtdStoreBody");
+    if(section) section.style.display="none";
+    if(body) body.innerHTML="";
+    if(!selectedDate || !Array.isArray(homeSalesStores) || !homeSalesStores.length) return;
+
+    const dates=homeMtdDates(selectedDate);
+    if(!dates.length) return;
+
+    const responses=await Promise.all(
+        dates.map(date=>callDailySalesAPI("getDailySalesList",{username,role,date}))
+    );
+
+    const salesByStore=new Map();
+    const customerByStore=new Map();
+    responses.forEach(response=>{
+        if(!response || !response.status || !Array.isArray(response.rows)) return;
+        response.rows.forEach(row=>{
+            const key=homeStoreKey(row.storeNo);
+            if(!key) return;
+            const sales=Number(String(row.totalMerchandiseSales ?? "").replace(/,/g,"")) || 0;
+            const customer=Number(String(row.totalCustomer ?? "").replace(/,/g,"")) || 0;
+            salesByStore.set(key,(salesByStore.get(key)||0)+sales);
+            customerByStore.set(key,(customerByStore.get(key)||0)+customer);
+        });
+    });
+
+    const monthStart=dates[0];
+    const records=homeSalesStores.map(store=>{
+        const key=homeStoreKey(store.storeNo);
+        const mtdSales=salesByStore.get(key)||0;
+        const customer=customerByStore.get(key)||0;
+        const openingISO=homeParseDateISO(store.openingDate);
+        const activeStart=(openingISO && openingISO > monthStart) ? openingISO : monthStart;
+        const activeDays=homeCalendarDaysInclusive(activeStart,selectedDate) || dates.length;
+        const apsdSales=activeDays>0 ? mtdSales/activeDays : 0;
+        const apsdBudget=Number(String(store.budgetSales ?? "").replace(/,/g,"")) || 0;
+        const variance=apsdSales-apsdBudget;
+        return {storeNo:store.storeNo||"",storeName:store.storeName||"",mtdSales,customer,apsdSales,apsdBudget,variance,activeDays};
+    });
+
+    homeRenderMtdStorePerformance(records,selectedDate);
+}
+
 async function loadHomeSalesDashboard(dateOverride=""){
 
     const authenticatedUser = homeCurrentUser();
@@ -828,6 +1015,13 @@ async function loadHomeSalesDashboard(dateOverride=""){
                     100
                 ) + "%";
         }
+
+        // ADDITIVE ONLY: MTD store performance list.
+        await homeLoadMtdStorePerformance(
+            homeSalesDate,
+            username,
+            role
+        );
 
     }catch(err){
 
