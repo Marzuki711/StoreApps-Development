@@ -109,6 +109,19 @@ async function initializeApplication(){
             .getElementById("btnHome")
             ?.addEventListener("click",showHome);
 
+        /* MOBILE UI ONLY:
+           Home must close the dashboard sidebar drawer. */
+        document
+            .getElementById("btnHome")
+            ?.addEventListener("click",function(){
+                const toggle =
+                    document.getElementById("saMenuToggle");
+
+                if(toggle){
+                    toggle.checked = false;
+                }
+            });
+
         document
             .getElementById("btnLogout")
             ?.addEventListener("click",logout);
@@ -294,6 +307,33 @@ async function initializeApplication(){
 
         document.getElementById("btnSaveFW")
             ?.addEventListener("click",saveForeignWorker);
+
+        /* MOBILE SIDEBAR UI ONLY:
+           Close the real saMenuToggle after any sidebar action. */
+        const mobileSidebar =
+            document.querySelector(".sa-sidebar");
+
+        if(mobileSidebar && !mobileSidebar.dataset.autoCloseBound){
+            mobileSidebar.dataset.autoCloseBound = "1";
+
+            mobileSidebar.addEventListener("click",function(event){
+                const button =
+                    event.target.closest(".sa-side-link");
+
+                if(!button){
+                    return;
+                }
+
+                setTimeout(function(){
+                    const toggle =
+                        document.getElementById("saMenuToggle");
+
+                    if(toggle){
+                        toggle.checked = false;
+                    }
+                },0);
+            });
+        }
 
         console.log("APP INIT COMPLETE");
 
