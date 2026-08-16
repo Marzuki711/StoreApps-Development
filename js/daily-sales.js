@@ -455,47 +455,20 @@ function dsEnsureDateFilter() {
     }
 
     /*
-     * UI ONLY:
-     * Business Date is kept compact and aligned with Search.
-     * Existing data loading/change flow is preserved.
+     * Keep Business Date and Search on the same horizontal row.
+     * The date label stays above the date controls, while the
+     * search field is vertically aligned with the date input.
      */
-    const isMobile =
-        window.matchMedia("(max-width: 600px)").matches;
-
     toolbar.style.display = "grid";
-    toolbar.style.columnGap = isMobile ? "12px" : "24px";
-    toolbar.style.rowGap = "12px";
+    toolbar.style.gridTemplateColumns =
+        "minmax(430px, 480px) minmax(360px, 1fr) auto";
+    toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
-
-    toolbar.style.gridTemplateColumns = isMobile
-        ? "minmax(0, 1fr)"
-        : "400px minmax(360px, 1fr) auto";
 
     let filter =
         document.getElementById(
             "dsDateFilterWrap"
         );
-
-    /* UI ONLY: hide the browser's native date icon so only the custom calendar icon is visible. */
-    if (!document.getElementById("dsBusinessDateNativeIconFix")) {
-        const nativeIconFix = document.createElement("style");
-        nativeIconFix.id = "dsBusinessDateNativeIconFix";
-        nativeIconFix.textContent = `
-            #dsDateFilter::-webkit-calendar-picker-indicator {
-                opacity: 0 !important;
-                display: none !important;
-                width: 0 !important;
-                height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            #dsDateFilter::-webkit-inner-spin-button,
-            #dsDateFilter::-webkit-clear-button {
-                display: none !important;
-            }
-        `;
-        document.head.appendChild(nativeIconFix);
-    }
 
     if (!filter) {
 
@@ -514,19 +487,13 @@ function dsEnsureDateFilter() {
             "column";
 
         filter.style.alignItems =
-            "stretch";
+            "flex-start";
 
         filter.style.gap =
             "8px";
 
         filter.style.minWidth =
             "0";
-
-        filter.style.width =
-            "100%";
-
-        filter.style.boxSizing =
-            "border-box";
 
         const label =
             document.createElement(
@@ -556,21 +523,23 @@ function dsEnsureDateFilter() {
         input.id =
             "dsDateFilter";
 
-        /* Premium compact date field */
+        /* =====================================================
+           BUSINESS DATE — UI ONLY
+           Keep existing date value + change flow untouched.
+           The styling below only improves presentation.
+        ===================================================== */
+
         input.style.height =
-            "52px";
-
-        input.style.width =
-            "100%";
-
-        input.style.minWidth =
-            "0";
+            "54px";
 
         input.style.boxSizing =
             "border-box";
 
+        input.style.width =
+            "100%";
+
         input.style.border =
-            "1px solid #CBD5E1";
+            "1px solid #D6DCE5";
 
         input.style.borderRadius =
             "14px";
@@ -602,47 +571,8 @@ function dsEnsureDateFilter() {
         input.style.webkitAppearance =
             "none";
 
-        input.style.colorScheme =
-            "light";
-
-        /*
-         * Prevent manual typing/editing while keeping the
-         * calendar picker fully usable by touch/click.
-         */
-        input.addEventListener(
-            "keydown",
-            function (event) {
-                event.preventDefault();
-            }
-        );
-
-        input.addEventListener(
-            "beforeinput",
-            function (event) {
-                event.preventDefault();
-            }
-        );
-
-        input.addEventListener(
-            "paste",
-            function (event) {
-                event.preventDefault();
-            }
-        );
-
-        input.addEventListener(
-            "cut",
-            function (event) {
-                event.preventDefault();
-            }
-        );
-
-        input.addEventListener(
-            "drop",
-            function (event) {
-                event.preventDefault();
-            }
-        );
+        input.style.transition =
+            "border-color .2s ease, box-shadow .2s ease";
 
         input.addEventListener(
             "focus",
@@ -659,14 +589,20 @@ function dsEnsureDateFilter() {
             "blur",
             function () {
                 input.style.borderColor =
-                    "#CBD5E1";
+                    "#D6DCE5";
 
                 input.style.boxShadow =
                     "none";
             }
         );
 
-        /* Existing date-change functionality preserved. */
+        /* Native calendar icon is hidden so the custom icon
+           below remains visually consistent across browsers. */
+        input.style.colorScheme =
+            "light";
+
+        /* Keep the existing date-change functionality exactly
+           as before. */
         input.addEventListener(
             "change",
             async function () {
@@ -681,7 +617,8 @@ function dsEnsureDateFilter() {
             }
         );
 
-        /* One and only one visible calendar icon. */
+        /* Premium clickable calendar icon.
+           This affects only the Business Date control. */
         const calendarButton =
             document.createElement(
                 "button"
@@ -749,6 +686,25 @@ function dsEnsureDateFilter() {
         calendarButton.style.zIndex =
             "2";
 
+        calendarButton.style.pointerEvents =
+            "auto";
+
+        calendarButton.addEventListener(
+            "mouseenter",
+            function () {
+                calendarButton.style.background =
+                    "#F1F4F8";
+            }
+        );
+
+        calendarButton.addEventListener(
+            "mouseleave",
+            function () {
+                calendarButton.style.background =
+                    "transparent";
+            }
+        );
+
         calendarButton.addEventListener(
             "click",
             function (event) {
@@ -756,10 +712,7 @@ function dsEnsureDateFilter() {
                 event.stopPropagation();
 
                 try {
-                    if (
-                        typeof input.showPicker ===
-                        "function"
-                    ) {
+                    if (typeof input.showPicker === "function") {
                         input.showPicker();
                         return;
                     }
@@ -770,6 +723,111 @@ function dsEnsureDateFilter() {
             }
         );
 
+        const todayButton =
+            document.createElement(
+                "button"
+            );
+
+        todayButton.type =
+            "button";
+
+        todayButton.textContent =
+            "Yesterday";
+
+        todayButton.style.height =
+            "54px";
+
+        todayButton.style.minWidth =
+            "134px";
+
+        todayButton.style.border =
+            "1px solid #DCE2EA";
+
+        todayButton.style.borderRadius =
+            "14px";
+
+        todayButton.style.padding =
+            "0 18px";
+
+        todayButton.style.background =
+            "#EEF2F7";
+
+        todayButton.style.color =
+            "#172033";
+
+        todayButton.style.fontWeight =
+            "700";
+
+        todayButton.style.fontSize =
+            "14px";
+
+        todayButton.style.cursor =
+            "pointer";
+
+        todayButton.style.transition =
+            "background .2s ease, border-color .2s ease";
+
+        todayButton.addEventListener(
+            "click",
+            async function () {
+
+                const yesterday =
+                    dsYesterdayISO();
+
+                input.value =
+                    yesterday;
+
+                dsSelectedDate =
+                    yesterday;
+
+                await dsLoad(
+                    yesterday
+                );
+            }
+        );
+
+        todayButton.addEventListener(
+            "mouseenter",
+            function () {
+                todayButton.style.background =
+                    "#E6EBF2";
+
+                todayButton.style.borderColor =
+                    "#CBD5E1";
+            }
+        );
+
+        todayButton.addEventListener(
+            "mouseleave",
+            function () {
+                todayButton.style.background =
+                    "#EEF2F7";
+
+                todayButton.style.borderColor =
+                    "#DCE2EA";
+            }
+        );
+
+        const dateControls =
+            document.createElement(
+                "div"
+            );
+
+        dateControls.style.display =
+            "flex";
+
+        dateControls.style.alignItems =
+            "center";
+
+        dateControls.style.gap =
+            "12px";
+
+        dateControls.style.width =
+            "100%";
+
+        dateControls.style.minWidth =
+            "0";
+
         const dateInputWrap =
             document.createElement(
                 "div"
@@ -778,17 +836,14 @@ function dsEnsureDateFilter() {
         dateInputWrap.style.position =
             "relative";
 
-        dateInputWrap.style.width =
-            "100%";
+        dateInputWrap.style.flex =
+            "1 1 auto";
 
         dateInputWrap.style.minWidth =
             "0";
 
         dateInputWrap.style.height =
-            "52px";
-
-        dateInputWrap.style.boxSizing =
-            "border-box";
+            "54px";
 
         dateInputWrap.appendChild(
             input
@@ -798,12 +853,20 @@ function dsEnsureDateFilter() {
             calendarButton
         );
 
+        dateControls.appendChild(
+            dateInputWrap
+        );
+
+        dateControls.appendChild(
+            todayButton
+        );
+
         filter.appendChild(
             label
         );
 
         filter.appendChild(
-            dateInputWrap
+            dateControls
         );
 
         const searchWrap =
@@ -832,53 +895,17 @@ function dsEnsureDateFilter() {
             ".ds-search"
         );
 
-    /* Date + Search are equal in height. */
-    const searchHeight =
-        search.getBoundingClientRect().height;
-
-    const targetHeight =
-        searchHeight > 0
-            ? Math.round(searchHeight)
-            : 52;
-
-    const dateInput =
-        document.getElementById(
-            "dsDateFilter"
-        );
-
-    const dateWrap =
-        dateInput?.parentElement;
-
-    if (dateInput) {
-        dateInput.style.height =
-            targetHeight + "px";
-    }
-
-    if (dateWrap) {
-        dateWrap.style.height =
-            targetHeight + "px";
-    }
-
     if (filter) {
-        filter.style.gridColumn =
-            isMobile ? "1" : "1";
-        filter.style.gridRow =
-            isMobile ? "1" : "1";
+        filter.style.gridColumn = "1";
+        filter.style.gridRow = "1";
     }
 
     if (searchWrap) {
-        searchWrap.style.gridColumn =
-            isMobile ? "1" : "2";
-        searchWrap.style.gridRow =
-            isMobile ? "2" : "1";
-        searchWrap.style.alignSelf =
-            "end";
-        searchWrap.style.width =
-            "100%";
-        searchWrap.style.minWidth =
-            "0";
-        searchWrap.style.boxSizing =
-            "border-box";
+        searchWrap.style.gridColumn = "2";
+        searchWrap.style.gridRow = "1";
+        searchWrap.style.alignSelf = "end";
+        searchWrap.style.width = "100%";
+        searchWrap.style.boxSizing = "border-box";
     }
 
     const count =
@@ -887,18 +914,16 @@ function dsEnsureDateFilter() {
         );
 
     if (count) {
-        if (isMobile) {
-            count.style.gridColumn = "1";
-            count.style.gridRow = "3";
-            count.style.justifySelf = "end";
-        } else {
-            count.style.gridColumn = "3";
-            count.style.gridRow = "1";
-            count.style.alignSelf = "center";
-        }
-        count.style.whiteSpace =
-            "nowrap";
+        count.style.gridColumn = "3";
+        count.style.gridRow = "1";
+        count.style.alignSelf = "center";
+        count.style.whiteSpace = "nowrap";
     }
+
+    const dateInput =
+        document.getElementById(
+            "dsDateFilter"
+        );
 
     if (dateInput) {
 
@@ -2019,6 +2044,14 @@ function dsRenderTable() {
     const table =
         body.closest("table");
 
+    /* Remove previous summary before re-rendering. */
+    const oldSummary =
+        document.getElementById("dsListSummary");
+
+    if (oldSummary) {
+        oldSummary.remove();
+    }
+
     const headerRow =
         table?.querySelector("thead tr");
 
@@ -2159,6 +2192,129 @@ function dsRenderTable() {
                 `;
             }
         ).join("");
+
+    /* ==========================================
+       LIST SUMMARY — TOTAL & AVERAGE
+       UI/summary only. Uses the already filtered rows.
+    ========================================== */
+
+    const totalMerchandise =
+        rows.reduce(function(total, row) {
+            const value = Number(
+                String(
+                    row.totalMerchandiseSales ??
+                    ""
+                ).replace(/,/g, "")
+            ) || 0;
+
+            return total + value;
+        }, 0);
+
+    const totalCustomer =
+        rows.reduce(function(total, row) {
+            const value = Number(
+                String(
+                    row.totalCustomer ??
+                    ""
+                ).replace(/,/g, "")
+            ) || 0;
+
+            return total + value;
+        }, 0);
+
+    const avgMerchandise =
+        rows.length > 0
+            ? totalMerchandise / rows.length
+            : 0;
+
+    const avgCustomer =
+        rows.length > 0
+            ? totalCustomer / rows.length
+            : 0;
+
+    const summary =
+        document.createElement("div");
+
+    summary.id = "dsListSummary";
+
+    summary.innerHTML = `
+        <div class="ds-summary-item">
+            <span class="ds-summary-label">Total Merchandise Sales</span>
+            <strong>${dsMoney(totalMerchandise)}</strong>
+        </div>
+
+        <div class="ds-summary-item">
+            <span class="ds-summary-label">Avg Merchandise Sales</span>
+            <strong>${dsMoney(avgMerchandise)}</strong>
+        </div>
+
+        <div class="ds-summary-item">
+            <span class="ds-summary-label">Total Customer</span>
+            <strong>${totalCustomer.toLocaleString("en-MY")}</strong>
+        </div>
+
+        <div class="ds-summary-item">
+            <span class="ds-summary-label">Avg Customer</span>
+            <strong>${avgCustomer.toFixed(0)}</strong>
+        </div>
+    `;
+
+    summary.style.display = "grid";
+    summary.style.gridTemplateColumns =
+        "repeat(4, minmax(0, 1fr))";
+    summary.style.gap = "12px";
+    summary.style.marginTop = "12px";
+    summary.style.padding = "12px 14px";
+    summary.style.borderTop = "1px solid #E2E8F0";
+    summary.style.background = "#F8FAFC";
+    summary.style.borderRadius = "0 0 12px 12px";
+    summary.style.boxSizing = "border-box";
+
+    summary
+        .querySelectorAll(".ds-summary-item")
+        .forEach(function(item) {
+            item.style.display = "flex";
+            item.style.flexDirection = "column";
+            item.style.gap = "4px";
+            item.style.minWidth = "0";
+        });
+
+    summary
+        .querySelectorAll(".ds-summary-label")
+        .forEach(function(label) {
+            label.style.fontSize = "10px";
+            label.style.fontWeight = "700";
+            label.style.color = "#64748B";
+        });
+
+    summary
+        .querySelectorAll("strong")
+        .forEach(function(value) {
+            value.style.fontSize = "14px";
+            value.style.fontWeight = "800";
+            value.style.color = "#172033";
+        });
+
+    if (table && table.parentElement) {
+        table.parentElement.insertBefore(
+            summary,
+            table.nextSibling
+        );
+    }
+
+    if (!document.getElementById("dsListSummaryResponsiveStyle")) {
+        const style = document.createElement("style");
+        style.id = "dsListSummaryResponsiveStyle";
+        style.textContent = `
+            @media (max-width: 700px) {
+                #dsListSummary {
+                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                    gap: 10px !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 /* ==========================================
