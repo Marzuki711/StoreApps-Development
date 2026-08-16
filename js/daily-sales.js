@@ -798,8 +798,8 @@ function dsEnsureDateFilter() {
         calendarButton.style.position =
             "absolute";
 
-        calendarButton.style.left =
-            "274px";
+        calendarButton.style.right =
+            "10px";
 
         calendarButton.style.top =
             "10px";
@@ -1008,20 +1008,9 @@ function dsEnsureDateFilter() {
 
             style.textContent = `
                 @media (max-width: 800px) {
-                    .ds-toolbar {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        display: grid !important;
-                        grid-template-columns: minmax(0, 1fr) !important;
-                        gap: 14px !important;
-                        box-sizing: border-box !important;
-                    }
-
                     #dsDateFilterWrap {
                         width: 100% !important;
                         max-width: 100% !important;
-                        grid-column: 1 !important;
-                        grid-row: 1 !important;
                         box-sizing: border-box !important;
                     }
 
@@ -1029,13 +1018,15 @@ function dsEnsureDateFilter() {
                         width: 100% !important;
                         max-width: 100% !important;
                         display: flex !important;
+                        flex-wrap: nowrap !important;
                         align-items: center !important;
                         gap: 8px !important;
                         box-sizing: border-box !important;
+                        overflow: visible !important;
                     }
 
                     #dsDateFilter {
-                        width: calc(100% - 120px) !important;
+                        width: auto !important;
                         min-width: 0 !important;
                         max-width: none !important;
                         flex: 1 1 auto !important;
@@ -1043,11 +1034,18 @@ function dsEnsureDateFilter() {
                     }
 
                     #dsDateFilterWrap button {
-                        width: 112px !important;
-                        min-width: 112px !important;
-                        max-width: 112px !important;
-                        flex: 0 0 112px !important;
+                        width: 88px !important;
+                        min-width: 88px !important;
+                        max-width: 88px !important;
+                        height: 44px !important;
+                        flex: 0 0 88px !important;
                         box-sizing: border-box !important;
+                        padding: 0 8px !important;
+                    }
+
+                    #dsDateFilterWrap input[type="date"] {
+                        width: 100% !important;
+                        max-width: 100% !important;
                     }
 
                     .ds-search {
@@ -1063,10 +1061,98 @@ function dsEnsureDateFilter() {
                         justify-self: start !important;
                     }
                 }
+
+                @media (max-width: 380px) {
+                    #dsDateFilterWrap button {
+                        width: 82px !important;
+                        min-width: 82px !important;
+                        max-width: 82px !important;
+                        flex-basis: 82px !important;
+                        padding: 0 6px !important;
+                        font-size: 12px !important;
+                    }
+                }
             `;
 
             document.head.appendChild(style);
         }
+    }
+
+    const applyStoreListMobileDateLayout = function () {
+        const wrap = document.getElementById("dsDateFilterWrap");
+        const controls = wrap ? wrap.querySelector("div") : null;
+        const dateInput = document.getElementById("dsDateFilter");
+        const yesterdayButton = controls ? controls.querySelector("button") : null;
+        const pickerInput = controls ? controls.querySelector('input[type="date"]') : null;
+        const icon = controls ? controls.querySelector("button") : null;
+
+        if (!wrap || !controls || !dateInput || !yesterdayButton) {
+            return;
+        }
+
+        if (window.innerWidth <= 800) {
+            wrap.style.width = "100%";
+            wrap.style.maxWidth = "100%";
+            controls.style.width = "100%";
+            controls.style.maxWidth = "100%";
+            controls.style.flexWrap = "nowrap";
+            controls.style.overflow = "visible";
+
+            dateInput.style.width = "auto";
+            dateInput.style.minWidth = "0";
+            dateInput.style.maxWidth = "none";
+            dateInput.style.flex = "1 1 auto";
+
+            yesterdayButton.style.width = "88px";
+            yesterdayButton.style.minWidth = "88px";
+            yesterdayButton.style.maxWidth = "88px";
+            yesterdayButton.style.flex = "0 0 88px";
+            yesterdayButton.style.boxSizing = "border-box";
+
+            if (window.innerWidth <= 380) {
+                yesterdayButton.style.width = "82px";
+                yesterdayButton.style.minWidth = "82px";
+                yesterdayButton.style.maxWidth = "82px";
+                yesterdayButton.style.flex = "0 0 82px";
+                yesterdayButton.style.fontSize = "12px";
+            }
+
+            if (pickerInput) {
+                pickerInput.style.width = dateInput.offsetWidth + "px";
+                pickerInput.style.maxWidth = dateInput.offsetWidth + "px";
+            }
+
+            if (calendarButton) {
+                calendarButton.style.right = "10px";
+                calendarButton.style.left = "auto";
+            }
+        } else {
+            dateInput.style.width = "300px";
+            dateInput.style.maxWidth = "300px";
+            dateInput.style.flex = "1 1 300px";
+            yesterdayButton.style.width = "112px";
+            yesterdayButton.style.minWidth = "112px";
+            yesterdayButton.style.maxWidth = "112px";
+            yesterdayButton.style.flex = "0 1 112px";
+            if (pickerInput) {
+                pickerInput.style.width = "300px";
+                pickerInput.style.maxWidth = "300px";
+            }
+            if (calendarButton) {
+                calendarButton.style.right = "10px";
+                calendarButton.style.left = "auto";
+            }
+        }
+    };
+
+    applyStoreListMobileDateLayout();
+
+    if (!window.__dsStoreListMobileDateResizeBound) {
+        window.__dsStoreListMobileDateResizeBound = true;
+        window.addEventListener("resize", applyStoreListMobileDateLayout);
+        window.addEventListener("orientationchange", function () {
+            setTimeout(applyStoreListMobileDateLayout, 50);
+        });
     }
 
     if (searchWrap) {
