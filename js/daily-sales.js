@@ -476,6 +476,27 @@ function dsEnsureDateFilter() {
             "dsDateFilterWrap"
         );
 
+    /* UI ONLY: hide the browser's native date icon so only the custom calendar icon is visible. */
+    if (!document.getElementById("dsBusinessDateNativeIconFix")) {
+        const nativeIconFix = document.createElement("style");
+        nativeIconFix.id = "dsBusinessDateNativeIconFix";
+        nativeIconFix.textContent = `
+            #dsDateFilter::-webkit-calendar-picker-indicator {
+                opacity: 0 !important;
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #dsDateFilter::-webkit-inner-spin-button,
+            #dsDateFilter::-webkit-clear-button {
+                display: none !important;
+            }
+        `;
+        document.head.appendChild(nativeIconFix);
+    }
+
     if (!filter) {
 
         filter =
