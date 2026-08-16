@@ -792,6 +792,9 @@ function dsEnsureDateFilter() {
         calendarButton.innerHTML =
             '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 9h18"></path></svg>';
 
+        calendarButton.className =
+            "ds-calendar-button";
+
         calendarButton.style.position =
             "relative";
 
@@ -1031,6 +1034,11 @@ function dsEnsureDateFilter() {
                         max-width: none !important;
                         flex: 1 1 auto !important;
                         box-sizing: border-box !important;
+                        padding-right: 42px !important;
+                    }
+
+                    #dsDateFilterWrap .ds-calendar-button {
+                        pointer-events: none !important;
                     }
 
                     #dsDateFilterWrap button {
@@ -1082,11 +1090,26 @@ function dsEnsureDateFilter() {
         const wrap = document.getElementById("dsDateFilterWrap");
         const controls = wrap ? wrap.querySelector("div") : null;
         const dateInput = document.getElementById("dsDateFilter");
-        const yesterdayButton = controls ? controls.querySelector("button") : null;
-        const pickerInput = controls ? controls.querySelector('input[type="date"]') : null;
-        const icon = controls ? controls.querySelector("button") : null;
+        const buttons = controls
+            ? Array.from(controls.querySelectorAll("button"))
+            : [];
 
-        if (!wrap || !controls || !dateInput || !yesterdayButton) {
+        const yesterdayButton =
+            buttons.find(function (button) {
+                return button !== controls.querySelector(".ds-calendar-button");
+            }) || null;
+
+        const pickerInput =
+            controls
+                ? controls.querySelector('input[type="date"]')
+                : null;
+
+        const calendarButton =
+            controls
+                ? controls.querySelector(".ds-calendar-button")
+                : null;
+
+        if (!wrap || !controls || !dateInput || !yesterdayButton || !calendarButton) {
             return;
         }
 
@@ -1118,14 +1141,19 @@ function dsEnsureDateFilter() {
             }
 
             if (pickerInput) {
+                pickerInput.style.left = "0";
                 pickerInput.style.width = dateInput.offsetWidth + "px";
                 pickerInput.style.maxWidth = dateInput.offsetWidth + "px";
+                pickerInput.style.zIndex = "1";
             }
 
-            if (calendarButton) {
-                calendarButton.style.right = "10px";
-                calendarButton.style.left = "auto";
-            }
+            /* Keep the calendar icon INSIDE the Business Date field.
+               The Yesterday button is a separate control. */
+            calendarButton.style.left = "auto";
+            calendarButton.style.right =
+                (yesterdayButton.offsetWidth + 8) + "px";
+            calendarButton.style.zIndex = "3";
+            calendarButton.style.pointerEvents = "none";
         } else {
             dateInput.style.width = "300px";
             dateInput.style.maxWidth = "300px";
@@ -1135,13 +1163,16 @@ function dsEnsureDateFilter() {
             yesterdayButton.style.maxWidth = "112px";
             yesterdayButton.style.flex = "0 1 112px";
             if (pickerInput) {
+                pickerInput.style.left = "0";
                 pickerInput.style.width = "300px";
                 pickerInput.style.maxWidth = "300px";
+                pickerInput.style.zIndex = "1";
             }
-            if (calendarButton) {
-                calendarButton.style.right = "10px";
-                calendarButton.style.left = "auto";
-            }
+            calendarButton.style.left = "auto";
+            calendarButton.style.right =
+                (yesterdayButton.offsetWidth + 8) + "px";
+            calendarButton.style.zIndex = "3";
+            calendarButton.style.pointerEvents = "none";
         }
     };
 
