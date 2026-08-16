@@ -502,9 +502,27 @@ function dsEnsureDateFilter() {
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "minmax(320px, 380px) minmax(360px, 1fr) auto";
+        "360px minmax(320px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
+
+    /* Responsive UI only: keep date/search fully inside the card. */
+    const dsApplyDateResponsiveLayout = function () {
+        const mobile = window.innerWidth <= 700;
+        if (mobile) {
+            toolbar.style.gridTemplateColumns = "minmax(0, 1fr)";
+            toolbar.style.rowGap = "12px";
+        } else {
+            toolbar.style.gridTemplateColumns =
+                "360px minmax(320px, 1fr) auto";
+            toolbar.style.rowGap = "0";
+        }
+    };
+    dsApplyDateResponsiveLayout();
+    if (!toolbar.dataset.dsDateResponsiveBound) {
+        window.addEventListener("resize", dsApplyDateResponsiveLayout);
+        toolbar.dataset.dsDateResponsiveBound = "1";
+    }
 
     let filter =
         document.getElementById(
@@ -751,6 +769,22 @@ function dsEnsureDateFilter() {
 
         dateControls.style.boxSizing =
             "border-box";
+        dateControls.style.height = "54px";
+        dateControls.style.maxWidth = "360px";
+        dateControls.style.overflow = "visible";
+
+        calendarIcon.style.position = "absolute";
+        calendarIcon.style.right = "14px";
+        calendarIcon.style.top = "50%";
+        calendarIcon.style.transform = "translateY(-50%)";
+        calendarIcon.style.width = "22px";
+        calendarIcon.style.height = "22px";
+        calendarIcon.style.display = "flex";
+        calendarIcon.style.alignItems = "center";
+        calendarIcon.style.justifyContent = "center";
+        calendarIcon.style.color = "#172033";
+        calendarIcon.style.pointerEvents = "none";
+        calendarIcon.style.zIndex = "2";
 
         /* Keep the native picker physically inside the date field.
            UI positioning only; picker behavior remains unchanged. */
@@ -765,9 +799,13 @@ function dsEnsureDateFilter() {
 
         input.style.width =
             "100%";
-
-        input.style.minWidth =
-            "0";
+        input.style.height = "54px";
+        input.style.minWidth = "0";
+        input.style.boxSizing = "border-box";
+        input.style.padding = "0 46px 0 16px";
+        input.style.borderRadius = "14px";
+        input.style.border = "1px solid #CBD5E1";
+        input.style.background = "#fff";
 
         dateControls.appendChild(
             input
@@ -838,6 +876,55 @@ function dsEnsureDateFilter() {
         count.style.gridRow = "1";
         count.style.alignSelf = "center";
         count.style.whiteSpace = "nowrap";
+    }
+
+    const dsApplyDateElementResponsiveLayout = function () {
+        const mobile = window.innerWidth <= 700;
+        if (mobile) {
+            filter.style.gridColumn = "1";
+            filter.style.gridRow = "1";
+            filter.style.width = "100%";
+            filter.style.maxWidth = "100%";
+            const controls = document.getElementById("dsDateFilterWrap")?.querySelector("div");
+            if (controls) {
+                controls.style.maxWidth = "100%";
+                controls.style.width = "100%";
+            }
+            if (searchWrap) {
+                searchWrap.style.gridColumn = "1";
+                searchWrap.style.gridRow = "2";
+                searchWrap.style.width = "100%";
+            }
+            if (count) {
+                count.style.gridColumn = "1";
+                count.style.gridRow = "3";
+                count.style.justifySelf = "end";
+            }
+        } else {
+            filter.style.gridColumn = "1";
+            filter.style.gridRow = "1";
+            filter.style.width = "100%";
+            filter.style.maxWidth = "360px";
+            const controls = document.getElementById("dsDateFilterWrap")?.querySelector("div");
+            if (controls) {
+                controls.style.maxWidth = "360px";
+                controls.style.width = "100%";
+            }
+            if (searchWrap) {
+                searchWrap.style.gridColumn = "2";
+                searchWrap.style.gridRow = "1";
+            }
+            if (count) {
+                count.style.gridColumn = "3";
+                count.style.gridRow = "1";
+                count.style.justifySelf = "auto";
+            }
+        }
+    };
+    dsApplyDateElementResponsiveLayout();
+    if (!toolbar.dataset.dsDateElementResponsiveBound) {
+        window.addEventListener("resize", dsApplyDateElementResponsiveLayout);
+        toolbar.dataset.dsDateElementResponsiveBound = "1";
     }
 
     const dateInput =
