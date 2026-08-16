@@ -502,7 +502,7 @@ function dsEnsureDateFilter() {
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "minmax(430px, 480px) minmax(360px, 1fr) auto";
+        "minmax(320px, 380px) minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -735,8 +735,6 @@ function dsEnsureDateFilter() {
             }
         );
 
-        filter.appendChild(picker);
-
         const dateControls =
             document.createElement(
                 "div"
@@ -754,6 +752,17 @@ function dsEnsureDateFilter() {
         dateControls.style.boxSizing =
             "border-box";
 
+        /* Keep the native picker physically inside the date field.
+           UI positioning only; picker behavior remains unchanged. */
+        picker.style.position = "absolute";
+        picker.style.right = "0";
+        picker.style.top = "0";
+        picker.style.width = "1px";
+        picker.style.height = "1px";
+        picker.style.opacity = "0";
+        picker.style.pointerEvents = "none";
+        picker.style.zIndex = "0";
+
         input.style.width =
             "100%";
 
@@ -762,6 +771,10 @@ function dsEnsureDateFilter() {
 
         dateControls.appendChild(
             input
+        );
+
+        dateControls.appendChild(
+            picker
         );
 
         dateControls.appendChild(
