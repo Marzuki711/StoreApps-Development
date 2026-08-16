@@ -1322,6 +1322,82 @@ function dsToggleForm(show) {
 }
 
 
+
+/* ==========================================
+   FORM VALIDATION DIALOG
+   UI ONLY — SAVE CORE UNCHANGED
+========================================== */
+
+function dsShowValidationFailed(fields) {
+
+    if (!fields || !fields.length) {
+        return;
+    }
+
+    const items = fields.map(function (field) {
+        return `
+            <div style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+                margin:5px 0;
+                padding:8px 10px;
+                background:#fff4f4;
+                border-left:3px solid #e85b76;
+                border-radius:4px;
+                color:#555;
+                font-size:13px;
+                text-align:left;
+            ">
+                <span style="
+                    color:#e85b76;
+                    font-weight:700;
+                    font-size:16px;
+                    line-height:1;
+                ">✕</span>
+                <span>${dsEsc(field)}</span>
+            </div>
+        `;
+    }).join("");
+
+    const html = `
+        <div style="text-align:left;">
+            <div style="
+                font-size:13px;
+                font-weight:600;
+                color:#555;
+                margin:0 0 14px 0;
+            ">
+                Please complete the following field(s):
+            </div>
+            ${items}
+        </div>
+    `;
+
+    if (typeof Swal !== "undefined") {
+        return Swal.fire({
+            icon: "error",
+            title: "Validation Failed",
+            html: html,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#dc3545",
+            width: "390px",
+            customClass: {
+                popup: "ds-validation-popup"
+            }
+        });
+    }
+
+    alert(
+        "Validation Failed\n\n" +
+        "Please complete the following field(s):\n\n" +
+        fields.map(function(field) {
+            return "✕ " + field;
+        }).join("\n")
+    );
+}
+
+
 /* ==========================================
    SAVE DAILY SALES
 ========================================== */
@@ -1338,184 +1414,85 @@ async function dsSave() {
     const businessDate =
         dsGet("dsBusinessDate");
 
-    if (!storeNo) {
-
-        dsShowError(
-            "Please select Store No."
-        );
-
-        return;
-    }
-
-    if (!businessDate) {
-
-        dsShowError(
-            "Please select Business Date."
-        );
-
-        return;
-    }
-
     /*
-     * DUPLICATE RECORD CHECK — ADDITIVE ONLY
-     * Prevent saving the same Store No + Business Date twice.
-     * Existing edit flow is preserved by excluding the current record.
+     * Required fields validation.
+     * Only empty fields are treated as incomplete.
+     * Numeric value 0 remains valid.
      *
-     * IMPORTANT:
-     * Always refresh the Daily Sales list from the API before saving.
-     * This prevents stale dsRows data from allowing a duplicate record.
+     * Auto-generated / calculated fields are intentionally
+     * excluded because the existing system fills them.
      */
-    if (!dsEditId) {
-
-        const normalizeStoreNo =
-            function (value) {
-                return String(value ?? "")
-                    .replace(/\D/g, "");
-            };
-
-        const normalizeBusinessDate =
-            function (value) {
-
-                const text =
-                    String(value ?? "")
-                        .trim();
-
-                if (!text) {
-                    return "";
-                }
-
-                /* YYYY-MM-DD */
-                if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-                    return text;
-                }
-
-                /* DD/MM/YYYY */
-                const dmy =
-                    text.match(
-                        /^(\d{2})\/(\d{2})\/(\d{4})$/
-                    );
-
-                if (dmy) {
-                    return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-                }
-
-                /* Handle Date-like values returned by API */
-                const parsed =
-                    new Date(text);
-
-                if (!Number.isNaN(parsed.getTime())) {
-                    const year =
-                        parsed.getFullYear();
-
-                    const month =
-                        String(
-                            parsed.getMonth() + 1
-                        ).padStart(2, "0");
-
-                    const day =
-                        String(
-                            parsed.getDate()
-                        ).padStart(2, "0");
-
-                    return `${year}-${month}-${day}`;
-                }
-
-                return text;
-            };
-
-        const targetStoreNo =
-            normalizeStoreNo(storeNo);
-
-        const targetBusinessDate =
-            normalizeBusinessDate(businessDate);
-
-        /*
-         * Refresh from the database/API so the duplicate check
-         * is based on the latest saved records, not an old screen cache.
-         */
-        const user =
-            dsGetCurrentUser() || {};
-
-        let latestRows =
-            Array.isArray(dsRows)
-                ? dsRows
-                : [];
-
-        try {
-
-            const latestResponse =
-                await callDailySalesAPI(
-                    "getDailySalesList",
-                    {
-                        username:
-                            user.username || "",
-
-                        role:
-                            user.role || "",
-
-                        date:
-                            businessDate
-                    }
-                );
-
-            if (!latestResponse?.status) {
-
-                dsShowError(
-                    latestResponse?.message ||
-                    "Unable to verify existing Daily Sales records. Please try again."
-                );
-
-                return;
-            }
-
-            latestRows =
-                Array.isArray(latestResponse.rows)
-                    ? latestResponse.rows
-                    : [];
-
-            /* Keep the existing page data in sync. */
-            dsRows = latestRows;
-
-        } catch (error) {
-
-            console.error(
-                "Duplicate record check failed:",
-                error
-            );
-
-            dsShowError(
-                "Unable to verify existing Daily Sales records. Please try again."
-            );
-
-            return;
+    const requiredFields = [
+        {
+            id: "dsStoreNo",
+            label: "Store No"
+        },
+        {
+            id: "dsBusinessDate",
+            label: "Business Date"
+        },
+        {
+            id: "dsTotalSales",
+            label: "Total Sales"
+        },
+        {
+            id: "dsTotalMerchandiseSales",
+            label: "Total Merchandise Sales"
+        },
+        {
+            id: "dsServices",
+            label: "Services"
+        },
+        {
+            id: "dsFood",
+            label: "Food"
+        },
+        {
+            id: "dsBeverage",
+            label: "Beverage"
+        },
+        {
+            id: "dsGeneralMerchandise",
+            label: "General Merchandise"
+        },
+        {
+            id: "dsTobacco",
+            label: "Tobacco"
+        },
+        {
+            id: "dsSupply",
+            label: "Supply"
+        },
+        {
+            id: "dsFoodService",
+            label: "Food Service"
+        },
+        {
+            id: "dsAlcoholic",
+            label: "Alcoholic"
+        },
+        {
+            id: "dsTotalCustomer",
+            label: "Total Customer"
         }
+    ];
 
-        const duplicateRecord =
-            latestRows.some(
-                function (row) {
+    const incompleteFields =
+        requiredFields
+            .filter(function (field) {
+                return !dsGet(field.id);
+            })
+            .map(function (field) {
+                return field.label;
+            });
 
-                    return (
-                        normalizeStoreNo(
-                            row.storeNo
-                        ) === targetStoreNo &&
+    if (incompleteFields.length) {
 
-                        normalizeBusinessDate(
-                            row.businessDate
-                        ) === targetBusinessDate
-                    );
-                }
-            );
+        dsShowValidationFailed(
+            incompleteFields
+        );
 
-        if (duplicateRecord) {
-
-            dsShowError(
-                "Record Already Exists\n\n" +
-                "This Store No. and Business Date already have a Daily Sales record.\n\n" +
-                "Please edit the existing record instead of creating a new one."
-            );
-
-            return;
-        }
+        return;
     }
 
     const user =
