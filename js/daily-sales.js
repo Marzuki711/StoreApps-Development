@@ -570,6 +570,14 @@ function dsEnsureDateFilter() {
         input.autocomplete =
             "off";
 
+        input.readOnly =
+            true;
+
+        input.setAttribute(
+            "aria-readonly",
+            "true"
+        );
+
         input.placeholder =
             "dd/mm/yyyy";
 
@@ -605,6 +613,9 @@ function dsEnsureDateFilter() {
 
         input.style.fontWeight =
             "500";
+
+        input.style.cursor =
+            "pointer";
 
         input.value =
             dsFormatDisplayDate(
@@ -695,6 +706,23 @@ function dsEnsureDateFilter() {
             }
         );
 
+        const calendarIcon =
+            document.createElement("span");
+
+        calendarIcon.className =
+            "ds-date-filter-icon";
+
+        calendarIcon.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        calendarIcon.innerHTML =
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<rect x="3" y="4" width="18" height="17" rx="2"></rect>' +
+            '<path d="M16 2v4M8 2v4M3 9h18"></path>' +
+            '</svg>';
+
         input.addEventListener(
             "click",
             function () {
@@ -709,79 +737,25 @@ function dsEnsureDateFilter() {
 
         filter.appendChild(picker);
 
-        const todayButton =
-            document.createElement(
-                "button"
-            );
-
-        todayButton.type =
-            "button";
-
-        todayButton.textContent =
-            "Yesterday";
-
-        todayButton.style.height =
-            "44px";
-
-        todayButton.style.border =
-            "0";
-
-        todayButton.style.borderRadius =
-            "10px";
-
-        todayButton.style.padding =
-            "0 14px";
-
-        todayButton.style.background =
-            "#E2E8F0";
-
-        todayButton.style.color =
-            "#1E293B";
-
-        todayButton.style.fontWeight =
-            "700";
-
-        todayButton.style.cursor =
-            "pointer";
-
-        todayButton.addEventListener(
-            "click",
-            async function () {
-
-                const yesterday =
-                    dsYesterdayISO();
-
-                input.value =
-                    dsFormatDisplayDate(yesterday);
-
-                dsSelectedDate =
-                    yesterday;
-
-                await dsLoad(
-                    yesterday
-                );
-            }
-        );
-
         const dateControls =
             document.createElement(
                 "div"
             );
 
-        dateControls.style.display =
-            "flex";
-
-        dateControls.style.alignItems =
-            "center";
-
-        dateControls.style.gap =
-            "8px";
+        dateControls.style.position =
+            "relative";
 
         dateControls.style.width =
             "100%";
 
-        input.style.flex =
-            "1 1 auto";
+        dateControls.style.minWidth =
+            "0";
+
+        dateControls.style.boxSizing =
+            "border-box";
+
+        input.style.width =
+            "100%";
 
         input.style.minWidth =
             "0";
@@ -791,7 +765,7 @@ function dsEnsureDateFilter() {
         );
 
         dateControls.appendChild(
-            todayButton
+            calendarIcon
         );
 
         filter.appendChild(
