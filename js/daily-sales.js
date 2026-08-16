@@ -937,16 +937,43 @@ function dsEnsureDateFilter() {
             }
         );
 
-        dateControls.appendChild(
+        const dateFieldWrap =
+            document.createElement(
+                "div"
+            );
+
+        dateFieldWrap.style.position =
+            "relative";
+
+        dateFieldWrap.style.width =
+            "300px";
+
+        dateFieldWrap.style.minWidth =
+            "0";
+
+        dateFieldWrap.style.height =
+            "44px";
+
+        dateFieldWrap.style.flex =
+            "1 1 300px";
+
+        dateFieldWrap.style.boxSizing =
+            "border-box";
+
+        dateFieldWrap.appendChild(
             input
         );
 
-        dateControls.appendChild(
+        dateFieldWrap.appendChild(
             picker
         );
 
-        dateControls.appendChild(
+        dateFieldWrap.appendChild(
             calendarButton
+        );
+
+        dateControls.appendChild(
+            dateFieldWrap
         );
 
         dateControls.appendChild(
@@ -1028,8 +1055,16 @@ function dsEnsureDateFilter() {
                         overflow: visible !important;
                     }
 
+                    #dsDateFilterWrap > div > div {
+                        width: calc(100% - 96px) !important;
+                        min-width: 0 !important;
+                        max-width: none !important;
+                        flex: 1 1 auto !important;
+                        box-sizing: border-box !important;
+                    }
+
                     #dsDateFilter {
-                        width: auto !important;
+                        width: 100% !important;
                         min-width: 0 !important;
                         max-width: none !important;
                         flex: 1 1 auto !important;
