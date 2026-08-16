@@ -1360,46 +1360,162 @@ async function dsSave() {
      * DUPLICATE RECORD CHECK — ADDITIVE ONLY
      * Prevent saving the same Store No + Business Date twice.
      * Existing edit flow is preserved by excluding the current record.
+     *
+     * IMPORTANT:
+     * Always refresh the Daily Sales list from the API before saving.
+     * This prevents stale dsRows data from allowing a duplicate record.
      */
-    const normalizedStoreNo =
-        String(storeNo || "")
-            .replace(/\D/g, "");
+    if (!dsEditId) {
 
-    const normalizedBusinessDate =
-        String(businessDate || "")
-            .trim();
+        const normalizeStoreNo =
+            function (value) {
+                return String(value ?? "")
+                    .replace(/\D/g, "");
+            };
 
-    const duplicateRecord =
-        !dsEditId &&
-        Array.isArray(dsRows) &&
-        dsRows.some(
-            function (row) {
+        const normalizeBusinessDate =
+            function (value) {
 
-                const rowStoreNo =
-                    String(row.storeNo || "")
-                        .replace(/\D/g, "");
+                const text =
+                    String(value ?? "")
+                        .trim();
 
-                const rowBusinessDate =
-                    dsToInputDate(
-                        row.businessDate
+                if (!text) {
+                    return "";
+                }
+
+                /* YYYY-MM-DD */
+                if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+                    return text;
+                }
+
+                /* DD/MM/YYYY */
+                const dmy =
+                    text.match(
+                        /^(\d{2})\/(\d{2})\/(\d{4})$/
                     );
 
-                return (
-                    rowStoreNo === normalizedStoreNo &&
-                    rowBusinessDate === normalizedBusinessDate
+                if (dmy) {
+                    return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+                }
+
+                /* Handle Date-like values returned by API */
+                const parsed =
+                    new Date(text);
+
+                if (!Number.isNaN(parsed.getTime())) {
+                    const year =
+                        parsed.getFullYear();
+
+                    const month =
+                        String(
+                            parsed.getMonth() + 1
+                        ).padStart(2, "0");
+
+                    const day =
+                        String(
+                            parsed.getDate()
+                        ).padStart(2, "0");
+
+                    return `${year}-${month}-${day}`;
+                }
+
+                return text;
+            };
+
+        const targetStoreNo =
+            normalizeStoreNo(storeNo);
+
+        const targetBusinessDate =
+            normalizeBusinessDate(businessDate);
+
+        /*
+         * Refresh from the database/API so the duplicate check
+         * is based on the latest saved records, not an old screen cache.
+         */
+        const user =
+            dsGetCurrentUser() || {};
+
+        let latestRows =
+            Array.isArray(dsRows)
+                ? dsRows
+                : [];
+
+        try {
+
+            const latestResponse =
+                await callDailySalesAPI(
+                    "getDailySalesList",
+                    {
+                        username:
+                            user.username || "",
+
+                        role:
+                            user.role || "",
+
+                        date:
+                            businessDate
+                    }
                 );
+
+            if (!latestResponse?.status) {
+
+                dsShowError(
+                    latestResponse?.message ||
+                    "Unable to verify existing Daily Sales records. Please try again."
+                );
+
+                return;
             }
-        );
 
-    if (duplicateRecord) {
+            latestRows =
+                Array.isArray(latestResponse.rows)
+                    ? latestResponse.rows
+                    : [];
 
-        dsShowError(
-            "Record Already Exists\n\n" +
-            "This Store No. and Business Date already have a Daily Sales record.\n\n" +
-            "Please select another date or edit the existing record."
-        );
+            /* Keep the existing page data in sync. */
+            dsRows = latestRows;
 
-        return;
+        } catch (error) {
+
+            console.error(
+                "Duplicate record check failed:",
+                error
+            );
+
+            dsShowError(
+                "Unable to verify existing Daily Sales records. Please try again."
+            );
+
+            return;
+        }
+
+        const duplicateRecord =
+            latestRows.some(
+                function (row) {
+
+                    return (
+                        normalizeStoreNo(
+                            row.storeNo
+                        ) === targetStoreNo &&
+
+                        normalizeBusinessDate(
+                            row.businessDate
+                        ) === targetBusinessDate
+                    );
+                }
+            );
+
+        if (duplicateRecord) {
+
+            dsShowError(
+                "Record Already Exists\n\n" +
+                "This Store No. and Business Date already have a Daily Sales record.\n\n" +
+                "Please edit the existing record instead of creating a new one."
+            );
+
+            return;
+        }
     }
 
     const user =
