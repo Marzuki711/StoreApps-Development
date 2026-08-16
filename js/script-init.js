@@ -41,6 +41,39 @@ async function initializeApplication(){
 
         console.log("COMPONENTS LOADED");
 
+        /* =====================================================
+           MOBILE SIDEBAR AUTO-CLOSE — UI ONLY
+           Closes the checkbox drawer after any sidebar button
+           and when the global Home button is pressed.
+        ===================================================== */
+        if (!window.__saMobileSidebarCloseBound) {
+
+            window.__saMobileSidebarCloseBound = true;
+
+            document.addEventListener("click", function (event) {
+
+                const toggle =
+                    document.getElementById("saMenuToggle");
+
+                if (!toggle) {
+                    return;
+                }
+
+                const sidebarButton =
+                    event.target.closest(".sa-side-link");
+
+                const homeButton =
+                    event.target.closest("#btnHome");
+
+                if (sidebarButton || homeButton) {
+                    setTimeout(function () {
+                        toggle.checked = false;
+                    }, 0);
+                }
+
+            }, false);
+        }
+
         /* ==========================
            USER MANAGEMENT UI
            Component must be bound AFTER
@@ -378,6 +411,11 @@ if("serviceWorker" in navigator){
 ========================================== */
 
 function showHome(){
+    const saMenuToggle = document.getElementById("saMenuToggle");
+    if (saMenuToggle) {
+        saMenuToggle.checked = false;
+    }
+
 
     const topbar =
         document.querySelector(".topbar");
