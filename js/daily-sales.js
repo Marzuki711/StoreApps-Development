@@ -801,6 +801,7 @@ function dsEnsureDateFilter() {
             "100%";
         input.style.height = "54px";
         input.style.minWidth = "0";
+
         input.style.boxSizing = "border-box";
         input.style.padding = "0 46px 0 16px";
         input.style.borderRadius = "14px";
@@ -922,6 +923,31 @@ function dsEnsureDateFilter() {
         }
     };
     dsApplyDateElementResponsiveLayout();
+
+    /* UI ONLY: Business Date height matches Search height. */
+    const dsSyncBusinessDateHeight = function () {
+        const dateBox = document.getElementById("dsDateFilter");
+        const searchBox = document.getElementById("dsSearch");
+        const dateControls = document.getElementById("dsDateFilterWrap")?.querySelector("div");
+
+        if (!dateBox || !searchBox) return;
+
+        const h = Math.round(searchBox.getBoundingClientRect().height);
+        if (h > 0) {
+            dateBox.style.setProperty("height", h + "px", "important");
+            if (dateControls) {
+                dateControls.style.setProperty("height", h + "px", "important");
+            }
+        }
+    };
+
+    dsSyncBusinessDateHeight();
+
+    if (!toolbar.dataset.dsDateHeightMatchBound) {
+        window.addEventListener("resize", dsSyncBusinessDateHeight);
+        toolbar.dataset.dsDateHeightMatchBound = "1";
+    }
+
     if (!toolbar.dataset.dsDateElementResponsiveBound) {
         window.addEventListener("resize", dsApplyDateElementResponsiveLayout);
         toolbar.dataset.dsDateElementResponsiveBound = "1";
