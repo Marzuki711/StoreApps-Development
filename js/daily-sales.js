@@ -9,8 +9,6 @@
 
 let dsStores = [];
 let dsRows = [];
-// ADDITIVE: dedicated master-store cache for Store Not Submitted.
-let dsSubmissionMasterStores = [];
 let dsEditId = "";
 let dsSelectedDate = "";
 
@@ -367,32 +365,6 @@ async function dsLoad(
         dsPopulateStoreSelect();
         dsRenderTable();
 
-        // ADDITIVE ONLY: refresh the full Area/master store list for the
-        // Store Not Submitted section. This is kept separate from the
-        // existing Daily Sales list/store logic so no existing function
-        // behaviour is changed.
-        try {
-            const masterResponse =
-                await callDailySalesAPI(
-                    "getDailySalesStores",
-                    {
-                        username: username,
-                        role: user.role || ""
-                    }
-                );
-
-            if (masterResponse?.status) {
-                dsSubmissionMasterStores =
-                    Array.isArray(masterResponse.stores)
-                        ? masterResponse.stores
-                        : [];
-
-                dsRenderNotSubmittedStores();
-            }
-        } catch (_) {
-            // Existing Daily Sales loading must not be affected.
-        }
-
     } finally {
 
         dsSetListLoading(false);
@@ -461,19 +433,6 @@ function dsYesterdayISO() {
     );
 }
 
-function dsFormatDisplayDate(iso) {
-
-    const value = String(iso || "");
-    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-    if (!match) {
-        return value;
-    }
-
-    return `${match[3]}/${match[2]}/${match[1]}`;
-}
-
-
 
 function dsEnsureDateFilter() {
 
@@ -496,12 +455,13 @@ function dsEnsureDateFilter() {
     }
 
     /*
-     * STORE LIST BUSINESS DATE ONLY
-     * Keep the Add Daily Sales form untouched.
+     * Keep Business Date and Search on the same horizontal row.
+     * The date label stays above the date controls, while the
+     * search field is vertically aligned with the date input.
      */
     toolbar.style.display = "grid";
     toolbar.style.gridTemplateColumns =
-        "430px minmax(360px, 1fr) auto";
+        "minmax(430px, 480px) minmax(360px, 1fr) auto";
     toolbar.style.columnGap = "24px";
     toolbar.style.alignItems = "end";
 
@@ -532,9 +492,6 @@ function dsEnsureDateFilter() {
         filter.style.gap =
             "8px";
 
-        filter.style.width =
-            "430px";
-
         filter.style.minWidth =
             "0";
 
@@ -555,224 +512,113 @@ function dsEnsureDateFilter() {
         label.style.color =
             "#334155";
 
-        const dateControls =
-            document.createElement(
-                "div"
-            );
-
-        dateControls.style.display =
-            "flex";
-
-        dateControls.style.alignItems =
-            "center";
-
-        dateControls.style.gap =
-            "8px";
-
-        dateControls.style.width =
-            "100%";
-
-        dateControls.style.maxWidth =
-            "430px";
-
-        dateControls.style.height =
-            "44px";
-
-        dateControls.style.position =
-            "relative";
-
         const input =
             document.createElement(
                 "input"
             );
 
         input.type =
-            "text";
+            "date";
 
         input.id =
             "dsDateFilter";
 
-        /* SELECT ONLY — never a typing field */
-        input.readOnly = true;
-        input.disabled = false;
-        input.tabIndex = -1;
-        input.inputMode = "none";
-        input.autocomplete = "off";
-        input.setAttribute(
-            "aria-readonly",
-            "true"
-        );
-
-        input.onkeydown =
-            function () {
-                return false;
-            };
-
-        input.onkeypress =
-            function () {
-                return false;
-            };
-
-        input.onbeforeinput =
-            function () {
-                return false;
-            };
-
-        input.oninput =
-            function () {
-                input.value =
-                    dsFormatDisplayDate(
-                        dsSelectedDate ||
-                        dsYesterdayISO()
-                    );
-            };
-
-        input.onpaste =
-            function (event) {
-                event.preventDefault();
-                return false;
-            };
-
-        input.oncut =
-            function (event) {
-                event.preventDefault();
-                return false;
-            };
-
-        input.ondrop =
-            function (event) {
-                event.preventDefault();
-                return false;
-            };
-
-        input.placeholder =
-            "dd/mm/yyyy";
-
-        input.maxLength =
-            10;
+        /* =====================================================
+           BUSINESS DATE — UI ONLY
+           Keep existing date value + change flow untouched.
+           The styling below only improves presentation.
+        ===================================================== */
 
         input.style.height =
-            "44px";
-
-        input.style.width =
-            "300px";
-
-        input.style.minWidth =
-            "0";
-
-        input.style.maxWidth =
-            "300px";
-
-        input.style.flex =
-            "1 1 300px";
+            "54px";
 
         input.style.boxSizing =
             "border-box";
 
+        input.style.width =
+            "100%";
+
         input.style.border =
-            "1px solid #CBD5E1";
+            "1px solid #D6DCE5";
 
         input.style.borderRadius =
-            "10px";
+            "14px";
 
         input.style.padding =
-            "0 42px 0 12px";
+            "0 48px 0 16px";
 
         input.style.background =
-            "#fff";
+            "#FFFFFF";
 
         input.style.color =
             "#172033";
 
         input.style.fontSize =
-            "14px";
+            "16px";
+
+        input.style.fontWeight =
+            "600";
 
         input.style.outline =
             "none";
 
-        input.style.fontWeight =
-            "500";
-
         input.style.cursor =
-            "default";
-
-        input.style.pointerEvents =
-            "none";
-
-        input.style.caretColor =
-            "transparent";
-
-        input.style.userSelect =
-            "none";
-
-        input.value =
-            dsFormatDisplayDate(
-                dsSelectedDate ||
-                dsYesterdayISO()
-            );
-
-        const picker =
-            document.createElement(
-                "input"
-            );
-
-        picker.type =
-            "date";
-
-        picker.tabIndex =
-            -1;
-
-        picker.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-
-        picker.style.position =
-            "absolute";
-
-        picker.style.left =
-            "0";
-
-        picker.style.top =
-            "0";
-
-        picker.style.width =
-            "300px";
-
-        picker.style.height =
-            "44px";
-
-        picker.style.opacity =
-            "0";
-
-        picker.style.cursor =
             "pointer";
 
-        picker.style.zIndex =
-            "4";
+        input.style.appearance =
+            "none";
 
-        picker.addEventListener(
+        input.style.webkitAppearance =
+            "none";
+
+        input.style.transition =
+            "border-color .2s ease, box-shadow .2s ease";
+
+        input.addEventListener(
+            "focus",
+            function () {
+                input.style.borderColor =
+                    "#B11226";
+
+                input.style.boxShadow =
+                    "0 0 0 3px rgba(177,18,38,.08)";
+            }
+        );
+
+        input.addEventListener(
+            "blur",
+            function () {
+                input.style.borderColor =
+                    "#D6DCE5";
+
+                input.style.boxShadow =
+                    "none";
+            }
+        );
+
+        /* Native calendar icon is hidden so the custom icon
+           below remains visually consistent across browsers. */
+        input.style.colorScheme =
+            "light";
+
+        /* Keep the existing date-change functionality exactly
+           as before. */
+        input.addEventListener(
             "change",
             async function () {
 
-                if (!picker.value) {
-                    return;
-                }
-
                 dsSelectedDate =
-                    picker.value;
-
-                input.value =
-                    dsFormatDisplayDate(
-                        picker.value
-                    );
+                    input.value ||
+                    dsTodayISO();
 
                 await dsLoad(
-                    picker.value
+                    dsSelectedDate
                 );
             }
         );
 
+        /* Premium clickable calendar icon.
+           This affects only the Business Date control. */
         const calendarButton =
             document.createElement(
                 "button"
@@ -781,88 +627,99 @@ function dsEnsureDateFilter() {
         calendarButton.type =
             "button";
 
-        calendarButton.title =
-            "Select Business Date";
-
         calendarButton.setAttribute(
             "aria-label",
-            "Select Business Date"
+            "Open Business Date calendar"
         );
 
         calendarButton.innerHTML =
-            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 9h18"></path></svg>';
-
-        calendarButton.className =
-            "ds-calendar-button";
-
-        calendarButton.style.position =
-            "relative";
+            '<i class="fa-regular fa-calendar"></i>';
 
         calendarButton.style.position =
             "absolute";
 
         calendarButton.style.right =
-            "10px";
+            "12px";
 
         calendarButton.style.top =
-            "10px";
+            "50%";
 
-        calendarButton.style.marginLeft =
-            "0";
-
-        calendarButton.style.zIndex =
-            "3";
+        calendarButton.style.transform =
+            "translateY(-50%)";
 
         calendarButton.style.width =
-            "24px";
+            "34px";
 
         calendarButton.style.height =
-            "24px";
+            "34px";
+
+        calendarButton.style.display =
+            "flex";
+
+        calendarButton.style.alignItems =
+            "center";
+
+        calendarButton.style.justifyContent =
+            "center";
+
+        calendarButton.style.padding =
+            "0";
 
         calendarButton.style.border =
             "0";
+
+        calendarButton.style.borderRadius =
+            "9px";
 
         calendarButton.style.background =
             "transparent";
 
         calendarButton.style.color =
-            "#0F172A";
+            "#172033";
 
         calendarButton.style.fontSize =
-            "0";
-
-        calendarButton.style.padding =
-            "0";
+            "18px";
 
         calendarButton.style.cursor =
-            "default";
+            "pointer";
+
+        calendarButton.style.zIndex =
+            "2";
 
         calendarButton.style.pointerEvents =
-            "none";
+            "auto";
+
+        calendarButton.addEventListener(
+            "mouseenter",
+            function () {
+                calendarButton.style.background =
+                    "#F1F4F8";
+            }
+        );
+
+        calendarButton.addEventListener(
+            "mouseleave",
+            function () {
+                calendarButton.style.background =
+                    "transparent";
+            }
+        );
 
         calendarButton.addEventListener(
             "click",
-            function () {
-
-                picker.value =
-                    dsSelectedDate ||
-                    dsYesterdayISO();
+            function (event) {
+                event.preventDefault();
+                event.stopPropagation();
 
                 try {
-
-                    if (
-                        typeof picker.showPicker ===
-                        "function"
-                    ) {
-                        picker.showPicker();
-                    } else {
-                        picker.click();
+                    if (typeof input.showPicker === "function") {
+                        input.showPicker();
+                        return;
                     }
+                } catch (e) {}
 
-                } catch (error) {
-
-                    picker.click();
-                }
+                input.focus();
+                input.click();
             }
         );
 
@@ -878,43 +735,37 @@ function dsEnsureDateFilter() {
             "Yesterday";
 
         todayButton.style.height =
-            "44px";
-
-        todayButton.style.width =
-            "112px";
+            "54px";
 
         todayButton.style.minWidth =
-            "112px";
-
-        todayButton.style.flex =
-            "0 1 112px";
-
-        todayButton.style.boxSizing =
-            "border-box";
+            "134px";
 
         todayButton.style.border =
-            "0";
+            "1px solid #DCE2EA";
 
         todayButton.style.borderRadius =
-            "10px";
+            "14px";
 
         todayButton.style.padding =
-            "0 14px";
+            "0 18px";
 
         todayButton.style.background =
-            "#E2E8F0";
+            "#EEF2F7";
 
         todayButton.style.color =
-            "#1E293B";
+            "#172033";
 
         todayButton.style.fontWeight =
             "700";
 
+        todayButton.style.fontSize =
+            "14px";
+
         todayButton.style.cursor =
             "pointer";
 
-        todayButton.style.whiteSpace =
-            "nowrap";
+        todayButton.style.transition =
+            "background .2s ease, border-color .2s ease";
 
         todayButton.addEventListener(
             "click",
@@ -924,9 +775,7 @@ function dsEnsureDateFilter() {
                     dsYesterdayISO();
 
                 input.value =
-                    dsFormatDisplayDate(
-                        yesterday
-                    );
+                    yesterday;
 
                 dsSelectedDate =
                     yesterday;
@@ -937,43 +786,75 @@ function dsEnsureDateFilter() {
             }
         );
 
-        const dateFieldWrap =
+        todayButton.addEventListener(
+            "mouseenter",
+            function () {
+                todayButton.style.background =
+                    "#E6EBF2";
+
+                todayButton.style.borderColor =
+                    "#CBD5E1";
+            }
+        );
+
+        todayButton.addEventListener(
+            "mouseleave",
+            function () {
+                todayButton.style.background =
+                    "#EEF2F7";
+
+                todayButton.style.borderColor =
+                    "#DCE2EA";
+            }
+        );
+
+        const dateControls =
             document.createElement(
                 "div"
             );
 
-        dateFieldWrap.style.position =
-            "relative";
+        dateControls.style.display =
+            "flex";
 
-        dateFieldWrap.style.width =
-            "300px";
+        dateControls.style.alignItems =
+            "center";
 
-        dateFieldWrap.style.minWidth =
+        dateControls.style.gap =
+            "12px";
+
+        dateControls.style.width =
+            "100%";
+
+        dateControls.style.minWidth =
             "0";
 
-        dateFieldWrap.style.height =
-            "44px";
+        const dateInputWrap =
+            document.createElement(
+                "div"
+            );
 
-        dateFieldWrap.style.flex =
-            "1 1 300px";
+        dateInputWrap.style.position =
+            "relative";
 
-        dateFieldWrap.style.boxSizing =
-            "border-box";
+        dateInputWrap.style.flex =
+            "1 1 auto";
 
-        dateFieldWrap.appendChild(
+        dateInputWrap.style.minWidth =
+            "0";
+
+        dateInputWrap.style.height =
+            "54px";
+
+        dateInputWrap.appendChild(
             input
         );
 
-        dateFieldWrap.appendChild(
-            picker
-        );
-
-        dateFieldWrap.appendChild(
+        dateInputWrap.appendChild(
             calendarButton
         );
 
         dateControls.appendChild(
-            dateFieldWrap
+            dateInputWrap
         );
 
         dateControls.appendChild(
@@ -1015,248 +896,47 @@ function dsEnsureDateFilter() {
         );
 
     if (filter) {
-
-        filter.style.gridColumn =
-            "1";
-
-        filter.style.gridRow =
-            "1";
-
-        filter.style.maxWidth =
-            "100%";
-
-        const mobileStyleId =
-            "dsStoreListDateMobileStyle";
-
-        if (!document.getElementById(mobileStyleId)) {
-
-            const style =
-                document.createElement("style");
-
-            style.id =
-                mobileStyleId;
-
-            style.textContent = `
-                @media (max-width: 800px) {
-                    #dsDateFilterWrap {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    #dsDateFilterWrap > div {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        display: flex !important;
-                        flex-wrap: nowrap !important;
-                        align-items: center !important;
-                        gap: 8px !important;
-                        box-sizing: border-box !important;
-                        overflow: visible !important;
-                    }
-
-                    #dsDateFilterWrap > div > div {
-                        width: calc(100% - 96px) !important;
-                        min-width: 0 !important;
-                        max-width: none !important;
-                        flex: 1 1 auto !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    #dsDateFilter {
-                        width: 100% !important;
-                        min-width: 0 !important;
-                        max-width: none !important;
-                        flex: 1 1 auto !important;
-                        box-sizing: border-box !important;
-                        padding-right: 42px !important;
-                    }
-
-                    #dsDateFilterWrap .ds-calendar-button {
-                        pointer-events: none !important;
-                    }
-
-                    #dsDateFilterWrap button {
-                        width: 88px !important;
-                        min-width: 88px !important;
-                        max-width: 88px !important;
-                        height: 44px !important;
-                        flex: 0 0 88px !important;
-                        box-sizing: border-box !important;
-                        padding: 0 8px !important;
-                    }
-
-                    #dsDateFilterWrap input[type="date"] {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                    }
-
-                    .ds-search {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        grid-column: 1 !important;
-                        grid-row: 2 !important;
-                    }
-
-                    #dsRecordCount {
-                        grid-column: 1 !important;
-                        grid-row: 3 !important;
-                        justify-self: start !important;
-                    }
-                }
-
-                @media (max-width: 380px) {
-                    #dsDateFilterWrap button {
-                        width: 82px !important;
-                        min-width: 82px !important;
-                        max-width: 82px !important;
-                        flex-basis: 82px !important;
-                        padding: 0 6px !important;
-                        font-size: 12px !important;
-                    }
-                }
-            `;
-
-            document.head.appendChild(style);
-        }
-    }
-
-    const applyStoreListMobileDateLayout = function () {
-        const wrap = document.getElementById("dsDateFilterWrap");
-        const controls = wrap ? wrap.querySelector("div") : null;
-        const dateInput = document.getElementById("dsDateFilter");
-        const buttons = controls
-            ? Array.from(controls.querySelectorAll("button"))
-            : [];
-
-        const yesterdayButton =
-            buttons.find(function (button) {
-                return button !== controls.querySelector(".ds-calendar-button");
-            }) || null;
-
-        const pickerInput =
-            controls
-                ? controls.querySelector('input[type="date"]')
-                : null;
-
-        const calendarButton =
-            controls
-                ? controls.querySelector(".ds-calendar-button")
-                : null;
-
-        if (!wrap || !controls || !dateInput || !yesterdayButton || !calendarButton) {
-            return;
-        }
-
-        if (window.innerWidth <= 800) {
-            wrap.style.width = "100%";
-            wrap.style.maxWidth = "100%";
-            controls.style.width = "100%";
-            controls.style.maxWidth = "100%";
-            controls.style.flexWrap = "nowrap";
-            controls.style.overflow = "visible";
-
-            dateInput.style.width = "auto";
-            dateInput.style.minWidth = "0";
-            dateInput.style.maxWidth = "none";
-            dateInput.style.flex = "1 1 auto";
-
-            yesterdayButton.style.width = "88px";
-            yesterdayButton.style.minWidth = "88px";
-            yesterdayButton.style.maxWidth = "88px";
-            yesterdayButton.style.flex = "0 0 88px";
-            yesterdayButton.style.boxSizing = "border-box";
-
-            if (window.innerWidth <= 380) {
-                yesterdayButton.style.width = "82px";
-                yesterdayButton.style.minWidth = "82px";
-                yesterdayButton.style.maxWidth = "82px";
-                yesterdayButton.style.flex = "0 0 82px";
-                yesterdayButton.style.fontSize = "12px";
-            }
-
-            if (pickerInput) {
-                pickerInput.style.left = "0";
-                pickerInput.style.width = dateInput.offsetWidth + "px";
-                pickerInput.style.maxWidth = dateInput.offsetWidth + "px";
-                pickerInput.style.zIndex = "1";
-            }
-
-            /* Keep the calendar icon INSIDE the Business Date field.
-               The Yesterday button is a separate control. */
-            calendarButton.style.left = "auto";
-            calendarButton.style.right =
-                (yesterdayButton.offsetWidth + 8) + "px";
-            calendarButton.style.zIndex = "3";
-            calendarButton.style.pointerEvents = "none";
-        } else {
-            dateInput.style.width = "300px";
-            dateInput.style.maxWidth = "300px";
-            dateInput.style.flex = "1 1 300px";
-            yesterdayButton.style.width = "112px";
-            yesterdayButton.style.minWidth = "112px";
-            yesterdayButton.style.maxWidth = "112px";
-            yesterdayButton.style.flex = "0 1 112px";
-            if (pickerInput) {
-                pickerInput.style.left = "0";
-                pickerInput.style.width = "300px";
-                pickerInput.style.maxWidth = "300px";
-                pickerInput.style.zIndex = "1";
-            }
-            calendarButton.style.left = "auto";
-            calendarButton.style.right =
-                (yesterdayButton.offsetWidth + 8) + "px";
-            calendarButton.style.zIndex = "3";
-            calendarButton.style.pointerEvents = "none";
-        }
-    };
-
-    applyStoreListMobileDateLayout();
-
-    if (!window.__dsStoreListMobileDateResizeBound) {
-        window.__dsStoreListMobileDateResizeBound = true;
-        window.addEventListener("resize", applyStoreListMobileDateLayout);
-        window.addEventListener("orientationchange", function () {
-            setTimeout(applyStoreListMobileDateLayout, 50);
-        });
+        filter.style.gridColumn = "1";
+        filter.style.gridRow = "1";
     }
 
     if (searchWrap) {
-
-        searchWrap.style.gridColumn =
-            "2";
-
-        searchWrap.style.gridRow =
-            "1";
-
-        searchWrap.style.alignSelf =
-            "end";
-
-        searchWrap.style.width =
-            "100%";
-
-        searchWrap.style.boxSizing =
-            "border-box";
+        searchWrap.style.gridColumn = "2";
+        searchWrap.style.gridRow = "1";
+        searchWrap.style.alignSelf = "end";
+        searchWrap.style.width = "100%";
+        searchWrap.style.boxSizing = "border-box";
     }
 
     const count =
         document.getElementById(
-            "dsRecordCount"
+            "dsCount"
         );
 
     if (count) {
+        count.style.gridColumn = "3";
+        count.style.gridRow = "1";
+        count.style.alignSelf = "center";
+        count.style.whiteSpace = "nowrap";
+    }
 
-        count.style.gridColumn =
-            "3";
+    const dateInput =
+        document.getElementById(
+            "dsDateFilter"
+        );
 
-        count.style.gridRow =
-            "1";
+    if (dateInput) {
 
-        count.style.alignSelf =
-            "center";
+        dateInput.value =
+            dsSelectedDate ||
+            dsYesterdayISO();
     }
 }
 
+
+/* ==========================================
+   STORE SELECT
+========================================== */
 
 function dsPopulateStoreSelect() {
 
@@ -1272,34 +952,7 @@ function dsPopulateStoreSelect() {
     select.innerHTML =
         '<option value="">Select Store No</option>';
 
-    [...dsStores]
-        .sort(
-            function (a, b) {
-                const aNo =
-                        String(a.storeNo || "")
-                            .replace(/\D/g, "");
-                    const bNo =
-                        String(b.storeNo || "")
-                            .replace(/\D/g, "");
-
-                    const aNum =
-                        aNo ? Number(aNo) : Number.MAX_SAFE_INTEGER;
-                    const bNum =
-                        bNo ? Number(bNo) : Number.MAX_SAFE_INTEGER;
-
-                    if (aNum !== bNum) {
-                        return aNum - bNum;
-                    }
-
-                    return String(a.storeNo || "")
-                        .localeCompare(
-                            String(b.storeNo || ""),
-                            undefined,
-                            { sensitivity: "base" }
-                        );
-            }
-        )
-        .forEach(
+    dsStores.forEach(
         function (store) {
 
             const option =
@@ -2412,45 +2065,22 @@ function dsRenderTable() {
             .toLowerCase();
 
     const rows =
-        dsRows
-            .filter(
-                function (row) {
+        dsRows.filter(
+            function (row) {
 
-                    return [
-                        row.storeNo,
-                        row.storeName
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(query);
-                }
-            )
-            .sort(
-                function (a, b) {
-                    const aNo =
-                        String(a.storeNo || "")
-                            .replace(/\D/g, "");
-                    const bNo =
-                        String(b.storeNo || "")
-                            .replace(/\D/g, "");
-
-                    const aNum =
-                        aNo ? Number(aNo) : Number.MAX_SAFE_INTEGER;
-                    const bNum =
-                        bNo ? Number(bNo) : Number.MAX_SAFE_INTEGER;
-
-                    if (aNum !== bNum) {
-                        return aNum - bNum;
-                    }
-
-                    return String(a.storeNo || "")
-                        .localeCompare(
-                            String(b.storeNo || ""),
-                            undefined,
-                            { sensitivity: "base" }
-                        );
-                }
-            );
+                return [
+                    row.dsId,
+                    row.dailySalesNo,
+                    row.storeNo,
+                    row.storeName,
+                    row.businessDate,
+                    row.personInCharge
+                ]
+                    .join(" ")
+                    .toLowerCase()
+                    .includes(query);
+            }
+        );
 
     if (count) {
 
@@ -2467,11 +2097,6 @@ function dsRenderTable() {
         body.innerHTML =
             '<tr><td colspan="7" class="ds-empty">No Daily Sales records found for the selected date.</td></tr>';
 
-        const emptyFoot = table?.querySelector("tfoot#dsTableFoot");
-        if (emptyFoot) emptyFoot.innerHTML = "";
-
-        // ADDITIVE: still show stores that have not submitted when there are zero rows.
-        dsRenderNotSubmittedStores();
         return;
     }
 
@@ -2559,248 +2184,6 @@ function dsRenderTable() {
                 `;
             }
         ).join("");
-
-    /*
-     * TABLE SUMMARY — display only.
-     * Existing row data/calculations remain unchanged.
-     */
-    let foot = table?.querySelector("tfoot#dsTableFoot");
-
-    if (!foot && table) {
-        foot = document.createElement("tfoot");
-        foot.id = "dsTableFoot";
-        table.appendChild(foot);
-    }
-
-    if (foot) {
-        const totalMerchandiseSales = rows.reduce(
-            (sum, row) => sum + (Number(String(row.totalMerchandiseSales ?? "").replace(/,/g, "")) || 0),
-            0
-        );
-
-        const totalCustomer = rows.reduce(
-            (sum, row) => sum + (Number(String(row.totalCustomer ?? "").replace(/,/g, "")) || 0),
-            0
-        );
-
-        const totalBudget = rows.reduce(
-            (sum, row) => sum + (Number(String(row.budgetSales ?? "").replace(/,/g, "")) || 0),
-            0
-        );
-
-        const recordCount = rows.length;
-        const avgSales = recordCount ? totalMerchandiseSales / recordCount : 0;
-        const avgCustomer = recordCount ? totalCustomer / recordCount : 0;
-        const totalPercentage = totalBudget > 0
-            ? (totalMerchandiseSales / totalBudget) * 100
-            : 0;
-
-        const avgPercentage = recordCount
-            ? rows.reduce((sum, row) => {
-                const sales = Number(String(row.totalMerchandiseSales ?? "").replace(/,/g, "")) || 0;
-                const budget = Number(String(row.budgetSales ?? "").replace(/,/g, "")) || 0;
-                return sum + (budget > 0 ? (sales / budget) * 100 : 0);
-            }, 0) / recordCount
-            : 0;
-
-        foot.innerHTML = `
-            <tr class="ds-summary-row">
-                <td colspan="3" class="ds-summary-label">
-                    <span>TOTAL / AVERAGE</span>
-                    <small>${recordCount.toLocaleString("en-MY")} stores submitted</small>
-                </td>
-                <td class="ds-number ds-summary-value">
-                    <strong>${dsMoney(totalMerchandiseSales)}</strong>
-                    <small>Avg ${dsMoney(avgSales)}</small>
-                </td>
-                <td class="ds-number ds-summary-value">
-                    <strong>${totalCustomer.toLocaleString("en-MY")}</strong>
-                    <small>Avg ${avgCustomer.toLocaleString("en-MY", { maximumFractionDigits: 2 })}</small>
-                </td>
-                <td class="ds-number ds-summary-value">
-                    <strong>${totalPercentage.toFixed(2)}%</strong>
-                    <small>Avg ${avgPercentage.toFixed(2)}%</small>
-                </td>
-                <td></td>
-            </tr>
-        `;
-    }
-
-    // ADDITIVE: render stores that have not submitted for the selected date.
-    dsRenderNotSubmittedStores();
-}
-
-/* ==========================================
-   STORE NOT SUBMITTED — ADDITIVE ONLY
-========================================== */
-
-/* ==========================================
-   STORE NOT SUBMITTED — SHARE (ADDITIVE ONLY)
-========================================== */
-
-function dsGetNotSubmittedStores_() {
-
-    const submitted = new Set(
-        (dsRows || []).map(function (row) {
-            return String(row.storeNo || "")
-                .replace(/\D/g, "")
-                .padStart(4, "0")
-                .slice(-4);
-        }).filter(Boolean)
-    );
-
-    const masterStores =
-        (Array.isArray(dsSubmissionMasterStores) && dsSubmissionMasterStores.length)
-            ? dsSubmissionMasterStores
-            : (dsStores || []);
-
-    return masterStores
-        .filter(function (store) {
-            const normalized = String(store.storeNo || "")
-                .replace(/\D/g, "")
-                .padStart(4, "0")
-                .slice(-4);
-            return normalized && !submitted.has(normalized);
-        })
-        .sort(function (a, b) {
-            const aNo = String(a.storeNo || "").replace(/\D/g, "");
-            const bNo = String(b.storeNo || "").replace(/\D/g, "");
-            return (Number(aNo || 999999) - Number(bNo || 999999));
-        });
-}
-
-async function dsShareNotSubmittedStores() {
-
-    const missing = dsGetNotSubmittedStores_();
-
-    if (!missing.length) {
-        return;
-    }
-
-    const businessDate =
-        dsFormatDisplayDate(dsSelectedDate);
-
-    const lines = [
-        "STORE NOT SUBMITTED",
-        "Business Date : " + businessDate,
-        "Total : " + missing.length + " STORE" + (missing.length === 1 ? "" : "S"),
-        "",
-        "Store Details :"
-    ];
-
-    missing.forEach(function (store, index) {
-        lines.push(
-            (index + 1) + ". " +
-            String(store.storeNo || "").trim() + " - " +
-            String(store.storeName || "").trim()
-        );
-    });
-
-    const text = lines.join("\n");
-
-    try {
-        if (navigator.share) {
-            await navigator.share({
-                title: "Store Not Submitted - " + businessDate,
-                text: text
-            });
-            return;
-        }
-    } catch (error) {
-        if (error && error.name === "AbortError") {
-            return;
-        }
-    }
-
-    try {
-        await navigator.clipboard.writeText(text);
-
-        if (typeof Swal !== "undefined") {
-            await Swal.fire({
-                icon: "success",
-                title: "Details Copied",
-                text: "Store Not Submitted details have been copied. You can paste them into WhatsApp, Email, Teams or any platform.",
-                confirmButtonText: "OK"
-            });
-        } else {
-            alert("Store Not Submitted details copied to clipboard.");
-        }
-    } catch (error) {
-        const fallback = window.prompt(
-            "Copy the Store Not Submitted details below:",
-            text
-        );
-        void fallback;
-    }
-}
-
-function dsRenderNotSubmittedStores() {
-
-    const section = document.getElementById("dsNotSubmittedSection");
-    const body = document.getElementById("dsNotSubmittedBody");
-    const count = document.getElementById("dsNotSubmittedCount");
-    const subtitle = document.getElementById("dsNotSubmittedSubtitle");
-
-    if (!section || !body) {
-        return;
-    }
-
-    const submitted = new Set(
-        (dsRows || []).map(function (row) {
-            return String(row.storeNo || "")
-                .replace(/\D/g, "")
-                .padStart(4, "0")
-                .slice(-4);
-        }).filter(Boolean)
-    );
-
-    // Prefer the dedicated full master-store list. Fall back to the
-    // existing store cache only if the additive request has not returned.
-    const masterStores =
-        (Array.isArray(dsSubmissionMasterStores) && dsSubmissionMasterStores.length)
-            ? dsSubmissionMasterStores
-            : (dsStores || []);
-
-    const missing = masterStores
-        .filter(function (store) {
-            const normalized = String(store.storeNo || "")
-                .replace(/\D/g, "")
-                .padStart(4, "0")
-                .slice(-4);
-            return normalized && !submitted.has(normalized);
-        })
-        .sort(function (a, b) {
-            const aNo = String(a.storeNo || "").replace(/\D/g, "");
-            const bNo = String(b.storeNo || "").replace(/\D/g, "");
-            return (Number(aNo || 999999) - Number(bNo || 999999));
-        });
-
-    if (!missing.length) {
-        section.hidden = true;
-        body.innerHTML = "";
-        if (count) count.textContent = "";
-        if (subtitle) subtitle.textContent = "";
-        return;
-    }
-
-    section.hidden = false;
-
-    if (count) {
-        count.textContent = `${missing.length} STORE${missing.length === 1 ? "" : "S"}`;
-    }
-
-    if (subtitle) {
-        subtitle.textContent = `Stores without Daily Sales submission for ${dsFormatDisplayDate(dsSelectedDate)}`;
-    }
-
-    body.innerHTML = missing.map(function (store) {
-        return `
-            <tr>
-                <td>${dsEsc(store.storeNo)}</td>
-                <td>${dsEsc(store.storeName)}</td>
-            </tr>
-        `;
-    }).join("");
 }
 
 /* ==========================================
