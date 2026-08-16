@@ -2076,6 +2076,45 @@
 
 <script>
 /*
+ * MOBILE SIDEBAR AUTO-CLOSE
+ * UI-only: closes the checkbox drawer after any sidebar button is pressed.
+ * Does not change navigation targets, APIs, calculations, or data flow.
+ */
+(function () {
+    function bindSidebarAutoClose() {
+        var toggle = document.getElementById("saMenuToggle");
+        var sidebar = document.querySelector(".sa-sidebar");
+
+        if (!toggle || !sidebar || sidebar.dataset.saSidebarAutoCloseBound === "1") {
+            return;
+        }
+
+        sidebar.dataset.saSidebarAutoCloseBound = "1";
+
+        sidebar.addEventListener("click", function (event) {
+            var button = event.target.closest(".sa-side-link");
+            if (!button) return;
+
+            /*
+             * Let the existing onclick/navigation execute first,
+             * then close the mobile drawer without changing its function.
+             */
+            setTimeout(function () {
+                toggle.checked = false;
+            }, 0);
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindSidebarAutoClose);
+    } else {
+        bindSidebarAutoClose();
+    }
+})();
+</script>
+
+<script>
+/*
  * UI compatibility helpers.
  * Existing application functions are used when available.
  */
