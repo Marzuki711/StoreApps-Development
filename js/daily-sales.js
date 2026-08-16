@@ -455,32 +455,21 @@ function dsEnsureDateFilter() {
     }
 
     /*
-     * BUSINESS DATE FILTER — UI ONLY
-     * - No manual typing in Business Date.
-     * - One calendar icon only.
-     * - Yesterday button removed.
-     * - Mobile layout stays inside the card.
-     * - Existing date change -> dsLoad() flow is preserved.
+     * UI ONLY:
+     * Business Date is kept compact and aligned with Search.
+     * Existing data loading/change flow is preserved.
      */
-    toolbar.style.display = "grid";
-    toolbar.style.width = "100%";
-    toolbar.style.maxWidth = "100%";
-    toolbar.style.boxSizing = "border-box";
-    toolbar.style.columnGap = "20px";
-    toolbar.style.rowGap = "14px";
-    toolbar.style.alignItems = "end";
-    toolbar.style.minWidth = "0";
-
     const isMobile =
-        window.matchMedia &&
-        window.matchMedia("(max-width: 700px)").matches;
+        window.matchMedia("(max-width: 600px)").matches;
 
-    if (isMobile) {
-        toolbar.style.gridTemplateColumns = "minmax(0, 1fr)";
-    } else {
-        toolbar.style.gridTemplateColumns =
-            "minmax(340px, 420px) minmax(280px, 1fr) auto";
-    }
+    toolbar.style.display = "grid";
+    toolbar.style.columnGap = isMobile ? "12px" : "24px";
+    toolbar.style.rowGap = "12px";
+    toolbar.style.alignItems = "end";
+
+    toolbar.style.gridTemplateColumns = isMobile
+        ? "minmax(0, 1fr)"
+        : "400px minmax(360px, 1fr) auto";
 
     let filter =
         document.getElementById(
@@ -497,14 +486,26 @@ function dsEnsureDateFilter() {
         filter.id =
             "dsDateFilterWrap";
 
-        filter.style.display = "flex";
-        filter.style.flexDirection = "column";
-        filter.style.alignItems = "stretch";
-        filter.style.gap = "8px";
-        filter.style.width = "100%";
-        filter.style.maxWidth = "100%";
-        filter.style.minWidth = "0";
-        filter.style.boxSizing = "border-box";
+        filter.style.display =
+            "flex";
+
+        filter.style.flexDirection =
+            "column";
+
+        filter.style.alignItems =
+            "stretch";
+
+        filter.style.gap =
+            "8px";
+
+        filter.style.minWidth =
+            "0";
+
+        filter.style.width =
+            "100%";
+
+        filter.style.boxSizing =
+            "border-box";
 
         const label =
             document.createElement(
@@ -514,62 +515,79 @@ function dsEnsureDateFilter() {
         label.textContent =
             "Business Date:";
 
-        label.style.fontSize = "13px";
-        label.style.fontWeight = "700";
-        label.style.color = "#334155";
-        label.style.lineHeight = "1.3";
+        label.style.fontSize =
+            "13px";
 
-        const dateControls =
-            document.createElement(
-                "div"
-            );
+        label.style.fontWeight =
+            "700";
 
-        dateControls.style.display = "flex";
-        dateControls.style.width = "100%";
-        dateControls.style.maxWidth = "100%";
-        dateControls.style.minWidth = "0";
-        dateControls.style.boxSizing = "border-box";
-
-        const dateInputWrap =
-            document.createElement(
-                "div"
-            );
-
-        dateInputWrap.style.position = "relative";
-        dateInputWrap.style.width = "100%";
-        dateInputWrap.style.maxWidth = "100%";
-        dateInputWrap.style.minWidth = "0";
-        dateInputWrap.style.height = "54px";
-        dateInputWrap.style.boxSizing = "border-box";
-        dateInputWrap.style.overflow = "hidden";
+        label.style.color =
+            "#334155";
 
         const input =
             document.createElement(
                 "input"
             );
 
-        input.type = "date";
-        input.id = "dsDateFilter";
+        input.type =
+            "date";
 
-        /* Premium Business Date field */
-        input.style.height = "54px";
-        input.style.width = "100%";
-        input.style.maxWidth = "100%";
-        input.style.boxSizing = "border-box";
-        input.style.border = "1px solid #D6DCE5";
-        input.style.borderRadius = "14px";
-        input.style.padding = "0 50px 0 16px";
-        input.style.background = "#FFFFFF";
-        input.style.color = "#172033";
-        input.style.fontSize = "16px";
-        input.style.fontWeight = "600";
-        input.style.outline = "none";
-        input.style.cursor = "pointer";
-        input.style.colorScheme = "light";
-        input.style.webkitAppearance = "none";
-        input.style.appearance = "none";
+        input.id =
+            "dsDateFilter";
 
-        /* Prevent manual keyboard entry while keeping the date picker usable. */
+        /* Premium compact date field */
+        input.style.height =
+            "52px";
+
+        input.style.width =
+            "100%";
+
+        input.style.minWidth =
+            "0";
+
+        input.style.boxSizing =
+            "border-box";
+
+        input.style.border =
+            "1px solid #CBD5E1";
+
+        input.style.borderRadius =
+            "14px";
+
+        input.style.padding =
+            "0 48px 0 16px";
+
+        input.style.background =
+            "#FFFFFF";
+
+        input.style.color =
+            "#172033";
+
+        input.style.fontSize =
+            "16px";
+
+        input.style.fontWeight =
+            "600";
+
+        input.style.outline =
+            "none";
+
+        input.style.cursor =
+            "pointer";
+
+        input.style.appearance =
+            "none";
+
+        input.style.webkitAppearance =
+            "none";
+
+        input.style.colorScheme =
+            "light";
+
+        /*
+         * Prevent manual typing/editing while keeping the
+         * calendar picker fully usable by touch/click.
+         */
         input.addEventListener(
             "keydown",
             function (event) {
@@ -578,7 +596,7 @@ function dsEnsureDateFilter() {
         );
 
         input.addEventListener(
-            "keypress",
+            "beforeinput",
             function (event) {
                 event.preventDefault();
             }
@@ -586,6 +604,13 @@ function dsEnsureDateFilter() {
 
         input.addEventListener(
             "paste",
+            function (event) {
+                event.preventDefault();
+            }
+        );
+
+        input.addEventListener(
+            "cut",
             function (event) {
                 event.preventDefault();
             }
@@ -601,7 +626,9 @@ function dsEnsureDateFilter() {
         input.addEventListener(
             "focus",
             function () {
-                input.style.borderColor = "#B11226";
+                input.style.borderColor =
+                    "#B11226";
+
                 input.style.boxShadow =
                     "0 0 0 3px rgba(177,18,38,.08)";
             }
@@ -610,12 +637,15 @@ function dsEnsureDateFilter() {
         input.addEventListener(
             "blur",
             function () {
-                input.style.borderColor = "#D6DCE5";
-                input.style.boxShadow = "none";
+                input.style.borderColor =
+                    "#CBD5E1";
+
+                input.style.boxShadow =
+                    "none";
             }
         );
 
-        /* Keep existing date-change functionality exactly as before. */
+        /* Existing date-change functionality preserved. */
         input.addEventListener(
             "change",
             async function () {
@@ -630,33 +660,15 @@ function dsEnsureDateFilter() {
             }
         );
 
-        /*
-         * Hide the native calendar indicator.
-         * The custom icon below is the ONLY visible calendar icon.
-         */
-        const calendarStyle =
-            document.createElement("style");
-
-        calendarStyle.textContent = `
-            #dsDateFilter::-webkit-calendar-picker-indicator {
-                opacity: 0 !important;
-                display: none !important;
-                pointer-events: none !important;
-                width: 0 !important;
-                height: 0 !important;
-            }
-        `;
-
-        document.head.appendChild(
-            calendarStyle
-        );
-
+        /* One and only one visible calendar icon. */
         const calendarButton =
             document.createElement(
                 "button"
             );
 
-        calendarButton.type = "button";
+        calendarButton.type =
+            "button";
+
         calendarButton.setAttribute(
             "aria-label",
             "Open Business Date calendar"
@@ -665,38 +677,56 @@ function dsEnsureDateFilter() {
         calendarButton.innerHTML =
             '<i class="fa-regular fa-calendar"></i>';
 
-        calendarButton.style.position = "absolute";
-        calendarButton.style.right = "12px";
-        calendarButton.style.top = "50%";
-        calendarButton.style.transform = "translateY(-50%)";
-        calendarButton.style.width = "32px";
-        calendarButton.style.height = "32px";
-        calendarButton.style.display = "flex";
-        calendarButton.style.alignItems = "center";
-        calendarButton.style.justifyContent = "center";
-        calendarButton.style.padding = "0";
-        calendarButton.style.border = "0";
-        calendarButton.style.borderRadius = "8px";
-        calendarButton.style.background = "transparent";
-        calendarButton.style.color = "#172033";
-        calendarButton.style.fontSize = "18px";
-        calendarButton.style.cursor = "pointer";
-        calendarButton.style.zIndex = "3";
-        calendarButton.style.pointerEvents = "auto";
+        calendarButton.style.position =
+            "absolute";
 
-        calendarButton.addEventListener(
-            "mouseenter",
-            function () {
-                calendarButton.style.background = "#F1F4F8";
-            }
-        );
+        calendarButton.style.right =
+            "12px";
 
-        calendarButton.addEventListener(
-            "mouseleave",
-            function () {
-                calendarButton.style.background = "transparent";
-            }
-        );
+        calendarButton.style.top =
+            "50%";
+
+        calendarButton.style.transform =
+            "translateY(-50%)";
+
+        calendarButton.style.width =
+            "34px";
+
+        calendarButton.style.height =
+            "34px";
+
+        calendarButton.style.display =
+            "flex";
+
+        calendarButton.style.alignItems =
+            "center";
+
+        calendarButton.style.justifyContent =
+            "center";
+
+        calendarButton.style.padding =
+            "0";
+
+        calendarButton.style.border =
+            "0";
+
+        calendarButton.style.borderRadius =
+            "9px";
+
+        calendarButton.style.background =
+            "transparent";
+
+        calendarButton.style.color =
+            "#172033";
+
+        calendarButton.style.fontSize =
+            "18px";
+
+        calendarButton.style.cursor =
+            "pointer";
+
+        calendarButton.style.zIndex =
+            "2";
 
         calendarButton.addEventListener(
             "click",
@@ -705,7 +735,10 @@ function dsEnsureDateFilter() {
                 event.stopPropagation();
 
                 try {
-                    if (typeof input.showPicker === "function") {
+                    if (
+                        typeof input.showPicker ===
+                        "function"
+                    ) {
                         input.showPicker();
                         return;
                     }
@@ -716,6 +749,26 @@ function dsEnsureDateFilter() {
             }
         );
 
+        const dateInputWrap =
+            document.createElement(
+                "div"
+            );
+
+        dateInputWrap.style.position =
+            "relative";
+
+        dateInputWrap.style.width =
+            "100%";
+
+        dateInputWrap.style.minWidth =
+            "0";
+
+        dateInputWrap.style.height =
+            "52px";
+
+        dateInputWrap.style.boxSizing =
+            "border-box";
+
         dateInputWrap.appendChild(
             input
         );
@@ -724,16 +777,12 @@ function dsEnsureDateFilter() {
             calendarButton
         );
 
-        dateControls.appendChild(
-            dateInputWrap
-        );
-
         filter.appendChild(
             label
         );
 
         filter.appendChild(
-            dateControls
+            dateInputWrap
         );
 
         const searchWrap =
@@ -742,11 +791,14 @@ function dsEnsureDateFilter() {
             );
 
         if (searchWrap) {
+
             toolbar.insertBefore(
                 filter,
                 searchWrap
             );
+
         } else {
+
             toolbar.insertBefore(
                 filter,
                 search
@@ -754,42 +806,58 @@ function dsEnsureDateFilter() {
         }
     }
 
-    /* Responsive placement: everything stays inside the card on mobile. */
     const searchWrap =
         search.closest(
             ".ds-search"
         );
 
-    if (filter) {
-        filter.style.width = "100%";
-        filter.style.maxWidth = "100%";
-        filter.style.minWidth = "0";
-        filter.style.boxSizing = "border-box";
+    /* Date + Search are equal in height. */
+    const searchHeight =
+        search.getBoundingClientRect().height;
 
-        if (isMobile) {
-            filter.style.gridColumn = "1";
-            filter.style.gridRow = "1";
-        } else {
-            filter.style.gridColumn = "1";
-            filter.style.gridRow = "1";
-        }
+    const targetHeight =
+        searchHeight > 0
+            ? Math.round(searchHeight)
+            : 52;
+
+    const dateInput =
+        document.getElementById(
+            "dsDateFilter"
+        );
+
+    const dateWrap =
+        dateInput?.parentElement;
+
+    if (dateInput) {
+        dateInput.style.height =
+            targetHeight + "px";
+    }
+
+    if (dateWrap) {
+        dateWrap.style.height =
+            targetHeight + "px";
+    }
+
+    if (filter) {
+        filter.style.gridColumn =
+            isMobile ? "1" : "1";
+        filter.style.gridRow =
+            isMobile ? "1" : "1";
     }
 
     if (searchWrap) {
-        searchWrap.style.width = "100%";
-        searchWrap.style.maxWidth = "100%";
-        searchWrap.style.minWidth = "0";
-        searchWrap.style.boxSizing = "border-box";
-
-        if (isMobile) {
-            searchWrap.style.gridColumn = "1";
-            searchWrap.style.gridRow = "2";
-            searchWrap.style.alignSelf = "stretch";
-        } else {
-            searchWrap.style.gridColumn = "2";
-            searchWrap.style.gridRow = "1";
-            searchWrap.style.alignSelf = "end";
-        }
+        searchWrap.style.gridColumn =
+            isMobile ? "1" : "2";
+        searchWrap.style.gridRow =
+            isMobile ? "2" : "1";
+        searchWrap.style.alignSelf =
+            "end";
+        searchWrap.style.width =
+            "100%";
+        searchWrap.style.minWidth =
+            "0";
+        searchWrap.style.boxSizing =
+            "border-box";
     }
 
     const count =
@@ -801,28 +869,24 @@ function dsEnsureDateFilter() {
         if (isMobile) {
             count.style.gridColumn = "1";
             count.style.gridRow = "3";
-            count.style.alignSelf = "start";
+            count.style.justifySelf = "end";
         } else {
             count.style.gridColumn = "3";
             count.style.gridRow = "1";
             count.style.alignSelf = "center";
         }
-
-        count.style.whiteSpace = "nowrap";
-        count.style.maxWidth = "100%";
+        count.style.whiteSpace =
+            "nowrap";
     }
 
-    const dateInput =
-        document.getElementById(
-            "dsDateFilter"
-        );
-
     if (dateInput) {
+
         dateInput.value =
             dsSelectedDate ||
             dsYesterdayISO();
     }
 }
+
 
 /* ==========================================
    STORE SELECT
