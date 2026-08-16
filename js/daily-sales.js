@@ -1007,16 +1007,31 @@ function dsEnsureDateFilter() {
                 mobileStyleId;
 
             style.textContent = `
-                @media (max-width: 600px) {
+                @media (max-width: 800px) {
+                    .ds-toolbar {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) !important;
+                        gap: 14px !important;
+                        box-sizing: border-box !important;
+                    }
+
                     #dsDateFilterWrap {
                         width: 100% !important;
                         max-width: 100% !important;
+                        grid-column: 1 !important;
+                        grid-row: 1 !important;
+                        box-sizing: border-box !important;
                     }
 
                     #dsDateFilterWrap > div {
                         width: 100% !important;
                         max-width: 100% !important;
+                        display: flex !important;
+                        align-items: center !important;
                         gap: 8px !important;
+                        box-sizing: border-box !important;
                     }
 
                     #dsDateFilter {
@@ -1024,12 +1039,28 @@ function dsEnsureDateFilter() {
                         min-width: 0 !important;
                         max-width: none !important;
                         flex: 1 1 auto !important;
+                        box-sizing: border-box !important;
                     }
 
                     #dsDateFilterWrap button {
                         width: 112px !important;
                         min-width: 112px !important;
+                        max-width: 112px !important;
                         flex: 0 0 112px !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    .ds-search {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        grid-column: 1 !important;
+                        grid-row: 2 !important;
+                    }
+
+                    #dsRecordCount {
+                        grid-column: 1 !important;
+                        grid-row: 3 !important;
+                        justify-self: start !important;
                     }
                 }
             `;
