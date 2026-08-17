@@ -656,6 +656,10 @@ function openManagement(){
     if(dailySalesContainer) dailySalesContainer.style.display = "none";
     if(managementContainer) managementContainer.style.display = "block";
 
+    if(typeof initManagementDashboard === "function"){
+        initManagementDashboard();
+    }
+
     const toggle = document.getElementById("saMenuToggle");
     if(toggle) toggle.checked = false;
 }
