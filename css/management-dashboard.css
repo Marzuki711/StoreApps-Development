@@ -1,1 +1,314 @@
+/* =========================================================
+   MANAGEMENT SALES DASHBOARD
+   UI ONLY — no existing module styling is changed
+   ========================================================= */
+
+.mgmt-dashboard{
+    position:relative;
+    width:100%;
+    max-width:1440px;
+    margin:0 auto;
+    padding:28px 24px 44px;
+    box-sizing:border-box;
+    color:#172033;
+}
+
+.mgmt-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:28px;
+}
+
+.mgmt-eyebrow,.mgmt-section-eyebrow{
+    color:#b5122b;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+}
+
+.mgmt-header h1{
+    margin:6px 0 5px;
+    font-size:34px;
+    line-height:1.08;
+    letter-spacing:-.03em;
+}
+
+.mgmt-header p{
+    margin:0;
+    color:#718096;
+    font-size:14px;
+}
+
+.mgmt-date-control{
+    min-width:190px;
+}
+
+.mgmt-date-control label{
+    display:block;
+    margin:0 0 7px;
+    color:#475569;
+    font-size:12px;
+    font-weight:800;
+}
+
+.mgmt-date-input-wrap{
+    position:relative;
+}
+
+.mgmt-date-input-wrap input{
+    width:100%;
+    height:48px;
+    padding:0 42px 0 14px;
+    box-sizing:border-box;
+    border:1px solid #d6deea;
+    border-radius:13px;
+    background:#fff;
+    color:#172033;
+    font-size:14px;
+    font-weight:700;
+    outline:none;
+}
+
+.mgmt-date-input-wrap input:focus{
+    border-color:#b5122b;
+    box-shadow:0 0 0 3px rgba(181,18,43,.08);
+}
+
+.mgmt-date-input-wrap i{
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#26354d;
+    pointer-events:none;
+    font-size:16px;
+}
+
+.mgmt-section{
+    position:relative;
+}
+
+.mgmt-section-heading{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+}
+
+.mgmt-section-heading h2{
+    margin:4px 0 0;
+    font-size:20px;
+    letter-spacing:-.02em;
+}
+
+.mgmt-period{
+    color:#8491a5;
+    font-size:12px;
+    font-weight:700;
+}
+
+.mgmt-kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;
+}
+
+.mgmt-kpi-card{
+    min-height:205px;
+    padding:20px;
+    border:1px solid #e0e6ef;
+    border-radius:20px;
+    background:linear-gradient(145deg,#fff 0%,#fbfcfe 100%);
+    box-shadow:0 10px 28px rgba(31,48,75,.06);
+    box-sizing:border-box;
+}
+
+.mgmt-kpi-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:17px;
+}
+
+.mgmt-icon{
+    width:42px;
+    height:42px;
+    display:grid;
+    place-items:center;
+    border-radius:13px;
+    color:#b5122b;
+    background:linear-gradient(145deg,#fff0f2,#fbe0e5);
+    border:1px solid #f3c6cd;
+    box-shadow:0 6px 16px rgba(181,18,43,.08);
+}
+
+.mgmt-icon i{font-size:17px}
+
+.mgmt-kpi-tag{
+    color:#9aa5b5;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.12em;
+}
+
+.mgmt-kpi-label{
+    color:#58667a;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:7px;
+}
+
+.mgmt-kpi-value{
+    color:#b5122b;
+    font-size:27px;
+    font-weight:850;
+    letter-spacing:-.025em;
+}
+
+.mgmt-kpi-note{
+    margin-top:7px;
+    color:#8a96a8;
+    font-size:11px;
+}
+
+.mgmt-dual-values{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:8px;
+}
+
+.mgmt-dual-values small{
+    display:block;
+    color:#98a2b1;
+    font-size:10px;
+    margin-bottom:4px;
+}
+
+.mgmt-dual-values strong{
+    display:block;
+    color:#202c3e;
+    font-size:16px;
+    white-space:nowrap;
+}
+
+.mgmt-variance{
+    margin-top:15px;
+    font-size:16px;
+    font-weight:850;
+}
+
+.mgmt-percent{
+    margin-top:3px;
+    color:#68768a;
+    font-size:12px;
+    font-weight:800;
+}
+
+.mgmt-positive{color:#16845b !important}
+.mgmt-negative{color:#c5293e !important}
+.mgmt-neutral{color:#68768a !important}
+
+.mgmt-weekly-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:4px;
+}
+
+.mgmt-weekly-metric{
+    padding:11px 12px;
+    border-radius:13px;
+    background:#f6f8fb;
+    border:1px solid #e7ebf1;
+}
+
+.mgmt-weekly-metric span{
+    display:block;
+    color:#68768a;
+    font-size:10px;
+    font-weight:800;
+}
+
+.mgmt-weekly-metric span i{
+    color:#b5122b;
+    margin-right:4px;
+}
+
+.mgmt-weekly-metric strong{
+    display:block;
+    margin-top:5px;
+    color:#202c3e;
+    font-size:16px;
+}
+
+.mgmt-weekly-metric small{
+    display:block;
+    margin-top:2px;
+    color:#8995a6;
+    font-size:9px;
+}
+
+.mgmt-week-change{
+    display:block;
+    margin-top:5px;
+    font-size:11px;
+}
+
+.mgmt-week-periods{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-top:12px;
+    color:#8a96a8;
+    font-size:9px;
+    font-weight:800;
+}
+
+.mgmt-loading{
+    position:absolute;
+    inset:0;
+    z-index:20;
+    min-height:300px;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(3px);
+    color:#4b596d;
+    font-size:13px;
+    font-weight:800;
+    border-radius:20px;
+}
+
+.mgmt-error{
+    margin-top:16px;
+    padding:12px 14px;
+    border:1px solid #f2c4cc;
+    border-radius:12px;
+    background:#fff4f5;
+    color:#a51f35;
+    font-size:12px;
+    font-weight:700;
+}
+
+@media(max-width:1100px){
+    .mgmt-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+@media(max-width:700px){
+    .mgmt-dashboard{padding:20px 14px 32px;}
+    .mgmt-header{align-items:stretch;flex-direction:column;gap:16px;}
+    .mgmt-header h1{font-size:28px;}
+    .mgmt-date-control{min-width:0;width:100%;}
+    .mgmt-kpi-grid{grid-template-columns:1fr;gap:12px;}
+    .mgmt-kpi-card{min-height:190px;padding:17px;border-radius:17px;}
+    .mgmt-section-heading{align-items:flex-start;flex-direction:column;gap:4px;}
+    .mgmt-weekly-row{grid-template-columns:1fr;}
+}
 
