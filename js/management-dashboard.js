@@ -97,9 +97,9 @@ function mgmtSetChange(id,pct){
     const el=document.getElementById(id);
     if(!el) return;
     const n=Number(pct)||0;
-    const cls=n>0.004 ? "mgmt-positive" : n<-0.004 ? "mgmt-negative" : "mgmt-neutral";
+    const cls=n>0.004 ? "mgmt-week-positive" : n<-0.004 ? "mgmt-week-negative" : "mgmt-week-neutral";
     el.className="mgmt-week-change "+cls;
-    el.textContent=(n>=0?"+":"")+mgmtPercent(n);
+    el.textContent=(n>=0?"▲ ":"▼ ")+mgmtPercent(Math.abs(n));
 }
 
 function mgmtStoreKey(v){
@@ -276,45 +276,52 @@ function initManagementDashboard(){
     if(!user?.username) return;
 
     const input=document.getElementById("mgmtSalesDate");
+    const displayInput=document.getElementById("mgmtSalesDateDisplay");
     const calendarIcon=document.getElementById("mgmtSalesDateIcon");
+
+    const syncDisplayDate=()=>{
+        if(displayInput){
+            displayInput.value=mgmtDisplayDate(input?.value||mgmtSalesDate||mgmtYesterdayISO());
+        }
+    };
+
     if(input && !mgmtInitialized){
         mgmtInitialized=true;
         input.value=mgmtSalesDate||mgmtYesterdayISO();
+        syncDisplayDate();
+
         input.addEventListener("change",()=>{
             mgmtSalesDate=input.value||mgmtYesterdayISO();
+            syncDisplayDate();
             loadManagementSalesDashboard(mgmtSalesDate);
         });
 
-        /* Calendar icon opens the native date picker without changing
-           the existing read-only Business Date behaviour. */
+        /* Visible Business Date is read-only. The hidden native date input
+           is the actual picker target, so the calendar icon always opens it. */
         const openPicker=()=>{
             try{
+                input.focus({preventScroll:true});
                 if(typeof input.showPicker === "function"){
                     input.showPicker();
                     return;
                 }
-            }catch(e){}
-            try{
-                input.removeAttribute("readonly");
-                input.focus();
                 input.click();
-                setTimeout(()=>input.setAttribute("readonly","readonly"),250);
-            }catch(e){}
+            }catch(e){
+                try{ input.click(); }catch(ignore){}
+            }
         };
 
         if(calendarIcon){
             calendarIcon.addEventListener("click",openPicker);
-            calendarIcon.addEventListener("keydown",(event)=>{
-                if(event.key === "Enter" || event.key === " "){
-                    event.preventDefault();
-                    openPicker();
-                }
-            });
+        }
+        if(displayInput){
+            displayInput.addEventListener("click",openPicker);
         }
     }
 
     const selected=(input?.value)||mgmtSalesDate||mgmtYesterdayISO();
     mgmtSalesDate=selected;
+    syncDisplayDate();
     loadManagementSalesDashboard(selected);
 }
 
