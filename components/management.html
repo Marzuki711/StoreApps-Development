@@ -6,7 +6,7 @@
 <div id="managementModule" class="mgmt-dashboard">
 
     <header class="mgmt-header">
-        <div>
+        <div class="mgmt-title-block">
             <div class="mgmt-eyebrow">MANAGEMENT</div>
             <h1>Sales Dashboard</h1>
             <p>Sales performance, budget and weekly APSD overview.</p>
@@ -16,6 +16,7 @@
             <label for="mgmtSalesDate">Business Date</label>
             <div class="mgmt-date-input-wrap">
                 <input id="mgmtSalesDate" type="date" aria-label="Business Date">
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
             </div>
         </div>
     </header>
@@ -25,11 +26,10 @@
         <span>Loading Sales Dashboard...</span>
     </div>
 
-    <!-- ================= SALES ================= -->
     <section class="mgmt-section">
         <div class="mgmt-section-heading">
-            <div>
-                <span class="mgmt-section-eyebrow">SALES</span>
+            <div class="mgmt-section-title">
+                <span class="mgmt-section-eyebrow"><i class="fa-solid fa-chart-column"></i> SALES</span>
                 <h2>Sales Performance</h2>
             </div>
             <span id="mgmtSalesPeriod" class="mgmt-period">—</span>
@@ -37,7 +37,8 @@
 
         <div class="mgmt-kpi-grid">
 
-            <article class="mgmt-kpi-card">
+            <article class="mgmt-kpi-card mgmt-card-budget">
+                <div class="mgmt-card-accent"></div>
                 <div class="mgmt-kpi-top">
                     <div class="mgmt-icon mgmt-icon-budget">
                         <i class="fa-solid fa-wallet"></i>
@@ -45,11 +46,12 @@
                     <span class="mgmt-kpi-tag">MONTHLY</span>
                 </div>
                 <div class="mgmt-kpi-label">Total Budget</div>
-                <div id="mgmtTotalBudget" class="mgmt-kpi-value">RM 0.00</div>
+                <div id="mgmtTotalBudget" class="mgmt-kpi-value">RM 0</div>
                 <div id="mgmtTotalBudgetNote" class="mgmt-kpi-note">—</div>
             </article>
 
-            <article class="mgmt-kpi-card">
+            <article class="mgmt-kpi-card mgmt-card-apsd">
+                <div class="mgmt-card-accent"></div>
                 <div class="mgmt-kpi-top">
                     <div class="mgmt-icon mgmt-icon-apsd">
                         <i class="fa-solid fa-scale-balanced"></i>
@@ -60,18 +62,19 @@
                 <div class="mgmt-dual-values">
                     <div>
                         <small>Budget</small>
-                        <strong id="mgmtApsdBudget">RM 0.00</strong>
+                        <strong id="mgmtApsdBudget">RM 0</strong>
                     </div>
                     <div>
                         <small>Sales</small>
-                        <strong id="mgmtApsdSales">RM 0.00</strong>
+                        <strong id="mgmtApsdSales">RM 0</strong>
                     </div>
                 </div>
-                <div id="mgmtApsdVariance" class="mgmt-variance">RM 0.00</div>
-                <div id="mgmtApsdVariancePct" class="mgmt-percent">0.00%</div>
+                <div id="mgmtApsdVariance" class="mgmt-variance">RM 0</div>
+                <div id="mgmtApsdVariancePct" class="mgmt-percent">0.00% variance</div>
             </article>
 
-            <article class="mgmt-kpi-card">
+            <article class="mgmt-kpi-card mgmt-card-mtd">
+                <div class="mgmt-card-accent"></div>
                 <div class="mgmt-kpi-top">
                     <div class="mgmt-icon mgmt-icon-mtd">
                         <i class="fa-solid fa-calendar-days"></i>
@@ -82,18 +85,19 @@
                 <div class="mgmt-dual-values">
                     <div>
                         <small>Budget MTD</small>
-                        <strong id="mgmtBudgetMtd">RM 0.00</strong>
+                        <strong id="mgmtBudgetMtd">RM 0</strong>
                     </div>
                     <div>
                         <small>Sales MTD</small>
-                        <strong id="mgmtSalesMtd">RM 0.00</strong>
+                        <strong id="mgmtSalesMtd">RM 0</strong>
                     </div>
                 </div>
-                <div id="mgmtMtdVariance" class="mgmt-variance">RM 0.00</div>
-                <div id="mgmtMtdVariancePct" class="mgmt-percent">0.00%</div>
+                <div id="mgmtMtdVariance" class="mgmt-variance">RM 0</div>
+                <div id="mgmtMtdVariancePct" class="mgmt-percent">0.00% variance</div>
             </article>
 
-            <article class="mgmt-kpi-card mgmt-kpi-weekly">
+            <article class="mgmt-kpi-card mgmt-kpi-weekly mgmt-card-weekly">
+                <div class="mgmt-card-accent"></div>
                 <div class="mgmt-kpi-top">
                     <div class="mgmt-icon mgmt-icon-weekly">
                         <i class="fa-solid fa-chart-line"></i>
@@ -105,8 +109,8 @@
                 <div class="mgmt-weekly-row">
                     <div class="mgmt-weekly-metric">
                         <span><i class="fa-solid fa-coins"></i> APSD Sales</span>
-                        <strong id="mgmtWeeklySales">RM 0.00</strong>
-                        <small id="mgmtWeeklySalesPrev">vs RM 0.00 last week</small>
+                        <strong id="mgmtWeeklySales">RM 0</strong>
+                        <small id="mgmtWeeklySalesPrev">vs RM 0 last week</small>
                         <b id="mgmtWeeklySalesPct" class="mgmt-week-change">0.00%</b>
                     </div>
                     <div class="mgmt-weekly-metric">
@@ -124,6 +128,14 @@
                 </div>
             </article>
 
+        </div>
+
+        <div class="mgmt-dashboard-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <div>
+                <strong>APSD (Average Per Store Per Day)</strong> is calculated using the actual number of store-days with data.
+                <span>APSD Sales = Total Sales ÷ store-days with Sales &nbsp; | &nbsp; APSD Budget = Total Budget ÷ store-days with Budget</span>
+            </div>
         </div>
     </section>
 
