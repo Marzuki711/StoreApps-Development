@@ -276,6 +276,7 @@ function initManagementDashboard(){
     if(!user?.username) return;
 
     const input=document.getElementById("mgmtSalesDate");
+    const calendarIcon=document.getElementById("mgmtSalesDateIcon");
     if(input && !mgmtInitialized){
         mgmtInitialized=true;
         input.value=mgmtSalesDate||mgmtYesterdayISO();
@@ -283,6 +284,33 @@ function initManagementDashboard(){
             mgmtSalesDate=input.value||mgmtYesterdayISO();
             loadManagementSalesDashboard(mgmtSalesDate);
         });
+
+        /* Calendar icon opens the native date picker without changing
+           the existing read-only Business Date behaviour. */
+        const openPicker=()=>{
+            try{
+                if(typeof input.showPicker === "function"){
+                    input.showPicker();
+                    return;
+                }
+            }catch(e){}
+            try{
+                input.removeAttribute("readonly");
+                input.focus();
+                input.click();
+                setTimeout(()=>input.setAttribute("readonly","readonly"),250);
+            }catch(e){}
+        };
+
+        if(calendarIcon){
+            calendarIcon.addEventListener("click",openPicker);
+            calendarIcon.addEventListener("keydown",(event)=>{
+                if(event.key === "Enter" || event.key === " "){
+                    event.preventDefault();
+                    openPicker();
+                }
+            });
+        }
     }
 
     const selected=(input?.value)||mgmtSalesDate||mgmtYesterdayISO();
