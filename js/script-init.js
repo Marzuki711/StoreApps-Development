@@ -35,7 +35,8 @@ async function initializeApplication(){
             loadComponent("components/parttimer.html","partTimerContainer"),
             loadComponent("components/foreignworker.html","foreignWorkerContainer"),
             loadComponent("components/user-management","userManagementContainer"),
-            loadComponent("components/daily-sales.html","dailySalesContainer")
+            loadComponent("components/daily-sales.html","dailySalesContainer"),
+            loadComponent("components/management.html","managementContainer")
 
         ]);
 
@@ -510,6 +511,9 @@ function showHome(){
     const dailySalesContainer = document.getElementById("dailySalesContainer");
     if(dailySalesContainer){ dailySalesContainer.style.display = "none"; }
 
+    const managementContainer = document.getElementById("managementContainer");
+    if(managementContainer){ managementContainer.style.display = "none"; }
+
     /* Home Sales Dashboard loads only for authenticated users. */
     if(typeof getCurrentUser === "function" && getCurrentUser()){
         if(typeof initHomeSalesDashboard === "function"){
@@ -534,12 +538,14 @@ function openUserManagement(){
     const otModule = document.getElementById("otModule");
     const userManagementContainer = document.getElementById("userManagementContainer");
     const dailySalesContainer = document.getElementById("dailySalesContainer");
+    const managementContainer = document.getElementById("managementContainer");
 
     if(loginContainer) loginContainer.style.display = "none";
     if(homeContainer) homeContainer.style.display = "none";
     if(otModule) otModule.style.display = "none";
     if(userManagementContainer) userManagementContainer.style.display = "block";
     if(dailySalesContainer) dailySalesContainer.style.display = "none";
+    if(managementContainer) managementContainer.style.display = "none";
 
     const toggle = document.getElementById("saSidebarToggle");
     if(toggle) toggle.checked = false;
@@ -559,9 +565,11 @@ function closeUserManagement(){
     const homeContainer = document.getElementById("homeContainer");
     const otModule = document.getElementById("otModule");
     const dailySalesContainer = document.getElementById("dailySalesContainer");
+    const managementContainer = document.getElementById("managementContainer");
 
     if(userManagementContainer) userManagementContainer.style.display = "none";
     if(dailySalesContainer) dailySalesContainer.style.display = "none";
+    if(managementContainer) managementContainer.style.display = "none";
     if(otModule) otModule.style.display = "none";
     if(homeContainer) homeContainer.style.display = "block";
 
@@ -583,6 +591,9 @@ function openManualOT(){
     const dailySalesContainer =
         document.getElementById("dailySalesContainer");
 
+    const managementContainer =
+        document.getElementById("managementContainer");
+
     const employeeType =
         document.getElementById("employeeType");
 
@@ -598,6 +609,10 @@ function openManualOT(){
         dailySalesContainer.style.display = "none";
     }
 
+    if(managementContainer){
+        managementContainer.style.display = "none";
+    }
+
     if(employeeType){
 
         employeeType.value = "Full Timer";
@@ -609,14 +624,52 @@ function openManualOT(){
 }
 
 
+/* ==========================================
+   OPEN MANAGEMENT — PLACEHOLDER
+   UI ONLY. FORM WILL BE ADDED LATER.
+========================================== */
+
+function openManagement(){
+
+    const loginContainer =
+        document.getElementById("loginContainer");
+
+    const homeContainer =
+        document.getElementById("homeContainer");
+
+    const otModule =
+        document.getElementById("otModule");
+
+    const userManagementContainer =
+        document.getElementById("userManagementContainer");
+
+    const dailySalesContainer =
+        document.getElementById("dailySalesContainer");
+
+    const managementContainer =
+        document.getElementById("managementContainer");
+
+    if(loginContainer) loginContainer.style.display = "none";
+    if(homeContainer) homeContainer.style.display = "none";
+    if(otModule) otModule.style.display = "none";
+    if(userManagementContainer) userManagementContainer.style.display = "none";
+    if(dailySalesContainer) dailySalesContainer.style.display = "none";
+    if(managementContainer) managementContainer.style.display = "block";
+
+    const toggle = document.getElementById("saMenuToggle");
+    if(toggle) toggle.checked = false;
+}
+
 function closeDailySales(){
     const dailySalesContainer=document.getElementById("dailySalesContainer");
     const homeContainer=document.getElementById("homeContainer");
     const otModule=document.getElementById("otModule");
     const userManagementContainer=document.getElementById("userManagementContainer");
+    const managementContainer=document.getElementById("managementContainer");
     if(dailySalesContainer) dailySalesContainer.style.display="none";
     if(otModule) otModule.style.display="none";
     if(userManagementContainer) userManagementContainer.style.display="none";
+    if(managementContainer) managementContainer.style.display="none";
     if(homeContainer) homeContainer.style.display="block";
     if(typeof applyRoleAccess==="function") applyRoleAccess();
 }
