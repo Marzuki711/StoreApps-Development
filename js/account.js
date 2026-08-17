@@ -69,6 +69,9 @@ function logout(){
         const dailySalesContainer = document.getElementById("dailySalesContainer");
          if(dailySalesContainer){ dailySalesContainer.style.display="none"; }
 
+        const managementContainer = document.getElementById("managementContainer");
+        if(managementContainer){ managementContainer.style.display="none"; }
+
          document.getElementById("loginContainer").style.display="block";
 
         document.getElementById("loginUsername").value="";
