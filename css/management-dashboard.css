@@ -76,7 +76,8 @@
     font-size:15px;
     font-weight:800;
     outline:none;
-    cursor:pointer;
+    cursor:default;
+    pointer-events:none;
     box-shadow:0 5px 18px rgba(30,48,76,.045);
     transition:border-color .2s ease,box-shadow .2s ease;
 }
@@ -93,8 +94,8 @@
 }
 
 .mgmt-date-input-wrap input:focus{
-    border-color:#b5122b;
-    box-shadow:0 0 0 4px rgba(181,18,43,.065),0 7px 20px rgba(30,48,76,.05);
+    border-color:#d8e1ec;
+    box-shadow:0 5px 18px rgba(30,48,76,.045);
 }
 
 .mgmt-date-input-wrap i{
@@ -146,7 +147,7 @@
 
 .mgmt-kpi-grid{
     display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:18px;
 }
 
@@ -270,18 +271,18 @@
 }
 
 .mgmt-percent{
-    display:inline-block;
+    display:block;
     margin-top:6px;
-    padding:4px 8px;
-    border-radius:999px;
-    background:#f3f6f8;
+    padding:0;
+    border-radius:0;
+    background:transparent;
     font-size:11px;
     font-weight:900;
 }
 
-.mgmt-positive{color:#12874e !important;background:#e3f4ea !important}
-.mgmt-negative{color:#d71936 !important;background:#fde7ea !important}
-.mgmt-neutral{color:#68768a !important;background:#f3f6f8 !important}
+.mgmt-positive{color:#12874e !important;background:transparent !important}
+.mgmt-negative{color:#d71936 !important;background:transparent !important}
+.mgmt-neutral{color:#68768a !important;background:transparent !important}
 
 .mgmt-weekly-row{
     display:grid;
@@ -330,17 +331,17 @@
 }
 
 .mgmt-week-change{
-    display:inline-block;
-    margin-top:5px;
-    padding:3px 6px;
-    border-radius:999px;
-    background:#f3f6f8;
+    display:block;
+    margin-top:6px;
+    padding:0;
+    border-radius:0;
+    background:transparent;
     font-size:10px;
     font-weight:950;
 }
 
 .mgmt-week-periods{
-    display:flex;
+    display:none;
     flex-wrap:wrap;
     align-items:center;
     gap:5px;
