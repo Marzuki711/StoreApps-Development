@@ -56,7 +56,7 @@ function mgmtDaysInMonth(iso){
 
 function mgmtMoney(value){
     const n=Number(String(value??"").replace(/,/g,""))||0;
-    return "RM " + n.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
+    return "RM " + Math.round(n).toLocaleString("en-MY",{maximumFractionDigits:0});
 }
 
 function mgmtNumber(value){
@@ -292,4 +292,3 @@ function initManagementDashboard(){
 
 window.initManagementDashboard=initManagementDashboard;
 window.loadManagementSalesDashboard=loadManagementSalesDashboard;
-
