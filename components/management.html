@@ -7,16 +7,14 @@
 
     <header class="mgmt-header">
         <div class="mgmt-title-block">
-            <div class="mgmt-eyebrow">MANAGEMENT</div>
-            <h1>Sales Dashboard</h1>
-            <p>Sales performance, budget and weekly APSD overview.</p>
+            <h1>Dashboard Management</h1>
         </div>
 
         <div class="mgmt-date-control">
             <label for="mgmtSalesDate">Business Date</label>
             <div class="mgmt-date-input-wrap">
                 <input id="mgmtSalesDate" type="date" aria-label="Business Date" readonly tabindex="-1">
-                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                <i id="mgmtSalesDateIcon" class="fa-regular fa-calendar" aria-hidden="true" role="button" tabindex="0"></i>
             </div>
         </div>
     </header>
@@ -29,7 +27,6 @@
     <section class="mgmt-section">
         <div class="mgmt-section-heading">
             <div class="mgmt-section-title">
-                <span class="mgmt-section-eyebrow"><i class="fa-solid fa-chart-column"></i> SALES</span>
                 <h2>Sales Performance</h2>
             </div>
             <span id="mgmtSalesPeriod" class="mgmt-period">—</span>
