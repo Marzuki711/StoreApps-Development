@@ -56,7 +56,7 @@ function mgmtDaysInMonth(iso){
 
 function mgmtMoney(value){
     const n=Number(String(value??"").replace(/,/g,""))||0;
-    return "RM " + Math.round(n).toLocaleString("en-MY",{maximumFractionDigits:0});
+    return Math.round(n).toLocaleString("en-MY",{maximumFractionDigits:0});
 }
 
 function mgmtNumber(value){
@@ -85,7 +85,7 @@ function mgmtSetVariance(id,pctId,variance,budget){
     const cls=variance>0.004 ? "mgmt-positive" : variance<-0.004 ? "mgmt-negative" : "mgmt-neutral";
     if(el){
         el.className="mgmt-variance "+cls;
-        el.textContent=(variance>=0?"+":"")+mgmtMoney(variance);
+        el.textContent=(variance>=0?"+":"")+mgmtNumber(variance);
     }
     if(pctEl){
         pctEl.className="mgmt-percent "+cls;
