@@ -1,14 +1,13 @@
 /* =========================================================
-   MANAGEMENT SALES DASHBOARD — PREMIUM UI
+   MANAGEMENT SALES DASHBOARD — PREMIUM KPI SUMMARY UI
    UI ONLY — existing data/API/calculation functions unchanged
    ========================================================= */
 
 .mgmt-dashboard{
-    position:relative;
     width:100%;
     max-width:1480px;
     margin:0 auto;
-    padding:30px 28px 46px;
+    padding:28px 28px 42px;
     box-sizing:border-box;
     color:#172033;
 }
@@ -18,34 +17,33 @@
     align-items:flex-end;
     justify-content:space-between;
     gap:32px;
-    margin-bottom:34px;
+    margin-bottom:30px;
 }
 
 .mgmt-eyebrow,.mgmt-section-eyebrow{
     color:#b5122b;
     font-size:10px;
     font-weight:900;
-    letter-spacing:.20em;
+    letter-spacing:.19em;
     text-transform:uppercase;
 }
 
 .mgmt-header h1{
-    margin:7px 0 6px;
+    margin:6px 0 5px;
     color:#101d33;
     font-size:38px;
-    line-height:1.05;
-    font-weight:850;
-    letter-spacing:-.035em;
+    line-height:1.02;
+    font-weight:900;
+    letter-spacing:-.04em;
 }
 
 .mgmt-header p{
     margin:0;
     color:#718096;
     font-size:14px;
-    line-height:1.5;
+    line-height:1.45;
 }
 
-/* ---------- BUSINESS DATE ---------- */
 .mgmt-date-control{
     width:228px;
     flex:0 0 228px;
@@ -53,10 +51,10 @@
 
 .mgmt-date-control label{
     display:block;
-    margin:0 0 8px;
+    margin:0 0 7px;
     color:#34435a;
     font-size:12px;
-    font-weight:800;
+    font-weight:850;
 }
 
 .mgmt-date-input-wrap{
@@ -65,37 +63,38 @@
 }
 
 .mgmt-date-input-wrap input{
+    appearance:none;
+    -webkit-appearance:none;
     width:100%;
     height:52px;
-    padding:0 46px 0 16px;
+    padding:0 48px 0 16px;
     box-sizing:border-box;
-    border:1px solid #d5deea;
+    border:1px solid #d8e1ec;
     border-radius:15px;
     background:#fff;
     color:#172033;
     font-size:15px;
-    font-weight:750;
+    font-weight:800;
     outline:none;
     cursor:pointer;
-    box-shadow:0 5px 16px rgba(30,48,76,.035);
-    transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+    box-shadow:0 5px 18px rgba(30,48,76,.045);
+    transition:border-color .2s ease,box-shadow .2s ease;
 }
 
-.mgmt-date-input-wrap input:hover{
-    border-color:#bdc9d9;
+.mgmt-date-input-wrap input::-webkit-calendar-picker-indicator{
+    display:none;
+    -webkit-appearance:none;
+    opacity:0;
+}
+
+.mgmt-date-input-wrap input::-webkit-inner-spin-button,
+.mgmt-date-input-wrap input::-webkit-clear-button{
+    display:none;
 }
 
 .mgmt-date-input-wrap input:focus{
     border-color:#b5122b;
-    box-shadow:0 0 0 4px rgba(181,18,43,.07),0 6px 18px rgba(30,48,76,.04);
-}
-
-/* Use ONE premium icon. Hide the browser's second icon. */
-.mgmt-date-input-wrap input::-webkit-calendar-picker-indicator{
-    opacity:0;
-    width:28px;
-    height:28px;
-    cursor:pointer;
+    box-shadow:0 0 0 4px rgba(181,18,43,.065),0 7px 20px rgba(30,48,76,.05);
 }
 
 .mgmt-date-input-wrap i{
@@ -103,15 +102,14 @@
     right:16px;
     top:50%;
     transform:translateY(-50%);
-    color:#18283f;
+    color:#172033;
     pointer-events:none;
     font-size:16px;
     z-index:2;
 }
 
-/* ---------- SECTION ---------- */
 .mgmt-section{
-    position:relative;
+    padding:0;
 }
 
 .mgmt-section-heading{
@@ -119,24 +117,33 @@
     align-items:flex-end;
     justify-content:space-between;
     gap:16px;
-    margin-bottom:15px;
+    margin-bottom:16px;
+}
+
+.mgmt-section-title .mgmt-section-eyebrow{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.mgmt-section-title .mgmt-section-eyebrow i{
+    font-size:11px;
 }
 
 .mgmt-section-heading h2{
     margin:5px 0 0;
-    color:#16243a;
+    color:#17243a;
     font-size:21px;
-    font-weight:820;
+    font-weight:900;
     letter-spacing:-.025em;
 }
 
 .mgmt-period{
     color:#7d8ba0;
     font-size:12px;
-    font-weight:750;
+    font-weight:800;
 }
 
-/* ---------- KPI GRID ---------- */
 .mgmt-kpi-grid{
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
@@ -144,68 +151,91 @@
 }
 
 .mgmt-kpi-card{
-    min-height:250px;
-    padding:22px 21px 20px;
-    border:1px solid #e0e7f0;
-    border-radius:22px;
-    background:linear-gradient(145deg,#ffffff 0%,#fbfcfe 100%);
-    box-shadow:0 12px 30px rgba(28,45,72,.055),0 2px 5px rgba(28,45,72,.025);
+    position:relative;
+    min-width:0;
+    min-height:238px;
+    padding:19px 20px 19px;
+    overflow:hidden;
+    border:1px solid #e0e6ee;
+    border-radius:19px;
+    background:#fff;
+    box-shadow:0 8px 22px rgba(25,43,67,.075),0 1px 2px rgba(25,43,67,.025);
     box-sizing:border-box;
-    transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+    transition:transform .18s ease,box-shadow .18s ease;
 }
 
 .mgmt-kpi-card:hover{
     transform:translateY(-2px);
-    border-color:#d7e0eb;
-    box-shadow:0 16px 34px rgba(28,45,72,.075),0 3px 7px rgba(28,45,72,.025);
+    box-shadow:0 13px 28px rgba(25,43,67,.095),0 2px 4px rgba(25,43,67,.03);
 }
+
+.mgmt-card-accent{
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:#6a8190;
+}
+
+.mgmt-card-apsd .mgmt-card-accent{background:#16a05d}
+.mgmt-card-mtd .mgmt-card-accent{background:#d71936}
+.mgmt-card-weekly .mgmt-card-accent{background:#f58220}
 
 .mgmt-kpi-top{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom:19px;
+    margin-bottom:16px;
 }
 
 .mgmt-icon{
-    width:44px;
-    height:44px;
+    width:42px;
+    height:42px;
     display:grid;
     place-items:center;
-    border-radius:14px;
+    border-radius:13px;
     color:#b5122b;
-    background:linear-gradient(145deg,#fff4f5,#fde3e7);
-    border:1px solid #f3cbd1;
-    box-shadow:0 7px 16px rgba(181,18,43,.075);
+    background:#f8e8eb;
+    border:1px solid #f0d0d6;
+    box-shadow:none;
 }
 
-.mgmt-icon i{font-size:17px}
+.mgmt-icon i{font-size:16px}
+
+.mgmt-icon-budget{background:#e9eef1;border-color:#dce4e8;color:#526c78}
+.mgmt-icon-apsd{background:#e2f2e9;border-color:#cde8d9;color:#138b50}
+.mgmt-icon-mtd{background:#fbe3e6;border-color:#f3c8ce;color:#d71936}
+.mgmt-icon-weekly{background:#fff0e3;border-color:#f7d9bd;color:#e97612}
 
 .mgmt-kpi-tag{
-    color:#9aa5b5;
+    color:#8995a6;
     font-size:9px;
     font-weight:900;
     letter-spacing:.14em;
 }
 
 .mgmt-kpi-label{
-    color:#536279;
+    color:#718096;
     font-size:12px;
-    font-weight:800;
+    font-weight:850;
     margin-bottom:8px;
+    text-transform:uppercase;
+    letter-spacing:.02em;
 }
 
 .mgmt-kpi-value{
-    color:#b5122b;
-    font-size:28px;
-    line-height:1.15;
-    font-weight:900;
-    letter-spacing:-.03em;
+    color:#253247;
+    font-size:29px;
+    line-height:1.12;
+    font-weight:950;
+    letter-spacing:-.035em;
+    white-space:nowrap;
 }
 
 .mgmt-kpi-note{
     margin-top:9px;
-    color:#8b97a8;
+    color:#8a96a6;
     font-size:11px;
     line-height:1.45;
 }
@@ -213,8 +243,8 @@
 .mgmt-dual-values{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:8px;
+    gap:14px;
+    margin-top:5px;
 }
 
 .mgmt-dual-values small{
@@ -226,49 +256,53 @@
 
 .mgmt-dual-values strong{
     display:block;
-    color:#202c3e;
-    font-size:15px;
-    white-space:nowrap;
-}
-
-.mgmt-variance{
-    margin-top:17px;
+    color:#253247;
     font-size:17px;
+    line-height:1.15;
+    white-space:nowrap;
     font-weight:900;
 }
 
-.mgmt-percent{
-    margin-top:4px;
-    color:#68768a;
-    font-size:12px;
-    font-weight:800;
+.mgmt-variance{
+    margin-top:19px;
+    font-size:17px;
+    font-weight:950;
 }
 
-.mgmt-positive{color:#16845b !important}
-.mgmt-negative{color:#c5293e !important}
-.mgmt-neutral{color:#68768a !important}
+.mgmt-percent{
+    display:inline-block;
+    margin-top:6px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#f3f6f8;
+    font-size:11px;
+    font-weight:900;
+}
 
-/* ---------- WEEKLY CARD ---------- */
+.mgmt-positive{color:#12874e !important;background:#e3f4ea !important}
+.mgmt-negative{color:#d71936 !important;background:#fde7ea !important}
+.mgmt-neutral{color:#68768a !important;background:#f3f6f8 !important}
+
 .mgmt-weekly-row{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:4px;
+    gap:9px;
+    margin-top:2px;
 }
 
 .mgmt-weekly-metric{
     min-width:0;
-    padding:12px 12px 11px;
-    border-radius:14px;
+    padding:10px 10px 9px;
+    border-radius:13px;
     background:#f7f9fc;
-    border:1px solid #e5eaf1;
+    border:1px solid #e4e9f0;
 }
 
 .mgmt-weekly-metric span{
     display:block;
-    color:#68768a;
+    color:#67758a;
     font-size:10px;
-    font-weight:850;
+    font-weight:900;
     line-height:1.25;
 }
 
@@ -280,24 +314,29 @@
 .mgmt-weekly-metric strong{
     display:block;
     margin-top:6px;
-    color:#202c3e;
-    font-size:16px;
+    color:#253247;
+    font-size:17px;
     line-height:1.15;
+    font-weight:950;
+    white-space:nowrap;
 }
 
 .mgmt-weekly-metric small{
     display:block;
     margin-top:5px;
-    color:#8c98a9;
+    color:#8b97a7;
     font-size:9px;
     line-height:1.3;
 }
 
 .mgmt-week-change{
-    display:block;
+    display:inline-block;
     margin-top:5px;
-    font-size:11px;
-    font-weight:900;
+    padding:3px 6px;
+    border-radius:999px;
+    background:#f3f6f8;
+    font-size:10px;
+    font-weight:950;
 }
 
 .mgmt-week-periods{
@@ -305,16 +344,46 @@
     flex-wrap:wrap;
     align-items:center;
     gap:5px;
-    margin-top:14px;
-    color:#8490a2;
+    margin-top:13px;
+    color:#7e8ba0;
     font-size:9px;
-    font-weight:750;
+    font-weight:800;
     line-height:1.35;
 }
 
 .mgmt-week-periods span:nth-child(2){
     color:#b1bac6;
-    font-weight:800;
+    font-weight:900;
+}
+
+.mgmt-dashboard-note{
+    display:flex;
+    align-items:flex-start;
+    gap:11px;
+    margin-top:18px;
+    padding:13px 15px;
+    border:1px solid #dce6f1;
+    border-radius:14px;
+    background:#f5f9fe;
+    color:#536b89;
+    font-size:10px;
+    line-height:1.45;
+}
+
+.mgmt-dashboard-note > i{
+    margin-top:1px;
+    color:#2d6aa3;
+    font-size:15px;
+}
+
+.mgmt-dashboard-note strong{
+    color:#274f79;
+}
+
+.mgmt-dashboard-note span{
+    display:block;
+    margin-top:2px;
+    color:#7488a1;
 }
 
 .mgmt-loading{
@@ -322,7 +391,7 @@
     align-items:center;
     justify-content:center;
     gap:8px;
-    min-height:48px;
+    min-height:46px;
     margin-bottom:14px;
     border:1px solid #e3e9f1;
     border-radius:14px;
@@ -345,63 +414,20 @@
     font-weight:700;
 }
 
-/* ---------- TABLET ---------- */
 @media (max-width:1100px){
     .mgmt-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
-/* ---------- MOBILE ---------- */
 @media (max-width:700px){
-    .mgmt-dashboard{
-        padding:20px 14px 32px;
-    }
-
-    .mgmt-header{
-        align-items:stretch;
-        flex-direction:column;
-        gap:18px;
-        margin-bottom:27px;
-    }
-
-    .mgmt-header h1{
-        font-size:29px;
-    }
-
-    .mgmt-date-control{
-        width:100%;
-        flex:0 0 auto;
-    }
-
-    .mgmt-date-input-wrap input{
-        height:52px;
-    }
-
-    .mgmt-section-heading{
-        align-items:flex-start;
-        flex-direction:column;
-        gap:6px;
-    }
-
-    .mgmt-kpi-grid{
-        grid-template-columns:1fr;
-        gap:13px;
-    }
-
-    .mgmt-kpi-card{
-        min-height:0;
-        padding:18px;
-        border-radius:18px;
-    }
-
-    .mgmt-kpi-value{
-        font-size:25px;
-    }
-
-    .mgmt-weekly-row{
-        gap:9px;
-    }
-
-    .mgmt-weekly-metric{
-        padding:11px 10px;
-    }
+    .mgmt-dashboard{padding:20px 14px 30px}
+    .mgmt-header{align-items:stretch;flex-direction:column;gap:18px;margin-bottom:25px}
+    .mgmt-header h1{font-size:29px}
+    .mgmt-date-control{width:100%;flex:0 0 auto}
+    .mgmt-section-heading{align-items:flex-start;flex-direction:column;gap:6px}
+    .mgmt-kpi-grid{grid-template-columns:1fr;gap:12px}
+    .mgmt-kpi-card{min-height:0;padding:18px;border-radius:17px}
+    .mgmt-kpi-value{font-size:26px}
+    .mgmt-weekly-row{gap:8px}
+    .mgmt-weekly-metric{padding:10px 9px}
+    .mgmt-dashboard-note{font-size:9px}
 }
