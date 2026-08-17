@@ -104,7 +104,8 @@
     top:50%;
     transform:translateY(-50%);
     color:#172033;
-    pointer-events:none;
+    pointer-events:auto;
+    cursor:pointer;
     font-size:16px;
     z-index:2;
 }
