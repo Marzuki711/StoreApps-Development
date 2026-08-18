@@ -201,24 +201,6 @@ async function loadManagementSalesDashboard(dateOverride=""){
         const previousWeek=mgmtAggregate(previousWeekResponses);
 
         /*
-         * Data completeness check — diagnostics only.
-         * The dashboard waits for every requested date response before
-         * calculating. If submitted store-days are lower than the
-         * expected active store-days, the source data is incomplete;
-         * do not silently invent or fill missing sales.
-         */
-        const expectedMtdStoreDays=stores.reduce((total,store)=>
-            total + mgmtActiveStoreDays(store,monthStart,selected),0);
-        const mtdDataComplete = mtd.storeDays >= expectedMtdStoreDays;
-        console.info("Management Sales MTD data check:", {
-            requestedDays: monthDates.length,
-            daysWithData: mtd.dataDays,
-            submittedStoreDays: mtd.storeDays,
-            expectedActiveStoreDays: expectedMtdStoreDays,
-            complete: mtdDataComplete
-        });
-
-        /*
          * Budget is the existing store budget from Daily Sales/Area.
          * Monthly = daily budget x calendar days in selected month.
          * MTD budget respects each store's opening date.
@@ -238,7 +220,9 @@ async function loadManagementSalesDashboard(dateOverride=""){
         });
 
         const apsdBudget=mtdActiveStoreDays ? mtdBudget/mtdActiveStoreDays : 0;
-        const apsdSales=mtdActiveStoreDays ? mtd.sales/mtdActiveStoreDays : 0;
+        /* APSD Sales uses actual submitted store-days so missing Daily Sales
+         * records do not artificially lower the daily sales average. */
+        const apsdSales=mtd.storeDays ? mtd.sales/mtd.storeDays : 0;
         const apsdVariance=apsdSales-apsdBudget;
         const mtdVariance=mtd.sales-mtdBudget;
 
