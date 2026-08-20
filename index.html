@@ -64,11 +64,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     value = 0;
     percent.textContent = '0%';
     document.body.classList.add('sa-loading-active');
+    document.documentElement.classList.add('sa-loading-active');
     timer = setInterval(function(){
       if(value < 95){
         value += value < 50 ? 3 : value < 80 ? 2 : 1;
         if(value > 95) value = 95;
         percent.textContent = value + '%';
+        loading.style.setProperty('--loading-progress', (value * 3.6) + 'deg');
       }
     }, 140);
   }
@@ -76,8 +78,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   function stop(){
     if(timer){ clearInterval(timer); timer = null; }
     document.body.classList.remove('sa-loading-active');
+    document.documentElement.classList.remove('sa-loading-active');
     value = 0;
     percent.textContent = '0%';
+    loading.style.setProperty('--loading-progress', '0deg');
   }
 
   const observer = new MutationObserver(function(){
