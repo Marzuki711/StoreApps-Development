@@ -43,6 +43,55 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 
 </div>
 
+<script>
+/* Loading UI only: animate the visible percentage while an existing
+   showLoading()/hideLoading() flow is running. No data/API logic changed. */
+(function(){
+  const loading = document.getElementById('loading');
+  const percent = document.getElementById('globalLoadingPercent');
+  if(!loading || !percent) return;
+  let timer = null;
+  let value = 0;
+  let lastState = null;
+
+  function isVisible(){
+    const style = loading.getAttribute('style') || '';
+    return getComputedStyle(loading).display !== 'none' && !/display\s*:\s*none/i.test(style);
+  }
+
+  function start(){
+    if(timer) return;
+    value = 0;
+    percent.textContent = '0%';
+    document.body.classList.add('sa-loading-active');
+    timer = setInterval(function(){
+      if(value < 95){
+        value += value < 50 ? 3 : value < 80 ? 2 : 1;
+        if(value > 95) value = 95;
+        percent.textContent = value + '%';
+      }
+    }, 140);
+  }
+
+  function stop(){
+    if(timer){ clearInterval(timer); timer = null; }
+    document.body.classList.remove('sa-loading-active');
+    value = 0;
+    percent.textContent = '0%';
+  }
+
+  const observer = new MutationObserver(function(){
+    const visible = isVisible();
+    if(visible === lastState) return;
+    lastState = visible;
+    visible ? start() : stop();
+  });
+  observer.observe(loading,{attributes:true,attributeFilter:['style','class']});
+  lastState = isVisible();
+  if(lastState) start();
+})();
+</script>
+
 <!-- ==========================
      Main Container
 ========================== -->
