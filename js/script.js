@@ -332,6 +332,56 @@ function showWarning(message){
    LOADING
 ========================================== */
 
+let storeAppsLoadingTimer = null;
+let storeAppsLoadingValue = 0;
+
+function startStoreAppsLoadingProgress(root){
+    if(!root) return;
+
+    const percent = root.querySelector(".sa-full-loading-percent");
+    const ring = root.querySelector(".sa-full-loading-ring");
+
+    if(!percent || !ring) return;
+
+    if(storeAppsLoadingTimer){
+        clearInterval(storeAppsLoadingTimer);
+        storeAppsLoadingTimer = null;
+    }
+
+    storeAppsLoadingValue = 0;
+    percent.textContent = "0%";
+    ring.style.setProperty("--loading-progress","0deg");
+
+    storeAppsLoadingTimer = setInterval(() => {
+        /* Visual connection progress only. It never changes API/data logic. */
+        if(storeAppsLoadingValue < 95){
+            storeAppsLoadingValue += storeAppsLoadingValue < 70 ? 2 : 1;
+            if(storeAppsLoadingValue > 95) storeAppsLoadingValue = 95;
+        }
+
+        percent.textContent = storeAppsLoadingValue + "%";
+        ring.style.setProperty(
+            "--loading-progress",
+            ((storeAppsLoadingValue / 100) * 360) + "deg"
+        );
+    }, 120);
+}
+
+function stopStoreAppsLoadingProgress(root){
+    if(storeAppsLoadingTimer){
+        clearInterval(storeAppsLoadingTimer);
+        storeAppsLoadingTimer = null;
+    }
+
+    if(root){
+        const percent = root.querySelector(".sa-full-loading-percent");
+        const ring = root.querySelector(".sa-full-loading-ring");
+
+        if(percent) percent.textContent = "100%";
+        if(ring) ring.style.setProperty("--loading-progress","360deg");
+    }
+}
+
 function showLoading() {
 
     const loading = document.getElementById("loading");
@@ -339,6 +389,7 @@ function showLoading() {
     if (loading) {
 
         loading.style.display = "flex";
+        startStoreAppsLoadingProgress(loading);
 
     }
 
@@ -350,6 +401,7 @@ function hideLoading() {
 
     if (loading) {
 
+        stopStoreAppsLoadingProgress(loading);
         loading.style.display = "none";
 
     }
