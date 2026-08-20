@@ -90,6 +90,12 @@ body{
 
 }
 
+/* Prevent the underlying Store Apps page from scrolling while the
+   full-screen loading overlay is active. */
+body.sa-loading-active{
+    overflow:hidden !important;
+}
+
 .container{
 
     max-width:1200px;
