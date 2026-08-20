@@ -22,9 +22,13 @@
         </div>
     </header>
 
-    <div id="mgmtSalesLoading" class="mgmt-loading" style="display:none;">
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        <span>Loading Sales Dashboard...</span>
+    <div id="mgmtSalesLoading" class="mgmt-loading" style="display:none;" aria-live="polite">
+        <div class="sa-full-loading">
+            <div class="sa-full-loading-ring" aria-hidden="true">
+                <div class="sa-full-loading-percent" id="mgmtLoadingPercent">0%</div>
+            </div>
+            <div class="sa-full-loading-text">Loading...</div>
+        </div>
     </div>
 
     <section class="mgmt-section">
