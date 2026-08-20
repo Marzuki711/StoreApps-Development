@@ -15,14 +15,12 @@ async function loginSystem(){
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
 
-    showLoading();
-
+    /* Login loading is shown on the Login button only.
+       Do not trigger the global/full-screen loading overlay here. */
     const result = await callAPI("login",{
         username,
         password
     });
-
-    hideLoading();
 
     btn.disabled = false;
     btn.innerHTML = "LOGIN";
