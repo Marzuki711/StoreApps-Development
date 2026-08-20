@@ -32,9 +32,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
      Loading
 ========================== -->
 
-<div id="loading" class="overlay">
+<div id="loading" class="overlay" aria-live="polite">
 
-    <div class="loader"></div>
+    <div class="sa-full-loading">
+        <div class="sa-full-loading-ring" aria-hidden="true">
+            <div class="sa-full-loading-percent" id="globalLoadingPercent">0%</div>
+        </div>
+        <div class="sa-full-loading-text">Loading...</div>
+    </div>
 
 </div>
 
