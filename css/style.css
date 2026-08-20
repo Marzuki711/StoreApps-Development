@@ -16,8 +16,10 @@
     overflow:hidden !important;
     margin:0;
     padding:24px;
-    background:#111b46;
+    background:rgba(17,27,70,.58);
     color:#fff;
+    backdrop-filter:blur(2px);
+    -webkit-backdrop-filter:blur(2px);
 }
 
 .overlay.sa-loading .sa-full-loading{
@@ -51,7 +53,7 @@
     position:absolute;
     inset:9px;
     border-radius:50%;
-    background:#111b46;
+    background:rgba(17,27,70,.72);
     border:1px solid rgba(255,255,255,.12);
 }
 
