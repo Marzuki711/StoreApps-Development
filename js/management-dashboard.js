@@ -251,7 +251,12 @@ async function loadManagementSalesDashboard(dateOverride=""){
 
     const loading=document.getElementById("mgmtSalesLoading");
     const error=document.getElementById("mgmtSalesError");
-    if(loading) loading.style.display="flex";
+    if(loading){
+        loading.style.display="flex";
+        if(typeof startStoreAppsLoadingProgress === "function"){
+            startStoreAppsLoadingProgress(loading);
+        }
+    }
     if(error) error.style.display="none";
 
     const username=user.username||"";
@@ -342,7 +347,12 @@ async function loadManagementSalesDashboard(dateOverride=""){
         console.error(errorObj);
         mgmtShowError(errorObj?.message||"Unable to load Management Sales Dashboard.");
     }finally{
-        if(loading) loading.style.display="none";
+        if(loading){
+            if(typeof stopStoreAppsLoadingProgress === "function"){
+                stopStoreAppsLoadingProgress(loading);
+            }
+            loading.style.display="none";
+        }
     }
 }
 
