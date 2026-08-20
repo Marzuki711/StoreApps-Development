@@ -160,6 +160,84 @@ function mgmtAggregate(responses){
     return {sales,customer,storeDays:storeDays.size,dataDays:dataDays.size};
 }
 
+
+function mgmtStoreSeries(responses){
+    const map={};
+    (Array.isArray(responses)?responses:[]).forEach((response,index)=>{
+        if(!response?.status || !Array.isArray(response.rows)) return;
+        response.rows.forEach(row=>{
+            const key=mgmtStoreKey(row.storeNo);
+            if(!key) return;
+            if(!map[key]) map[key]={storeNo:row.storeNo,storeName:row.storeName||"",sales:0,customer:0,days:0};
+            map[key].sales += mgmtRowSales(row);
+            map[key].customer += mgmtRowCustomer(row);
+            map[key].days += 1;
+        });
+    });
+    return map;
+}
+
+function mgmtRenderSalesInsights(stores,mtdResponses,currentWeekResponses,previousWeekResponses,selected){
+    const dropsEl=document.getElementById("mgmtInsightDrops");
+    const oppEl=document.getElementById("mgmtInsightOpportunities");
+    const actionEl=document.getElementById("mgmtInsightActions");
+    if(!dropsEl || !oppEl || !actionEl) return;
+
+    const mtd=mgmtStoreSeries(mtdResponses);
+    const current=mgmtStoreSeries(currentWeekResponses);
+    const previous=mgmtStoreSeries(previousWeekResponses);
+    const storeMap={};
+    (Array.isArray(stores)?stores:[]).forEach(store=>{
+        const key=mgmtStoreKey(store.storeNo);
+        if(key) storeMap[key]=store;
+    });
+
+    const drops=Object.keys(current).map(key=>{
+        const cur=current[key], prev=previous[key];
+        if(!prev || !prev.days || !cur.days) return null;
+        const curApsd=cur.sales/cur.days;
+        const prevApsd=prev.sales/prev.days;
+        const pct=prevApsd ? ((curApsd-prevApsd)/Math.abs(prevApsd))*100 : 0;
+        return {...cur,pct,curApsd,prevApsd};
+    }).filter(x=>x && x.pct<0).sort((a,b)=>a.pct-b.pct).slice(0,3);
+
+    const opportunities=Object.keys(mtd).map(key=>{
+        const item=mtd[key], store=storeMap[key]||{};
+        const budget=mgmtStoreBudget(store);
+        const opening=mgmtOpeningISO(store);
+        const monthStart=mgmtMonthStart(selected);
+        const activeStart=opening && opening>monthStart ? opening : monthStart;
+        const activeDays=activeStart && activeStart<=selected ? mgmtDatesBetween(activeStart,selected).length : 0;
+        const budgetMtd=budget*activeDays;
+        const gapPct=budgetMtd ? ((item.sales-budgetMtd)/budgetMtd)*100 : 0;
+        const actualPct=budgetMtd ? (item.sales/budgetMtd)*100 : 0;
+        if(!budgetMtd || item.sales<=0) return null;
+        return {...item,storeName:store.storeName||item.storeName,budgetMtd,gapPct,actualPct};
+    }).filter(Boolean).sort((a,b)=>a.gapPct-b.gapPct).slice(0,3);
+
+    if(!drops.length){
+        dropsEl.innerHTML='<div class="mgmt-insight-empty"><i class="fa-solid fa-circle-check"></i> No significant weekly sales drop detected.</div>';
+    }else{
+        dropsEl.innerHTML=drops.map(item=>`<div class="mgmt-insight-row"><div><strong>#${mgmtStoreKey(item.storeNo)}</strong><span>${mgmtEscape(item.storeName)}</span></div><b class="mgmt-insight-negative">▼ ${Math.abs(item.pct).toFixed(2)}%</b><small>${mgmtMoney(item.curApsd)} vs ${mgmtMoney(item.prevApsd)}</small></div>`).join('');
+    }
+
+    if(!opportunities.length){
+        oppEl.innerHTML='<div class="mgmt-insight-empty"><i class="fa-solid fa-circle-check"></i> No major sales gap detected.</div>';
+    }else{
+        oppEl.innerHTML=opportunities.map(item=>`<div class="mgmt-insight-row"><div><strong>#${mgmtStoreKey(item.storeNo)}</strong><span>${mgmtEscape(item.storeName)}</span></div><b class="mgmt-insight-negative">${item.gapPct.toFixed(2)}%</b><small>${mgmtMoney(item.sales)} sales vs ${mgmtMoney(item.budgetMtd)} budget</small></div>`).join('');
+    }
+
+    const actions=[];
+    if(drops[0]) actions.push(`Prioritise <strong>#${mgmtStoreKey(drops[0].storeNo)}</strong> and review the sales drivers behind the ${Math.abs(drops[0].pct).toFixed(2)}% weekly drop.`);
+    if(opportunities[0]) actions.push(`Focus on <strong>#${mgmtStoreKey(opportunities[0].storeNo)}</strong> to close its MTD budget gap of ${Math.abs(opportunities[0].gapPct).toFixed(2)}%.`);
+    actions.push('Compare customer traffic, basket size and daily trading pattern before setting the store action plan.');
+    actionEl.innerHTML=actions.slice(0,3).map((text,i)=>`<div class="mgmt-action-item"><i class="fa-solid fa-${i===0?'bullseye':i===1?'arrow-up':'list-check'}"></i><span>${text}</span></div>`).join('');
+}
+
+function mgmtEscape(value){
+    return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
 async function loadManagementSalesDashboard(dateOverride=""){
     const user=mgmtCurrentUser();
     if(!user?.username) return;
@@ -257,6 +335,8 @@ async function loadManagementSalesDashboard(dateOverride=""){
 
         mgmtSetText("mgmtWeeklyCurrentPeriod",`${mgmtDisplayDate(currentWeekStart)} – ${mgmtDisplayDate(selected)}`);
         mgmtSetText("mgmtWeeklyPreviousPeriod",`${mgmtDisplayDate(previousWeekStart)} – ${mgmtDisplayDate(previousWeekEnd)}`);
+
+        mgmtRenderSalesInsights(stores,mtdResponses,currentWeekResponses,previousWeekResponses,selected);
 
     }catch(errorObj){
         console.error(errorObj);
