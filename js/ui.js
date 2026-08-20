@@ -118,7 +118,133 @@ function showWarning(message){
 
 /* ==========================================
    LOADING
+   UI ONLY — keeps the existing show/hide flow.
+   The percentage is a visual connection indicator; it does not
+   control, delay, or change any API/data operation.
 ========================================== */
+
+let storeAppsLoadingTimer = null;
+let storeAppsLoadingValue = 0;
+let storeAppsLoadingRoot = null;
+let storeAppsLoadingBodyOverflow = null;
+let storeAppsLoadingHtmlOverflow = null;
+
+function lockStoreAppsPageScroll(){
+    const html = document.documentElement;
+    const body = document.body;
+
+    if(html){
+        storeAppsLoadingHtmlOverflow = html.style.overflow;
+        html.style.setProperty("overflow","hidden","important");
+        html.style.setProperty("overflow-x","hidden","important");
+        html.style.setProperty("overflow-y","hidden","important");
+        html.classList.add("sa-loading-active");
+    }
+
+    if(body){
+        storeAppsLoadingBodyOverflow = body.style.overflow;
+        body.style.setProperty("overflow","hidden","important");
+        body.style.setProperty("overflow-x","hidden","important");
+        body.style.setProperty("overflow-y","hidden","important");
+        body.classList.add("sa-loading-active");
+    }
+}
+
+function unlockStoreAppsPageScroll(){
+    const html = document.documentElement;
+    const body = document.body;
+
+    if(html){
+        if(storeAppsLoadingHtmlOverflow){
+            html.style.overflow = storeAppsLoadingHtmlOverflow;
+        }else{
+            html.style.removeProperty("overflow");
+        }
+        html.style.removeProperty("overflow-x");
+        html.style.removeProperty("overflow-y");
+        html.classList.remove("sa-loading-active");
+    }
+
+    if(body){
+        if(storeAppsLoadingBodyOverflow){
+            body.style.overflow = storeAppsLoadingBodyOverflow;
+        }else{
+            body.style.removeProperty("overflow");
+        }
+        body.style.removeProperty("overflow-x");
+        body.style.removeProperty("overflow-y");
+        body.classList.remove("sa-loading-active");
+    }
+
+    storeAppsLoadingHtmlOverflow = null;
+    storeAppsLoadingBodyOverflow = null;
+}
+
+function startStoreAppsLoadingProgress(root){
+    if(!root) return;
+
+    const percent = root.querySelector(".sa-full-loading-percent");
+    const ring = root.querySelector(".sa-full-loading-ring");
+    if(!percent || !ring) return;
+
+    if(storeAppsLoadingTimer){
+        clearInterval(storeAppsLoadingTimer);
+        storeAppsLoadingTimer = null;
+    }
+
+    storeAppsLoadingRoot = root;
+    storeAppsLoadingValue = 0;
+    percent.textContent = "0%";
+    ring.style.setProperty("--loading-progress","0deg");
+    lockStoreAppsPageScroll();
+
+    /*
+     * Visual progress only. It intentionally slows near 90% so the
+     * indicator can remain on screen while the real connection runs.
+     */
+    storeAppsLoadingTimer = setInterval(function(){
+        if(storeAppsLoadingValue >= 95) return;
+
+        if(storeAppsLoadingValue < 40){
+            storeAppsLoadingValue += 3;
+        }else if(storeAppsLoadingValue < 75){
+            storeAppsLoadingValue += 2;
+        }else{
+            storeAppsLoadingValue += 1;
+        }
+
+        if(storeAppsLoadingValue > 95){
+            storeAppsLoadingValue = 95;
+        }
+
+        percent.textContent = storeAppsLoadingValue + "%";
+        ring.style.setProperty(
+            "--loading-progress",
+            ((storeAppsLoadingValue / 100) * 360) + "deg"
+        );
+    },120);
+}
+
+function stopStoreAppsLoadingProgress(root){
+    if(storeAppsLoadingTimer){
+        clearInterval(storeAppsLoadingTimer);
+        storeAppsLoadingTimer = null;
+    }
+
+    const target = root || storeAppsLoadingRoot;
+
+    if(target){
+        const percent = target.querySelector(".sa-full-loading-percent");
+        const ring = target.querySelector(".sa-full-loading-ring");
+
+        /* Complete only when the real existing loading flow ends. */
+        if(percent) percent.textContent = "100%";
+        if(ring) ring.style.setProperty("--loading-progress","360deg");
+    }
+
+    storeAppsLoadingRoot = null;
+    unlockStoreAppsPageScroll();
+}
 
 function showLoading(){
 
@@ -126,6 +252,7 @@ function showLoading(){
 
     if(loading){
         loading.style.display="flex";
+        startStoreAppsLoadingProgress(loading);
     }
 
 }
@@ -135,7 +262,10 @@ function hideLoading(){
     const loading=document.getElementById("loading");
 
     if(loading){
+        stopStoreAppsLoadingProgress(loading);
         loading.style.display="none";
+    }else{
+        unlockStoreAppsPageScroll();
     }
 
 }
