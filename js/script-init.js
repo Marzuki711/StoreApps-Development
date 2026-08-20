@@ -631,6 +631,11 @@ function openManualOT(){
 
 function openManagement(){
 
+    /* MANAGEMENT ACCESS — LOCKED TO PERMISSION */
+    if(typeof requirePermission === "function" && !requirePermission("management")){
+        return;
+    }
+
     const loginContainer =
         document.getElementById("loginContainer");
 
