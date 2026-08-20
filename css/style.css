@@ -10,8 +10,10 @@
     align-items:center;
     justify-content:center;
     width:100vw;
-    height:100vh;
+    height:100dvh;
     min-height:100vh;
+    max-height:100dvh;
+    overflow:hidden !important;
     margin:0;
     padding:24px;
     background:#111b46;
@@ -92,8 +94,20 @@ body{
 
 /* Prevent the underlying Store Apps page from scrolling while the
    full-screen loading overlay is active. */
+html.sa-loading-active,
 body.sa-loading-active{
     overflow:hidden !important;
+    overflow-x:hidden !important;
+    overflow-y:hidden !important;
+    height:100% !important;
+    max-height:100% !important;
+}
+
+html:has(body.sa-loading-active),
+html:has(body.sa-loading-active) body{
+    overflow:hidden !important;
+    overflow-x:hidden !important;
+    overflow-y:hidden !important;
 }
 
 .container{
