@@ -249,6 +249,14 @@ function homeSetLoading(show){
 
     if(el){
         el.style.display = show ? "flex" : "none";
+
+        if(typeof startStoreAppsLoadingProgress === "function"){
+            if(show){
+                startStoreAppsLoadingProgress(el);
+            }else{
+                stopStoreAppsLoadingProgress(el);
+            }
+        }
     }
 }
 
