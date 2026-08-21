@@ -46,7 +46,13 @@ async function saveFullTimer() {
 
     };
 
-    const result = await callAPI("saveData", data);
+    beginDatabaseLoading();
+    let result;
+    try {
+        result = await callAPI("saveData", data);
+    } finally {
+        endDatabaseLoading();
+    }
 
     if (result && result.status) {
 
@@ -110,7 +116,13 @@ async function savePartTimer() {
 
     };
 
-    const result = await callAPI("saveData", data);
+    beginDatabaseLoading();
+    let result;
+    try {
+        result = await callAPI("saveData", data);
+    } finally {
+        endDatabaseLoading();
+    }
 
     if (result && result.status) {
 
@@ -178,7 +190,13 @@ async function saveForeignWorker() {
 
     };
 
-    const result = await callAPI("saveData", data);
+    beginDatabaseLoading();
+    let result;
+    try {
+        result = await callAPI("saveData", data);
+    } finally {
+        endDatabaseLoading();
+    }
 
     if (result && result.status) {
 
