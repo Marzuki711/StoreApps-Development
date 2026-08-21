@@ -246,7 +246,28 @@ function stopStoreAppsLoadingProgress(root){
     unlockStoreAppsPageScroll();
 }
 
+let storeAppsDatabaseLoadingDepth = 0;
+
+function beginDatabaseLoading(){
+    storeAppsDatabaseLoadingDepth++;
+    if(storeAppsDatabaseLoadingDepth === 1){
+        showLoading();
+    }
+}
+
+function endDatabaseLoading(){
+    storeAppsDatabaseLoadingDepth = Math.max(0, storeAppsDatabaseLoadingDepth - 1);
+    if(storeAppsDatabaseLoadingDepth === 0){
+        window.storeAppsForceHideLoading = true;
+        hideLoading();
+        window.storeAppsForceHideLoading = false;
+    }
+}
+
 function showLoading(){
+
+    /* Full-screen loading is reserved for database write/update flows. */
+    if(storeAppsDatabaseLoadingDepth <= 0) return;
 
     const loading=document.getElementById("loading");
 
