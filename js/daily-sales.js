@@ -106,9 +106,6 @@ async function callDailySalesAPI(action, data = {}) {
 ========================================== */
 
 function dsSetListLoading(show) {
-    /* LOCK: reading/filtering Daily Sales must not show a loading overlay.
-       Full-screen loading is reserved for database update/save flows. */
-    return;
 
     let overlay =
         document.getElementById(
@@ -135,11 +132,12 @@ function dsSetListLoading(show) {
         overlay.style.display = "none";
         overlay.style.alignItems = "center";
         overlay.style.justifyContent = "center";
-        overlay.style.background = "rgba(255,255,255,.82)";
-        overlay.style.backdropFilter = "blur(2px)";
+        overlay.style.background = "rgba(15,23,42,.10)";
+        overlay.style.backdropFilter = "blur(3px)";
         overlay.style.zIndex = "20";
         overlay.style.borderRadius = "18px";
         overlay.style.fontSize = "14px";
+        overlay.style.minHeight = "220px";
         overlay.style.fontWeight = "700";
         overlay.style.color = "#334155";
 
@@ -151,11 +149,18 @@ function dsSetListLoading(show) {
         box.style.display = "flex";
         box.style.alignItems = "center";
         box.style.gap = "10px";
-        box.style.padding = "12px 16px";
-        box.style.borderRadius = "10px";
+        box.style.padding = "16px 20px";
+        box.style.borderRadius = "14px";
         box.style.background = "#fff";
         box.style.boxShadow =
-            "0 8px 24px rgba(15,23,42,.12)";
+            "0 12px 30px rgba(15,23,42,.18)";
+        box.style.border = "1px solid rgba(193,18,31,.12)";
+
+        const spinner = overlay.querySelector("i");
+        if(spinner){
+            spinner.style.color = "#C1121F";
+            spinner.style.fontSize = "18px";
+        }
 
         const tableBody =
             document.getElementById(
@@ -1676,8 +1681,6 @@ async function dsSave() {
             '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     }
 
-    beginDatabaseLoading();
-
     try {
 
         const response =
@@ -1725,8 +1728,6 @@ async function dsSave() {
         );
 
     } finally {
-
-        endDatabaseLoading();
 
         if (button) {
 
