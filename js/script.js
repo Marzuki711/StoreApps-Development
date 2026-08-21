@@ -384,6 +384,9 @@ function stopStoreAppsLoadingProgress(root){
 
 function showLoading() {
 
+    /* Full-screen loading is reserved for database write/update flows. */
+    if (typeof storeAppsDatabaseLoadingDepth !== "undefined" && storeAppsDatabaseLoadingDepth <= 0 && !window.storeAppsForceHideLoading) return;
+
     const loading = document.getElementById("loading");
 
     if (loading) {
@@ -396,6 +399,9 @@ function showLoading() {
 }
 
 function hideLoading() {
+
+    /* Do not let ordinary navigation/search buttons hide an active DB loading. */
+    if (typeof storeAppsDatabaseLoadingDepth !== "undefined" && storeAppsDatabaseLoadingDepth <= 0) return;
 
     const loading = document.getElementById("loading");
 
