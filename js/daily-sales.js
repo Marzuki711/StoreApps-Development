@@ -1673,6 +1673,8 @@ async function dsSave() {
             '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     }
 
+    beginDatabaseLoading();
+
     try {
 
         const response =
@@ -1720,6 +1722,8 @@ async function dsSave() {
         );
 
     } finally {
+
+        endDatabaseLoading();
 
         if (button) {
 
