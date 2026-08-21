@@ -45,24 +45,52 @@ sessionStorage.setItem(
 
     applyRoleAccess();
 
-    requestAnimationFrame(() => {
+    /*
+     * LOGIN READINESS LOCK:
+     * The user is considered fully logged in only after
+     * the Home Dashboard has successfully loaded its data.
+     * This prevents a successful login from opening a blank
+     * dashboard and also avoids a second loading indicator.
+     */
+    let homeReady = false;
 
-        showHome();
+    try{
+        if(typeof preloadHomeSalesDashboard === "function"){
+            homeReady = await preloadHomeSalesDashboard();
+        }
+    }catch(err){
+        console.error("Home Dashboard preload:",err);
+        homeReady = false;
+    }
 
-        /* Load Home Sales Dashboard only after successful login. */
-        if(typeof initHomeSalesDashboard === "function"){
-            initHomeSalesDashboard();
+    if(!homeReady){
+        sessionStorage.removeItem("currentUser");
+        currentUser = null;
+
+        if(typeof applyRoleAccess === "function"){
+            applyRoleAccess();
         }
 
-    });
+        btn.disabled = false;
+        btn.innerHTML = "LOGIN";
+
+        showError(
+            "Unable to load Home Dashboard data. Please try again."
+        );
+
+        return;
+    }
+
+    /* Only show Home after the required dashboard data is ready. */
+    showHome();
 
     setTimeout(() => {
 
-    callAPI("updateLastLogin",{
-        username: currentUser.username
-    }).catch(console.error);
+        callAPI("updateLastLogin",{
+            username: currentUser.username
+        }).catch(console.error);
 
-},300);
+    },300);
 
 }
 
