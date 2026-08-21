@@ -249,9 +249,10 @@ async function loadManagementSalesDashboard(dateOverride=""){
     const selected=dateOverride || mgmtSalesDate || mgmtYesterdayISO();
     mgmtSalesDate=selected;
 
-    const loading=document.getElementById("mgmtSalesLoading");
+    const loading=null;
     const error=document.getElementById("mgmtSalesError");
-    if(loading){
+    /* LOCK: Management dashboard is read-only; no loading on navigation. */
+    if(false){
         loading.style.display="flex";
         if(typeof startStoreAppsLoadingProgress === "function"){
             startStoreAppsLoadingProgress(loading);
