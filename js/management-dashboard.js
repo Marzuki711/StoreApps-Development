@@ -251,12 +251,38 @@ async function loadManagementSalesDashboard(dateOverride=""){
 
     const loading=document.getElementById("mgmtSalesLoading");
     const error=document.getElementById("mgmtSalesError");
+
+    /* Navigation loading standard: same compact in-content loader used by Daily Sales.
+       This is visual feedback only; the existing API/connection flow is unchanged. */
     if(loading){
-        loading.style.display="flex";
-        const loadingText=loading.querySelector(".sa-full-loading-text");
-        if(loadingText) loadingText.textContent="Loading Management...";
-        if(typeof startStoreAppsLoadingProgress === "function"){
-            startStoreAppsLoadingProgress(loading);
+        const section=loading.closest(".mgmt-section") || document.querySelector("#managementModule .mgmt-section");
+        if(section){
+            if(getComputedStyle(section).position === "static") section.style.position="relative";
+            if(loading.parentElement !== section) section.appendChild(loading);
+        }
+
+        loading.innerHTML = `
+            <div class="mgmt-list-loading-box">
+                <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                <span>Loading Management...</span>
+            </div>
+        `;
+        Object.assign(loading.style,{
+            position:"absolute", inset:"0", display:"flex",
+            alignItems:"center", justifyContent:"center",
+            background:"rgba(255,255,255,.82)", backdropFilter:"blur(2px)",
+            WebkitBackdropFilter:"blur(2px)", zIndex:"20", borderRadius:"18px",
+            color:"#334155", fontSize:"14px", fontWeight:"700",
+            padding:"0", margin:"0", minHeight:"0",
+            visibility:"visible", opacity:"1"
+        });
+        const box=loading.querySelector(".mgmt-list-loading-box");
+        if(box){
+            Object.assign(box.style,{
+                display:"flex", alignItems:"center", gap:"10px",
+                padding:"12px 16px", borderRadius:"10px", background:"#fff",
+                boxShadow:"0 8px 24px rgba(15,23,42,.12)"
+            });
         }
     }
     if(error) error.style.display="none";
@@ -350,10 +376,8 @@ async function loadManagementSalesDashboard(dateOverride=""){
         mgmtShowError(errorObj?.message||"Unable to load Management Sales Dashboard.");
     }finally{
         if(loading){
-            if(typeof stopStoreAppsLoadingProgress === "function"){
-                stopStoreAppsLoadingProgress(loading);
-            }
             loading.style.display="none";
+            loading.style.visibility="hidden";
         }
     }
 }
