@@ -189,7 +189,7 @@ async function changePassword(){
 
     }catch(err){
 
-        hideLoading();
+        endDatabaseLoading();
 
         btn.disabled = false;
 
@@ -203,7 +203,7 @@ async function changePassword(){
 
     }
 
-    hideLoading();
+    endDatabaseLoading();
 
     btn.disabled = false;
 
