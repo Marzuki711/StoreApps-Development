@@ -249,11 +249,12 @@ async function loadManagementSalesDashboard(dateOverride=""){
     const selected=dateOverride || mgmtSalesDate || mgmtYesterdayISO();
     mgmtSalesDate=selected;
 
-    const loading=null;
+    const loading=document.getElementById("mgmtSalesLoading");
     const error=document.getElementById("mgmtSalesError");
-    /* LOCK: Management dashboard is read-only; no loading on navigation. */
-    if(false){
+    if(loading){
         loading.style.display="flex";
+        const loadingText=loading.querySelector(".sa-full-loading-text");
+        if(loadingText) loadingText.textContent="Loading Management...";
         if(typeof startStoreAppsLoadingProgress === "function"){
             startStoreAppsLoadingProgress(loading);
         }
