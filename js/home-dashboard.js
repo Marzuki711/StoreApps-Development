@@ -245,6 +245,9 @@ function homeSetText(id,value){
 }
 
 function homeSetLoading(show){
+    /* LOCK: Home dashboard is read-only; do not show loading on navigation. */
+    return;
+
     const el = document.getElementById("homeSalesLoading");
 
     if(el){
@@ -1170,15 +1173,27 @@ function initHomeSalesDashboard(){
 
         refresh.addEventListener(
             "click",
-            ()=>{
+            async ()=>{
                 const selectedDate =
                     homeGetDashboardSelectedISO();
 
                 homeSalesDate = selectedDate;
 
-                loadHomeSalesDashboard(
-                    selectedDate
-                );
+                /* LOCK: Dashboard navigation stays loading-free.
+                   Only an explicit Refresh requests fresh data. */
+                if(typeof showLoading === "function"){
+                    showLoading();
+                }
+
+                try{
+                    await loadHomeSalesDashboard(
+                        selectedDate
+                    );
+                }finally{
+                    if(typeof hideLoading === "function"){
+                        hideLoading();
+                    }
+                }
             }
         );
 
