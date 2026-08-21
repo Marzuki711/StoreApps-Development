@@ -106,6 +106,9 @@ async function callDailySalesAPI(action, data = {}) {
 ========================================== */
 
 function dsSetListLoading(show) {
+    /* LOCK: reading/filtering Daily Sales must not show a loading overlay.
+       Full-screen loading is reserved for database update/save flows. */
+    return;
 
     let overlay =
         document.getElementById(
