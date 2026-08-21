@@ -10,7 +10,6 @@
 let homeSalesDate = "";
 let homeSalesStores = [];
 let homeSalesDashboardInitialized = false;
-let homeSalesDashboardPreloaded = false;
 
 function homeCurrentUser(){
     try{
@@ -545,13 +544,13 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
     if(!authenticatedUser || !authenticatedUser.username){
         homeSetLoading(false);
-        return;
+        return false;
     }
 
     if(typeof callDailySalesAPI !== "function"){
         console.warn("Daily Sales API is not available.");
         homeSetLoading(false);
-        return;
+        return false;
     }
 
     const user = homeCurrentUser();
@@ -656,11 +655,6 @@ async function loadHomeSalesDashboard(dateOverride=""){
                 : [];
 
         const totalStores = homeSalesStores.length;
-
-        /* LOGIN READINESS: Home must have actual Daily Sales data. */
-        if(rows.length === 0){
-            throw new Error("No Home Dashboard data available.");
-        }
 
         /*
          * ADDITIVE WEEKLY APSD COMPARISON
@@ -1065,32 +1059,12 @@ async function loadHomeSalesDashboard(dateOverride=""){
     }
 }
 
-async function preloadHomeSalesDashboard(){
+async function initHomeSalesDashboard(){
 
-    const user = homeCurrentUser();
-
-    if(!user || !user.username){
-        return false;
-    }
-
-    const selectedDate =
-        homeSalesDate ||
-        homeYesterdayISO();
-
-    homeSalesDate = selectedDate;
-
-    const ready = await loadHomeSalesDashboard(selectedDate);
-
-    if(ready === true){
-        homeSalesDashboardPreloaded = true;
+    /* Login flow already completed the first Home load. Avoid duplicate API calls. */
+    if(window.__homeSalesPreloadedAfterLogin === true){
         return true;
     }
-
-    homeSalesDashboardPreloaded = false;
-    return false;
-}
-
-function initHomeSalesDashboard(){
 
     /* DASHBOARD UI LOCK — native date picker remains enabled */
     const lockedDateInput =
@@ -1118,13 +1092,11 @@ function initHomeSalesDashboard(){
                 "homeSalesDate"
             );
 
-        loadHomeSalesDashboard(
+        return await loadHomeSalesDashboard(
             homeGetDashboardSelectedISO() ||
             homeSalesDate ||
             homeYesterdayISO()
         );
-
-        return;
     }
 
     homeSalesDashboardInitialized = true;
@@ -1238,29 +1210,13 @@ function initHomeSalesDashboard(){
     homeSetGreeting();
 
     /*
-     * Delay one tick so Daily Sales API functions
-     * are fully available.
+     * The application components and API scripts are already loaded before
+     * login can succeed, so await the first Home load directly. This keeps
+     * the Login screen in its loading state until Home is actually ready.
      */
-    /*
-     * If Login already preloaded Home successfully, do not
-     * issue a second request. This is the single-loading rule.
-     */
-    if(homeSalesDashboardPreloaded){
-        homeSalesDashboardPreloaded = false;
-        return;
-    }
+    const selectedDate = homeGetDashboardSelectedISO();
 
-    setTimeout(
-        ()=>{
-            const selectedDate =
-                homeGetDashboardSelectedISO();
+    homeSalesDate = selectedDate;
 
-            homeSalesDate = selectedDate;
-
-            loadHomeSalesDashboard(
-                selectedDate
-            );
-        },
-        0
-    );
+    return await loadHomeSalesDashboard(selectedDate);
 }
