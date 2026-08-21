@@ -171,7 +171,7 @@ async function changePassword(){
         Saving...
     `;
 
-    showLoading();
+    beginDatabaseLoading();
 
     let result;
 
