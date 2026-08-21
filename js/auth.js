@@ -22,10 +22,12 @@ async function loginSystem(){
         password
     });
 
-    btn.disabled = false;
-    btn.innerHTML = "LOGIN";
+    /* Keep Login button in Signing In... state until Home Dashboard data is ready. */
 
     if(!result || !result.status){
+
+        btn.disabled = false;
+        btn.innerHTML = "LOGIN";
 
         showError(result?.message || "Login Failed");
         return;
@@ -46,51 +48,51 @@ sessionStorage.setItem(
     applyRoleAccess();
 
     /*
-     * LOGIN READINESS LOCK:
-     * The user is considered fully logged in only after
-     * the Home Dashboard has successfully loaded its data.
-     * This prevents a successful login from opening a blank
-     * dashboard and also avoids a second loading indicator.
-     */
-    let homeReady = false;
-
+       IMPORTANT: Keep the Login screen/button in loading state until
+       the Home Dashboard has finished its first data load. This prevents
+       the login form from briefly reappearing before Home is ready.
+    */
     try{
-        if(typeof preloadHomeSalesDashboard === "function"){
-            homeReady = await preloadHomeSalesDashboard();
-        }
-    }catch(err){
-        console.error("Home Dashboard preload:",err);
-        homeReady = false;
-    }
 
-    if(!homeReady){
-        sessionStorage.removeItem("currentUser");
-        currentUser = null;
+        let homeReady = true;
 
-        if(typeof applyRoleAccess === "function"){
-            applyRoleAccess();
+        if(typeof initHomeSalesDashboard === "function"){
+            homeReady = await initHomeSalesDashboard();
         }
+
+        if(homeReady === false){
+            btn.disabled = false;
+            btn.innerHTML = "LOGIN";
+            return;
+        }
+
+        /* Mark Home as already preloaded so showHome() does not request it again. */
+        window.__homeSalesPreloadedAfterLogin = true;
 
         btn.disabled = false;
         btn.innerHTML = "LOGIN";
 
-        showError(
-            "Unable to load Home Dashboard data. Please try again."
-        );
+        requestAnimationFrame(() => {
+            showHome();
+        });
 
+    }catch(err){
+
+        console.error("Home Dashboard initialization:", err);
+        btn.disabled = false;
+        btn.innerHTML = "LOGIN";
+        showError(err?.message || "Unable to load Home Dashboard.");
         return;
-    }
 
-    /* Only show Home after the required dashboard data is ready. */
-    showHome();
+    }
 
     setTimeout(() => {
 
-        callAPI("updateLastLogin",{
-            username: currentUser.username
-        }).catch(console.error);
+    callAPI("updateLastLogin",{
+        username: currentUser.username
+    }).catch(console.error);
 
-    },300);
+},300);
 
 }
 
