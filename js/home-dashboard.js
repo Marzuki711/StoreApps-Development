@@ -10,6 +10,7 @@
 let homeSalesDate = "";
 let homeSalesStores = [];
 let homeSalesDashboardInitialized = false;
+let homeSalesDashboardPreloaded = false;
 
 function homeCurrentUser(){
     try{
@@ -656,6 +657,11 @@ async function loadHomeSalesDashboard(dateOverride=""){
 
         const totalStores = homeSalesStores.length;
 
+        /* LOGIN READINESS: Home must have actual Daily Sales data. */
+        if(rows.length === 0){
+            throw new Error("No Home Dashboard data available.");
+        }
+
         /*
          * ADDITIVE WEEKLY APSD COMPARISON
          * --------------------------------
@@ -1034,6 +1040,8 @@ async function loadHomeSalesDashboard(dateOverride=""){
             role
         );
 
+        return true;
+
     }catch(err){
 
         console.error(
@@ -1048,11 +1056,38 @@ async function loadHomeSalesDashboard(dateOverride=""){
             );
         }
 
+        return false;
+
     }finally{
 
         homeSetLoading(false);
 
     }
+}
+
+async function preloadHomeSalesDashboard(){
+
+    const user = homeCurrentUser();
+
+    if(!user || !user.username){
+        return false;
+    }
+
+    const selectedDate =
+        homeSalesDate ||
+        homeYesterdayISO();
+
+    homeSalesDate = selectedDate;
+
+    const ready = await loadHomeSalesDashboard(selectedDate);
+
+    if(ready === true){
+        homeSalesDashboardPreloaded = true;
+        return true;
+    }
+
+    homeSalesDashboardPreloaded = false;
+    return false;
 }
 
 function initHomeSalesDashboard(){
@@ -1206,6 +1241,15 @@ function initHomeSalesDashboard(){
      * Delay one tick so Daily Sales API functions
      * are fully available.
      */
+    /*
+     * If Login already preloaded Home successfully, do not
+     * issue a second request. This is the single-loading rule.
+     */
+    if(homeSalesDashboardPreloaded){
+        homeSalesDashboardPreloaded = false;
+        return;
+    }
+
     setTimeout(
         ()=>{
             const selectedDate =
